@@ -7,6 +7,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<UploadPage />} />
         <Route path="UploadPage" element={<UploadPage />} />
         <Route path="ComparePage" element={<ComparePage />} />
         <Route path="MergePage" element={<MergePage />} />
