@@ -12,47 +12,47 @@ def get_connection():
 #ファイルアップロード
 @app.route("/serp/api/fileupload", method=["POST"])
 def fileupload() :  
-   return ""
+   return jsonify({"status":0})
 
 #ファイル一覧
 @app.route("/serp/api/filelist/<yyyymm>", method=["GET"])
 def filelist(yyyymm : str) :
-   return ""
+   return jsonify({"status":0})
 
 #マージ結果のファイル一覧
 @app.route("/serp/api/filemergelist/<yyyymm>", method=["GET"])
 def filemergelist(yyyymm : str) :
-   return ""
+   return jsonify({"status":0})
 
 #データ取得
 @app.route("/serp/api/filedetail/<yyyymm>", method=["GET"])
 def filedetail(yyyymm : str) :
-   return ""
+   return jsonify({"status":0})
 
 #マージ結果のデータ取得
 @app.route("/serp/api/filemergedetail/<yyyymm>", method=["GET"])
 def filemergedetail(yyyymm : str) :
-   return ""
+   return jsonify({"status":0, "result":"Oops!"})
 
 #ファイル削除
 @app.route("/serp/api/filedelete/<fileid>", method=["DELETE"])
 def filedelete(fileid : str) :
-   return ""
+   return jsonify({"status":0})
 
 #ファイル照合
 @app.route("/serp/api/filematching", method=["PUT"])
 def filematching() :
-   return ""
+   return jsonify({"status":0, "result":"Oops!"})
 
 #マージ要求
 @app.route("/serp/api/filemerge", method=["PUT"])
 def filemerge() :
-   return ""
+   return jsonify({"status":0})
 
 #ファイルダウンロード
 @app.route("/serp/api/filedownload/<yyyymm>", method=["GET"])
 def filedownload(yyyymm : str) :
-   return ""
+   return jsonify({"status":0})
 
 # デバッグ用サーバー起動
 if __name__ == "__main__":
