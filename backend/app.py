@@ -17,7 +17,7 @@ def fileupload() :
 #ファイル一覧
 @app.route("/serp/api/filelist/<yyyymm>", methods=["GET"])
 def filelist(yyyymm : str) :
-   return jsonify({"status":0})
+   return jsonify({"status":0, "result":filelist(yyyymm)})
 
 #マージ結果のファイル一覧
 @app.route("/serp/api/filemergelist/<yyyymm>", methods=["GET"])
@@ -53,6 +53,15 @@ def filemerge() :
 @app.route("/serp/api/filedownload/<yyyymm>", methods=["GET"])
 def filedownload(yyyymm : str) :
    return jsonify({"status":0})
+
+
+# 仕掛情報テーブルから勘定年月を指定して取得
+def filelist(yyyymm : str):
+  with get_connection() as conn:
+    with conn.cursor() as cur:
+      cur.execute('select * from t_wip_info where fiscal_date = %s', (yyyymm, ))
+      return cur.fetchall()
+
 
 # デバッグ用サーバー起動
 if __name__ == "__main__":
