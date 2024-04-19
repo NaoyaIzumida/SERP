@@ -169,6 +169,7 @@ const UploadPage = () => {
                       label="Account Months"
                       format="YYYY/MM"
                       defaultValue={dayjs()}
+                      views={['year', 'month']}
                     />
                   </LocalizationProvider>
                   <Button variant="outlined" startIcon={<SearchIcon />}>

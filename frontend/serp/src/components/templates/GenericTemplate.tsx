@@ -23,6 +23,7 @@ import Link from '@mui/material/Link';
 import { NavLink } from "react-router-dom";
 import { lightBlue } from "@mui/material/colors";
 import logo from "../../images/logo.png";
+import serp from "../../images/serp.png";
 
 const drawerWidth: number = 240;
 
@@ -109,7 +110,8 @@ const GenericTemplate: React.FC<GenericTemplateProps> = ({title, children}) => {
               {/* サイドメニュー開閉ボタン */}
               <MenuIcon />
             </IconButton>
-            <img src={logo} alt="SERP" height="60" />
+            <img src={logo} alt="SCI" height="60" />
+            <img src={serp} alt="SERP" height="60" />
             <Typography
               component="h1"
               variant="h5"
