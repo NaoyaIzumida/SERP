@@ -27,9 +27,10 @@ def convertCursorToDict(cur):
 def fileupload() :  
    return jsonify({"status":0})
 
-#ファイル一覧
+#API No.2 ファイル一覧
 @app.route("/serp/api/filelist/<yyyymm>", methods=["GET"])
 def filelist(yyyymm : str) :
+#    return jsonify({"status":0, "result":convertCursorToJSON(filelist(yyyymm))})
    return jsonify({"status":0, "result":filelist(yyyymm)})
 
 #マージ結果のファイル一覧
@@ -73,7 +74,7 @@ def filelist(yyyymm : str):
   with get_connection() as conn:
     with conn.cursor() as cur:
       cur.execute('select * from t_wip_info where fiscal_date = %s', (yyyymm, ))
-      return cur.fetchall()
+      return convertCursorToDict(cur)
 
 
 # デバッグ用サーバー起動
