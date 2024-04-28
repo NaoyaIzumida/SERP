@@ -3,11 +3,24 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 
 app = Flask(__name__)
+app.json.sort_keys = False
 cors = CORS(app)
 
 # SERP DB - PostgreSQL接続
 def get_connection():
   return psycopg2.connect('postgresql://serp:serp@postgres:5432/serp')
+
+# カーソルをカラム名付き辞書形式に変換する
+# カーソルはオープン状態で渡すこと
+# 関数内で全行フェッチして辞書を作ります
+def convertCursorToDict(cur):
+    columns = [col[0] for col in cur.description]
+    data = cur.fetchall()
+    data_with_column_name = []
+    for result in data:
+        data_with_column_name.append(dict(zip(columns, result)))
+
+    return data_with_column_name
 
 #ファイルアップロード
 @app.route("/serp/api/fileupload", methods=["POST"])
