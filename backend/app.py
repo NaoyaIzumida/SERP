@@ -30,8 +30,10 @@ def fileupload() :
 #API No.2 ファイル一覧
 @app.route("/serp/api/filelist/<yyyymm>", methods=["GET"])
 def filelist(yyyymm : str) :
-#    return jsonify({"status":0, "result":convertCursorToJSON(filelist(yyyymm))})
-   return jsonify({"status":0, "result":filelist(yyyymm)})
+  try:
+    return jsonify({"status":0, "result":filelist(yyyymm)})
+  except:
+    return jsonify({"status":-1})
 
 #マージ結果のファイル一覧
 @app.route("/serp/api/filemergelist/<yyyymm>", methods=["GET"])
