@@ -38,10 +38,10 @@ def filelist(yyyymm : str) :
 def filemergelist(yyyymm : str) :
    return jsonify({"status":0})
 
-#データ取得
-@app.route("/serp/api/filedetail/<yyyymm>", methods=["GET"])
-def filedetail(yyyymm : str) :
-   return jsonify({"status":0})
+#API No.4 データ取得
+@app.route("/serp/api/filedetail/<manage_id>", methods=["GET"])
+def filedetail(manage_id : str) :
+   return jsonify({"status":0, "result":filedetail(manage_id)})
 
 #マージ結果のデータ取得
 @app.route("/serp/api/filemergedetail/<yyyymm>", methods=["GET"])
@@ -74,6 +74,19 @@ def filelist(yyyymm : str):
   with get_connection() as conn:
     with conn.cursor() as cur:
       cur.execute('select * from t_wip_info where fiscal_date = %s', (yyyymm, ))
+      return convertCursorToDict(cur)
+
+# データ取得
+def filedetail(manage_id : str):
+   with get_connection() as conn:
+    with conn.cursor() as cur:
+      cur.execute('select file_div from m_file_info where manage_id = %s', (manage_id, ))
+      if cur == 'F':
+         cur.execute('select * from t_fg_project_info where manage_id = %s', (manage_id, ))
+      elif cur == 'W':
+         cur.execute('select * from t_wip_project_info where manage_id = %s', (manage_id, ))
+      else:
+         cur.execute('select * from t_hrmos_expense where manage_id = %s', (manage_id, ))
       return convertCursorToDict(cur)
 
 
