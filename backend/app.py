@@ -41,7 +41,10 @@ def filemergelist(yyyymm : str) :
 #API No.4 データ取得
 @app.route("/serp/api/filedetail/<manage_id>", methods=["GET"])
 def filedetail(manage_id : str) :
-   return jsonify({"status":0, "result":filedetail(manage_id)})
+   try:
+      return jsonify({"status":0, "result":filedetail(manage_id)})
+   except:
+      return jsonify({"status":-1})
 
 #マージ結果のデータ取得
 @app.route("/serp/api/filemergedetail/<yyyymm>", methods=["GET"])
@@ -78,18 +81,19 @@ def filelist(yyyymm : str):
 
 # データ取得
 def filedetail(manage_id : str):
+   query = {
+   'F':'select * from t_fg_project_info where manage_id = %s',
+   'W':'select * from t_wip_project_info where manage_id = %s',
+   'H':'select * from t_hrmos_expense where manage_id = %s'
+   }     
+      
    with get_connection() as conn:
     with conn.cursor() as cur:
       cur.execute('select file_div from m_file_info where manage_id = %s', (manage_id, ))
       res = cur.fetchall()
       for r in res:
-         col1 = r[0]
-      if col1 == 'F':
-         cur.execute('select * from t_fg_project_info where manage_id = %s', (manage_id, ))
-      elif col1 == 'W':
-         cur.execute('select * from t_wip_project_info where manage_id = %s', (manage_id, ))
-      else:
-         cur.execute('select * from t_hrmos_expense where manage_id = %s', (manage_id, ))
+         file_div=r[0]
+      cur.execute(query.get(file_div), (manage_id,))
       return convertCursorToDict(cur)
 
 
