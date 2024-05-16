@@ -81,9 +81,12 @@ def filedetail(manage_id : str):
    with get_connection() as conn:
     with conn.cursor() as cur:
       cur.execute('select file_div from m_file_info where manage_id = %s', (manage_id, ))
-      if cur == 'F':
+      res = cur.fetchall()
+      for r in res:
+         col1 = r[0]
+      if col1 == 'F':
          cur.execute('select * from t_fg_project_info where manage_id = %s', (manage_id, ))
-      elif cur == 'W':
+      elif col1 == 'W':
          cur.execute('select * from t_wip_project_info where manage_id = %s', (manage_id, ))
       else:
          cur.execute('select * from t_hrmos_expense where manage_id = %s', (manage_id, ))
