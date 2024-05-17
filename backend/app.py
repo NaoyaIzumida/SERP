@@ -31,7 +31,7 @@ def fileupload() :
 @app.route("/serp/api/filelist/<yyyymm>", methods=["GET"])
 def filelist(yyyymm : str) :
   try:
-    return jsonify({"status":0, "result":filelist(yyyymm)})
+    return jsonify({"status":0, "result":_filelist(yyyymm)})
   except:
     return jsonify({"status":-1})
 
@@ -72,7 +72,7 @@ def filedownload(yyyymm : str) :
 
 
 # 仕掛情報テーブルから勘定年月を指定して取得
-def filelist(yyyymm : str):
+def _filelist(yyyymm : str):
   with get_connection() as conn:
     with conn.cursor() as cur:
       cur.execute('select * from t_wip_info where fiscal_date = %s', (yyyymm, ))
