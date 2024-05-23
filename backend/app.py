@@ -42,7 +42,7 @@ def filemergelist(yyyymm : str) :
 @app.route("/serp/api/filedetail/<manage_id>", methods=["GET"])
 def filedetail(manage_id : str) :
    try:
-      return jsonify({"status":0, "result":filedetail(manage_id)})
+      return jsonify({"status":0, "result":_filedetail(manage_id)})
    except:
       return jsonify({"status":-1})
 
@@ -80,7 +80,7 @@ def filelist(yyyymm : str):
       return convertCursorToDict(cur)
 
 # データ取得
-def filedetail(manage_id : str):
+def _filedetail(manage_id : str):
    query = {
    'F':'select * from t_fg_project_info where manage_id = %s',
    'W':'select * from t_wip_project_info where manage_id = %s',
@@ -89,12 +89,20 @@ def filedetail(manage_id : str):
       
    with get_connection() as conn:
     with conn.cursor() as cur:
-      cur.execute('select file_div from m_file_info where manage_id = %s', (manage_id, ))
-      res = cur.fetchall()
-      for r in res:
-         file_div=r[0]
+      file_div = _getfilediv(conn, manage_id)
+      if file_div == -1:
+         return []
       cur.execute(query.get(file_div), (manage_id,))
       return convertCursorToDict(cur)
+    
+# ファイル区分取得
+def _getfilediv(conn : any, manage_id : str):
+   with conn.cursor() as cur:
+      cur.execute('select file_div from m_file_info where manage_id = %s', (manage_id, ))
+      res = cur.fetchone()
+      if res is None:
+         return -1
+      return res[0]
 
 
 # デバッグ用サーバー起動
