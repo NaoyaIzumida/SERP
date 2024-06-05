@@ -90,18 +90,18 @@ def _filedetail(manage_id : str):
    with get_connection() as conn:
     with conn.cursor() as cur:
       file_div = _getfilediv(conn, manage_id)
-      if file_div == -1:
-         return []
+      if file_div == []:
+         return file_div
       cur.execute(query.get(file_div), (manage_id,))
       return convertCursorToDict(cur)
     
 # ファイル区分取得
 def _getfilediv(conn : any, manage_id : str):
-   with conn.cursor() as cur:
+    with conn.cursor() as cur:
       cur.execute('select file_div from m_file_info where manage_id = %s', (manage_id, ))
       res = cur.fetchone()
       if res is None:
-         return -1
+         return []
       return res[0]
 
 
