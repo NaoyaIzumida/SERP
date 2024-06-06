@@ -75,7 +75,7 @@ def filedownload(yyyymm: str):
 
 
 # 仕掛情報テーブルから勘定年月を指定して取得
-def filelist(yyyymm: str):
+def _filelist(yyyymm: str):
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
