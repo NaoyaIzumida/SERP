@@ -48,10 +48,13 @@ def filedetail(manage_id: str):
     except:
         return jsonify({"status": -1})
 
-# マージ結果のデータ取得
-@app.route("/serp/api/filemergedetail/<yyyymm>", methods=["GET"])
-def filemergedetail(yyyymm: str):
-    return jsonify({"status": 0, "result": "Oops!"})
+# API No.5 マージ結果のデータ取得
+@app.route("/serp/api/filemergedetail/<yyyymm>,<version>", methods=["GET"])
+def filemergedetail(yyyymm: str, version: str):
+    try:
+        return jsonify({"status": 0, "result": _filemergedetail(yyyymm, version)})
+    except:
+        return jsonify({"status": -1})
 
 # ファイル削除
 @app.route("/serp/api/filedelete/<fileid>", methods=["DELETE"])
@@ -108,6 +111,13 @@ def _getfilediv(conn: any, manage_id: str):
             return []
         return res[0]
 
+# マージ結果テーブルから勘定年月とバージョンを指定して取得
+def _filemergedetail(yyyymm: str, version: str):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                'select * from t_merge_result where fiscal_date = %s and version = %s', (yyyymm, version))
+            return convertCursorToDict(cur)
 
 # デバッグ用サーバー起動
 if __name__ == "__main__":
