@@ -35,10 +35,13 @@ def filelist(yyyymm : str) :
   except:
     return jsonify({"status":-1})
 
-# マージ結果のファイル一覧
+# API No.3 マージ結果のファイル一覧
 @app.route("/serp/api/filemergelist/<yyyymm>", methods=["GET"])
 def filemergelist(yyyymm: str):
-    return jsonify({"status": 0})
+  try:
+    return jsonify({"status":0, "result": _filemergelist(yyyymm)})
+  except:
+    return jsonify({"status":-1})
 
 # API No.4 データ取得
 @app.route("/serp/api/filedetail/<manage_id>", methods=["GET"])
@@ -80,6 +83,14 @@ def _filelist(yyyymm: str):
         with conn.cursor() as cur:
             cur.execute(
                 'select * from t_wip_info where fiscal_date = %s', (yyyymm, ))
+            return convertCursorToDict(cur)
+
+# マージ結果テーブルから勘定年月を指定して取得
+def _filemergelist(yyyymm: str):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                'select * from t_merge_result where fiscal_date = %s', (yyyymm, ))
             return convertCursorToDict(cur)
 
 # データ取得
