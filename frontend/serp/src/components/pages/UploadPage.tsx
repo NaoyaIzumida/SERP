@@ -2,48 +2,15 @@ import * as React from 'react';
 import { useCallback } from 'react';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import DeleteIcon from '@mui/icons-material/Delete';
-import Divider from '@mui/material/Divider';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import GenericTemplate from '../templates/GenericTemplate';
 import Grid from '@mui/material/Grid';
-import IconButton from '@mui/material/IconButton';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemText from '@mui/material/ListItemText';
 import Paper from '@mui/material/Paper';
-import SearchIcon from '@mui/icons-material/Search';
-import Switch from '@mui/material/Switch';
-import Stack from '@mui/material/Stack';
-import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { FixedSizeList, ListChildComponentProps } from 'react-window';
 import { useDropzone } from 'react-dropzone';
-import dayjs from 'dayjs';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+
 // Parts化したリストのImport
 import SideList from '../parts/SideList';
-
-// Demo用List作成
-function renderRow(props: ListChildComponentProps) {
-  const { index, style } = props;
-
-  return (
-    // <ListItem style={style} key={index} component="div" disablePadding>
-    //   <ListItemButton>
-    //     <ListItemText primary={`Item ${index + 1}`} />
-    //     <IconButton edge="end" aria-label="delete">
-    //       <DeleteIcon />
-    //     </IconButton>
-    //   </ListItemButton>
-    // </ListItem>
-    <SideList style={style} index={index} data={undefined}></SideList>
-  );
-}
 
 const columns: GridColDef<(typeof rows)[number]>[] = [
   { field: 'id', headerName: 'ID', width: 90 },
@@ -204,11 +171,6 @@ const UploadPage = () => {
     maxFiles: 1,
   });
 
-  const label = { inputProps: { 'aria-label': 'Switch demo' } };
-
-  const [dense, setDense] = React.useState(false);
-  const [secondary, setSecondary] = React.useState(false);
-
   return (
     <GenericTemplate title="Upload">
       <Box>
@@ -242,75 +204,7 @@ const UploadPage = () => {
             )}
           </Grid>
           <Grid item xs={12} md={3} lg={3} direction="row" alignItems="stretch">
-            <Paper
-              sx={{
-                p: 2,
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
-              <Toolbar>
-                <Stack
-                  direction="row"
-                  justifyContent="flex-start"
-                  alignItems="center"
-                  spacing={1}
-                >
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      label="Account Months"
-                      format="YYYY/MM"
-                      defaultValue={dayjs()}
-                      views={['year', 'month']}
-                    />
-                  </LocalizationProvider>
-                  <Button variant="outlined" startIcon={<SearchIcon />}>
-                    Search
-                  </Button>
-                </Stack>
-              </Toolbar>
-              <Divider />
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="flex-start"
-                spacing={0.5}
-              >
-                <Switch {...label} defaultChecked />
-                <IconButton color="primary" aria-label="Filter">
-                  <FilterListIcon />
-                </IconButton>
-              </Stack>
-              <Divider />
-              <Toolbar
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'flex-Start',
-                  px: [1],
-                  padding: 1,
-                }}
-              >
-                <Box
-                  sx={{
-                    width: '100%',
-                    height: '100%',
-                    bgcolor: 'background.paper',
-                  }}
-                >
-                  <FixedSizeList
-                    height={560}
-                    width="100%"
-                    itemSize={40}
-                    itemCount={30}
-                    overscanCount={5}
-                  >
-                    {renderRow}
-                  </FixedSizeList>
-                </Box>
-              </Toolbar>
-            </Paper>
+            <SideList mode={1} />
           </Grid>
           <Grid item xs={12} md={9} lg={9} alignItems="stretch">
             <Paper
