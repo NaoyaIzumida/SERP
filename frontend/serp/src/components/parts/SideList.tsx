@@ -37,84 +37,106 @@ function renderRow(props: ListChildComponentProps) {
   );
 }
 
+//mode:1 Upload
+//mode:2 Compare
+//mode:3 Merge
 function SideList({ mode }: { mode: number }) {
   const label = { inputProps: { 'aria-label': 'Switch demo' } };
 
-  //mode:1 Upload
-  //mode:2 Compare
-  //mode:3 Merge
+  // スライダー無しの描画
+  const noSwitchStack = (
+    <Stack
+      direction="row"
+      alignItems="center"
+      justifyContent={'flex-end'}
+      spacing={0.5}
+    >
+      <IconButton color="primary" aria-label="Filter">
+        <FilterListIcon />
+      </IconButton>
+    </Stack>
+  );
+  // スライダー有りの描画
+  const switchStack = (
+    <Stack
+      direction="row"
+      justifyContent="space-between"
+      alignItems="flex-start"
+      spacing={0.5}
+    >
+      <Switch {...label} defaultChecked />
+      <IconButton color="primary" aria-label="Filter">
+        <FilterListIcon />
+      </IconButton>
+    </Stack>
+  );
 
+  let listHeader;
   if (mode == 1) {
-    return (
-      <Paper
-        sx={{
-          p: 2,
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <Toolbar>
-          <Stack
-            direction="row"
-            justifyContent="flex-start"
-            alignItems="center"
-            spacing={1}
-          >
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker
-                label="Account Months"
-                format="YYYY/MM"
-                defaultValue={dayjs()}
-                views={['year', 'month']}
-              />
-            </LocalizationProvider>
-            <Button variant="outlined" startIcon={<SearchIcon />}>
-              Search
-            </Button>
-          </Stack>
-        </Toolbar>
-        <Divider />
+    listHeader = noSwitchStack;
+  } else {
+    listHeader = switchStack;
+  }
+
+  return (
+    <Paper
+      sx={{
+        p: 2,
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <Toolbar>
         <Stack
           direction="row"
-          justifyContent="space-between"
-          alignItems="flex-start"
-          spacing={0.5}
+          justifyContent="flex-start"
+          alignItems="center"
+          spacing={1}
         >
-          <Switch {...label} defaultChecked />
-          <IconButton color="primary" aria-label="Filter">
-            <FilterListIcon />
-          </IconButton>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="Account Months"
+              format="YYYY/MM"
+              defaultValue={dayjs()}
+              views={['year', 'month']}
+            />
+          </LocalizationProvider>
+          <Button variant="outlined" startIcon={<SearchIcon />}>
+            Search
+          </Button>
         </Stack>
-        <Divider />
-        <Toolbar
+      </Toolbar>
+      <Divider />
+      {listHeader}
+      <Divider />
+      <Toolbar
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-Start',
+          px: [1],
+          padding: 1,
+        }}
+      >
+        <Box
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-Start',
-            px: [1],
-            padding: 1,
+            width: '100%',
+            height: '100%',
+            bgcolor: 'background.paper',
           }}
         >
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              bgcolor: 'background.paper',
-            }}
+          <FixedSizeList
+            height={560}
+            width="100%"
+            itemSize={40}
+            itemCount={30}
+            overscanCount={5}
           >
-            <FixedSizeList
-              height={560}
-              width="100%"
-              itemSize={40}
-              itemCount={30}
-              overscanCount={5}
-            >
-              {renderRow}
-            </FixedSizeList>
-          </Box>
-        </Toolbar>
-      </Paper>
-    );
-  }
+            {renderRow}
+          </FixedSizeList>
+        </Box>
+      </Toolbar>
+    </Paper>
+  );
 }
