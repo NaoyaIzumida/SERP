@@ -80,8 +80,17 @@ def filedownload(yyyymm: str):
     return jsonify({"status": 0})
 
 
-# 仕掛情報テーブルから勘定年月を指定して取得
+# ファイル情報マスタから勘定年月を指定して取得
 def _filelist(yyyymm: str):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                'select * from m_file_info where fiscal_date = %s', (yyyymm, ))
+            return convertCursorToDict(cur)
+
+
+# 仕掛情報テーブルから勘定年月を指定して取得
+def _wiplist(yyyymm: str):
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
