@@ -33,12 +33,15 @@ def filelist(yyyymm : str) :
   try:
     return jsonify({"status":0, "result":_filelist(yyyymm)})
   except:
-    return jsonify({"status":-1})
+    return jsonify({"status":1})
 
-# マージ結果のファイル一覧
+# API No.3 マージ結果のファイル一覧
 @app.route("/serp/api/filemergelist/<yyyymm>", methods=["GET"])
 def filemergelist(yyyymm: str):
-    return jsonify({"status": 0})
+  try:
+    return jsonify({"status":0, "result": _filemergelist(yyyymm)})
+  except:
+    return jsonify({"status":1})
 
 # API No.4 データ取得
 @app.route("/serp/api/filedetail/<manage_id>", methods=["GET"])
@@ -46,12 +49,15 @@ def filedetail(manage_id: str):
     try:
         return jsonify({"status": 0, "result": _filedetail(manage_id)})
     except:
-        return jsonify({"status": -1})
+        return jsonify({"status": 1})
 
-# マージ結果のデータ取得
-@app.route("/serp/api/filemergedetail/<yyyymm>", methods=["GET"])
-def filemergedetail(yyyymm: str):
-    return jsonify({"status": 0, "result": "Oops!"})
+# API No.5 マージ結果のデータ取得
+@app.route("/serp/api/filemergedetail/<yyyymm>,<version>", methods=["GET"])
+def filemergedetail(yyyymm: str, version: str):
+    try:
+        return jsonify({"status": 0, "result": _filemergedetail(yyyymm, version)})
+    except:
+        return jsonify({"status": 1})
 
 # ファイル削除
 @app.route("/serp/api/filedelete/<fileid>", methods=["DELETE"])
@@ -74,12 +80,29 @@ def filedownload(yyyymm: str):
     return jsonify({"status": 0})
 
 
-# 仕掛情報テーブルから勘定年月を指定して取得
+# ファイル情報マスタから勘定年月を指定して取得
 def _filelist(yyyymm: str):
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
+                'select * from m_file_info where fiscal_date = %s', (yyyymm, ))
+            return convertCursorToDict(cur)
+
+
+# 仕掛情報テーブルから勘定年月を指定して取得
+def _wiplist(yyyymm: str):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
                 'select * from t_wip_info where fiscal_date = %s', (yyyymm, ))
+            return convertCursorToDict(cur)
+
+# マージ結果テーブルから勘定年月を指定して取得
+def _filemergelist(yyyymm: str):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                'select * from t_merge_result where fiscal_date = %s', (yyyymm, ))
             return convertCursorToDict(cur)
 
 # データ取得
@@ -108,6 +131,13 @@ def _getfilediv(conn: any, manage_id: str):
             return []
         return res[0]
 
+# マージ結果テーブルから勘定年月とバージョンを指定して取得
+def _filemergedetail(yyyymm: str, version: str):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                'select * from t_merge_result where fiscal_date = %s and version = %s', (yyyymm, version))
+            return convertCursorToDict(cur)
 
 # デバッグ用サーバー起動
 if __name__ == "__main__":
