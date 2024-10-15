@@ -156,18 +156,6 @@ const GenericTemplate: React.FC<GenericTemplateProps> = ({title, children}) => {
             </ListItemButton>
             <ListItemButton
                 component={NavLink}
-                to={"/ComparePage"}
-                sx={{ '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
-                end
-            >
-              <ListItemIcon>
-                {/* 照合 */}
-                <CompareArrowsOutlinedIcon />
-              </ListItemIcon>
-              <ListItemText primary="Compare" />
-            </ListItemButton>
-            <ListItemButton
-                component={NavLink}
                 to={"/MergePage"}
                 sx={{ '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
                 end
