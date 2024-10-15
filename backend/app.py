@@ -73,7 +73,7 @@ def filedelete(fileid: str):
 def filematching():
     return jsonify({"status": 0, "result": "Oops!"})
 
-# マージ要求
+# API No.8 マージ要求
 @app.route("/serp/api/filemerge", methods=["PUT"])
 def filemerge():
     return jsonify({"status": 0})
