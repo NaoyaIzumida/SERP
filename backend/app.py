@@ -1,5 +1,5 @@
 import psycopg2
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -76,7 +76,39 @@ def filematching():
 # API No.8 マージ要求
 @app.route("/serp/api/filemerge", methods=["PUT"])
 def filemerge():
-    return jsonify({"status": 0})
+    try:
+        if request.headers['Content-Type'] != 'application/json':
+            return jsonify({"status": -1, "result":"Content-Type:application/jsonを指定してください"})
+        
+        # リクエストからJSON形式でデータを取得
+        # 書式エラー時は例外が発生する
+
+        # パラメータチェック
+        manage_ids = request.json['manage_id']
+        if not isinstance(manage_ids, list):
+            return jsonify({"status": -1, "result": "管理IDは配列で指定してください"})
+
+        if manage_ids == []:
+            return jsonify({"status": -1, "result": "管理IDを指定してください"})
+
+        if len(manage_ids) == 1:
+            return jsonify({"status": -1, "result": "管理IDの指定が1件のためマージ出来ません"})
+        
+        if len(manage_ids) != len(list(set(manage_ids))):
+            return jsonify({"status": -1, "result": "管理IDの指定が重複しています"})
+
+        # 管理ID存在チェック
+        with get_connection() as conn:
+            for manage_id in manage_ids:
+                manage_id = str(manage_id)
+                file_div = _getfilediv(conn, manage_id)
+                if file_div == []:
+                    return jsonify({"status": -1, "result": "管理IDが不正です"})
+
+
+        return jsonify({"status": 0})
+    except:
+        return jsonify({"status": -1})
 
 # ファイルダウンロード
 @app.route("/serp/api/filedownload/<yyyymm>", methods=["GET"])
@@ -142,6 +174,10 @@ def _filemergedetail(yyyymm: str, version: str):
             cur.execute(
                 'select * from t_merge_result where fiscal_date = %s and version = %s', (yyyymm, version))
             return convertCursorToDict(cur)
+
+# マージ要求
+def _filemerge(manage_ids):
+    return jsonify({"status": 0})
 
 # デバッグ用サーバー起動
 if __name__ == "__main__":
