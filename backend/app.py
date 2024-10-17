@@ -1,3 +1,4 @@
+import datetime
 import psycopg2
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -97,16 +98,24 @@ def filemerge():
         if len(manage_ids) != len(list(set(manage_ids))):
             return jsonify({"status": -1, "result": "管理IDの指定が重複しています"})
 
-        # 管理ID存在チェック
+        fiscal_date = ''
         with get_connection() as conn:
             for manage_id in manage_ids:
                 manage_id = str(manage_id)
-                file_div = _getfilediv(conn, manage_id)
-                if file_div == []:
+                work_date = _getFiscalDateByManageID(manage_id)
+                # 管理ID存在チェック
+                if work_date == '':
                     return jsonify({"status": -1, "result": "管理IDが不正です"})
+                if fiscal_date == '':
+                    fiscal_date = work_date
+                # 勘定年月が混在していたらNG
+                if fiscal_date != work_date:
+                    return jsonify({"status": -1, "result": "指定された管理IDは勘定年月が混在しています"})
+                
 
 
-        return jsonify({"status": 0})
+
+        return jsonify({"status": 0, "result":fiscal_date})
     except:
         return jsonify({"status": -1})
 
@@ -178,6 +187,27 @@ def _filemergedetail(yyyymm: str, version: str):
 # マージ要求
 def _filemerge(manage_ids):
     return jsonify({"status": 0})
+
+
+# 勘定年月取得
+def _getFiscalDate():
+    # 前月末日を取得しその年月を文字列として返す
+    today = datetime.datetime.today()
+    thismonth = datetime.datetime(today.year, today.month, 1)
+    lastmonth = thismonth + datetime.timedelta(days=-1)
+    return lastmonth.strftime("%Y%m")
+
+# 勘定年月取得
+def _getFiscalDateByManageID(manage_id : str):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                'select fiscal_date from m_file_info where manage_id = %s', (manage_id, ))
+            res = cur.fetchone()
+            if res is None:
+                return ''
+            return res[0]
+
 
 # デバッグ用サーバー起動
 if __name__ == "__main__":
