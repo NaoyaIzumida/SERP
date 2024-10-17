@@ -63,11 +63,13 @@ def filemergedetail(yyyymm: str, version: str):
     except:
         return jsonify({"status": -1})
 
-# ファイル削除
+# API No.6 ファイル削除
 @app.route("/serp/api/filedelete/<fileid>", methods=["DELETE"])
-def filedelete(fileid: str):
-    return jsonify({"status": 0})
-
+def filedelete(manage_id: str):
+    try:
+        return jsonify({"status": 0, "result": _filedelete(manage_id)})
+    except:
+        return jsonify({"status": -1})
 # ファイル照合
 @app.route("/serp/api/filematching", methods=["PUT"])
 def filematching():
@@ -124,6 +126,23 @@ def _filedetail(manage_id: str):
                 return file_div
             cur.execute(query.get(file_div), (manage_id,))
             return convertCursorToDict(cur)
+# データ削除
+def _filedelete(manage_id: str):
+    query = {
+        'F': 'delete from t_fg_project_info where manage_id = %s',
+        'W': 'delete from t_wip_project_info where manage_id = %s',
+        'H': 'delete from t_hrmos_expense where manage_id = %s'
+    }
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            file_div = _getfilediv(conn, manage_id)
+            if file_div == []:
+                return file_div
+            cur.execute(query.get(file_div), (manage_id,))        
+        cur.execute('delete from m_file_info where manage_id = %s', (manage_id,))
+        conn.commit()
+
 
 # ファイル区分取得
 def _getfilediv(conn: any, manage_id: str):
