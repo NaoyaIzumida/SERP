@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
@@ -18,13 +18,13 @@ import Switch from '@mui/material/Switch';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import dayjs from 'dayjs';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { fetchData } from '../../api/api'; // API関数をインポート
 
 //他のファイルでこのファイルをimportすることで、ここの関数を使えるようになる
 export default SideList;
 
 function renderRow(props: ListChildComponentProps) {
   const { index, style } = props;
-
   return (
     <ListItem style={style} key={index} component="div" disablePadding>
       <ListItemButton>
@@ -71,12 +71,51 @@ function SideList({ mode }: { mode: number }) {
     </Stack>
   );
 
+  let rowCount: number;
+  rowCount = 1;
+  rowCount = 0;
+
   let listHeader;
   if (mode == 1) {
     listHeader = noSwitchStack;
   } else {
     listHeader = switchStack;
   }
+
+  interface listData {
+    status: number;
+    itemData: string;
+  }
+
+  const [data, setData] = useState<listData | null>(null); // データの状態管理
+  const [loading, setLoading] = useState<boolean>(false); // ローディング状態管理
+  const [error, setError] = useState<string | null>(null); // エラー状態管理
+  // ボタンクリックでAPI呼び出し
+  const handleFetchData = async () => {
+    try {
+      setLoading(true); // ローディング開始
+      setError(null); // エラーメッセージをリセット
+      setData(null); // 前のデータをリセット
+      // fetchDataを使ってAPIからデータを取得
+      // const result = await fetchData<listData>('/filelist/202412'); // エンドポイントを指定
+      // setData(result); // 取得したデータを状態にセット
+
+      //   if (result.status == 0) {
+      //     // renderRow;
+      //     null;
+      //   } else if (result.status == 1) {
+      //     console.error('Data Empty !!');
+      //   } else if (result.status == -1) {
+      //     console.error('System Error !!');
+      //   }
+    } catch (error) {
+      setError('データの取得に失敗しました'); // エラーメッセージをセット
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false); // ローディング終了
+    }
+    // console.error('System Error !!');
+  };
 
   return (
     <Paper
@@ -102,9 +141,23 @@ function SideList({ mode }: { mode: number }) {
               views={['year', 'month']}
             />
           </LocalizationProvider>
-          <Button variant="outlined" startIcon={<SearchIcon />}>
+          <Button
+            variant="outlined"
+            startIcon={<SearchIcon />}
+            onClick={handleFetchData}
+          >
             Search
           </Button>
+          {/* ローディング中の表示 */}
+          {/* {loading && <p>Loading...</p>} */}
+          {/* エラーがある場合の表示 */}
+          {/* {error && <p>{error}</p>} */}
+          {/* データがある場合の表示 */}
+          {/* {data && (
+            <div >
+              <h1>{data.status}</h1>
+            </div>
+          )} */}
         </Stack>
       </Toolbar>
       <Divider />
@@ -126,15 +179,17 @@ function SideList({ mode }: { mode: number }) {
             bgcolor: 'background.paper',
           }}
         >
-          <FixedSizeList
-            height={560}
-            width="100%"
-            itemSize={40}
-            itemCount={30}
-            overscanCount={5}
-          >
-            {renderRow}
-          </FixedSizeList>
+          <div id="sideList">
+            <FixedSizeList
+              height={560}
+              width="100%"
+              itemSize={40}
+              itemCount={rowCount}
+              overscanCount={5}
+            >
+              {renderRow}
+            </FixedSizeList>
+          </div>
         </Box>
       </Toolbar>
     </Paper>
