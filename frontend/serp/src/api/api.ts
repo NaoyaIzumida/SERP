@@ -1,30 +1,15 @@
-import axios, { AxiosResponse } from 'axios';
+import axios from 'axios';
 
-// ベースURLの設定
+// ベースURLを環境変数から取得
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+// axiosインスタンスを作成
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL, // 環境変数からベースURLを読み込む
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 5000, // タイムアウトを設定（オプション）
 });
 
-// APIからデータを取得する関数の例
-export const fetchData = async <T>(endpoint: string): Promise<T> => {
-  try {
-    const response: AxiosResponse<T> = await apiClient.get(endpoint);
-    return response.data;
-  } catch (error) {
-    console.error('API call error:', error);
-    throw error;
-  }
-};
-
-// APIにデータを送信する関数の例
-export const postData = async <T>(endpoint: string, data: T): Promise<void> => {
-  try {
-    await apiClient.post(endpoint, data);
-  } catch (error) {
-    console.error('API post error:', error);
-    throw error;
-  }
-};
+export default apiClient;

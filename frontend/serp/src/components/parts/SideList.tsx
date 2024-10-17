@@ -16,29 +16,15 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import Switch from '@mui/material/Switch';
 import FilterListIcon from '@mui/icons-material/FilterList';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { fetchData } from '../../api/api'; // API関数をインポート
+import apiClient from '../../api/api'; // API関数をインポート
 
 //他のファイルでこのファイルをimportすることで、ここの関数を使えるようになる
 export default SideList;
 
-function renderRow(props: ListChildComponentProps) {
-  const { index, style } = props;
-  return (
-    <ListItem style={style} key={index} component="div" disablePadding>
-      <ListItemButton>
-        <ListItemText primary={`Item ${index + 1}`} />
-        <IconButton edge="end" aria-label="delete">
-          <DeleteIcon />
-        </IconButton>
-      </ListItemButton>
-    </ListItem>
-  );
-}
-
 //mode:1 Upload
-//mode:2 Compare
+//mode:2 Compare  **不要のため破棄
 //mode:3 Merge
 function SideList({ mode }: { mode: number }) {
   const label = { inputProps: { 'aria-label': 'Switch demo' } };
@@ -56,6 +42,7 @@ function SideList({ mode }: { mode: number }) {
       </IconButton>
     </Stack>
   );
+
   // スライダー有りの描画
   const switchStack = (
     <Stack
@@ -71,10 +58,6 @@ function SideList({ mode }: { mode: number }) {
     </Stack>
   );
 
-  let rowCount: number;
-  rowCount = 1;
-  rowCount = 0;
-
   let listHeader;
   if (mode == 1) {
     listHeader = noSwitchStack;
@@ -82,39 +65,58 @@ function SideList({ mode }: { mode: number }) {
     listHeader = switchStack;
   }
 
-  interface listData {
-    status: number;
-    itemData: string;
+  // APIから取得するjsonの型定義
+  interface DataItem {
+    manage_id: string;
+    fiscal_date: string;
+    version: string;
+    file_div: string;
+    file_nm: string;
   }
 
-  const [data, setData] = useState<listData | null>(null); // データの状態管理
-  const [loading, setLoading] = useState<boolean>(false); // ローディング状態管理
-  const [error, setError] = useState<string | null>(null); // エラー状態管理
-  // ボタンクリックでAPI呼び出し
-  const handleFetchData = async () => {
-    try {
-      setLoading(true); // ローディング開始
-      setError(null); // エラーメッセージをリセット
-      setData(null); // 前のデータをリセット
-      // fetchDataを使ってAPIからデータを取得
-      // const result = await fetchData<listData>('/filelist/202412'); // エンドポイントを指定
-      // setData(result); // 取得したデータを状態にセット
+  // APIから取得するデータの型定義
+  interface ApiResponse {
+    status: number;
+    result: DataItem[];
+  }
 
-      //   if (result.status == 0) {
-      //     // renderRow;
-      //     null;
-      //   } else if (result.status == 1) {
-      //     console.error('Data Empty !!');
-      //   } else if (result.status == -1) {
-      //     console.error('System Error !!');
-      //   }
-    } catch (error) {
-      setError('データの取得に失敗しました'); // エラーメッセージをセット
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false); // ローディング終了
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);  // 選択された日付を管理
+  const [data, setData] = useState<DataItem[]>([]);                      // APIから取得したデータ
+
+  // API呼び出し関数
+  const fetchData = async () => {
+    if (selectedDate) {
+      const yearMonth = dayjs(selectedDate).format('YYYYMM');  // 選択された日付をyyyyMM形式に変換
+      try {
+        const response = await apiClient.get<ApiResponse>(`/filelist/${yearMonth}`);
+        setData(response.data.result);  // 取得したデータのresult部分(json)をstateに保存
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
     }
-    // console.error('System Error !!');
+  };
+
+  // ボタン押下時のハンドラ
+  const handleButtonClick = () => {
+    fetchData();
+  };
+
+  // FixedSizeListに表示するアイテム
+  const renderRow = ({ index, style }: ListChildComponentProps) => {
+    const item = data[index];  // data[index]の存在を確認
+    return (
+      // <div style={style}>
+      //   {item ? item.file_nm : 'データがありません'}  {/* file_nmプロパティを表示 */}
+      // </div>
+      <ListItem style={style} key={index} component="div" disablePadding>
+        <ListItemButton>
+          <ListItemText primary={item ? item.file_nm : 'データがありません'} data-manage-id={item?.manage_id} />
+          <IconButton edge="end" aria-label="delete">
+            <DeleteIcon />
+          </IconButton>
+        </ListItemButton>
+      </ListItem>
+    );
   };
 
   return (
@@ -136,28 +138,24 @@ function SideList({ mode }: { mode: number }) {
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
               label="Account Months"
-              format="YYYY/MM"
+              format="YYYYMM"
               defaultValue={dayjs()}
-              views={['year', 'month']}
+              views={['year', 'month']} // 年月のみ選択可能にする
+              value={selectedDate}
+              onChange={(newDate) => {
+                if (newDate) {
+                  setSelectedDate(newDate);
+                }
+              }}
             />
           </LocalizationProvider>
           <Button
             variant="outlined"
             startIcon={<SearchIcon />}
-            onClick={handleFetchData}
+            onClick={handleButtonClick}
           >
             Search
           </Button>
-          {/* ローディング中の表示 */}
-          {/* {loading && <p>Loading...</p>} */}
-          {/* エラーがある場合の表示 */}
-          {/* {error && <p>{error}</p>} */}
-          {/* データがある場合の表示 */}
-          {/* {data && (
-            <div >
-              <h1>{data.status}</h1>
-            </div>
-          )} */}
         </Stack>
       </Toolbar>
       <Divider />
@@ -179,17 +177,17 @@ function SideList({ mode }: { mode: number }) {
             bgcolor: 'background.paper',
           }}
         >
-          <div id="sideList">
+          {data.length > 0 && (
             <FixedSizeList
-              height={560}
-              width="100%"
-              itemSize={40}
-              itemCount={rowCount}
+              height={560}              // 表示リストの高さ
+              width="100%"              // 表示リストの幅
+              itemSize={40}             // 各アイテムの高さ
+              itemCount={data.length}   // リストアイテムの数(jsonのデータ数により可変)
               overscanCount={5}
             >
               {renderRow}
             </FixedSizeList>
-          </div>
+          )}
         </Box>
       </Toolbar>
     </Paper>
