@@ -2,7 +2,7 @@ import axios, { AxiosResponse } from 'axios';
 
 // ベースURLの設定
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_BASE_URL, // 環境変数からベースURLを読み込む
+  baseURL: process.env.REACT_APP_API_BASE_URL, // 環境変数からベースURLを読み込む
   headers: {
     'Content-Type': 'application/json',
   },
