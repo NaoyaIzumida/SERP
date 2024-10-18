@@ -8,6 +8,8 @@ import Paper from '@mui/material/Paper';
 import Toolbar from '@mui/material/Toolbar';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
+import Alert  from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
 import SearchIcon from '@mui/icons-material/Search';
@@ -60,8 +62,10 @@ function SideList({ mode }: { mode: number }) {
 
   let listHeader;
   if (mode == 1) {
+    // mode:1 Upload
     listHeader = noSwitchStack;
   } else {
+    // mode:3 Merge
     listHeader = switchStack;
   }
 
@@ -80,8 +84,11 @@ function SideList({ mode }: { mode: number }) {
     result: DataItem[];
   }
 
-  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);  // 選択された日付を管理
-  const [data, setData] = useState<DataItem[]>([]);                      // APIから取得したデータ
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);                   // 選択された日付を管理
+  const [data, setData] = useState<DataItem[]>([]);                                       // APIから取得したデータ
+  const [openSnackbar, setOpenSnackbar] = useState(false);                                // Snackbarの開閉状態
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'error' | 'warning' | 'success' | 'info'>('error'); // Snackbarのタイプ
+  const [errorMessage, setMessage] = useState('');                                        // メッセージ
 
   // API呼び出し関数
   const fetchData = async () => {
@@ -90,12 +97,32 @@ function SideList({ mode }: { mode: number }) {
       try {
         const response = await apiClient.get<ApiResponse>(`/filelist/${yearMonth}`);
         setData(response.data.result);  // 取得したデータのresult部分(json)をstateに保存
+
+        // データが取得できない場合はメッセージを表示する
+        if (response.data.status == 1) {
+          // エラーメッセージを設定しSnackbarを表示
+          setMessage('一致するデータがありません。');
+          setSnackbarSeverity('warning');  // 警告タイプに設定
+          setOpenSnackbar(true);
+        } else {
+          setMessage('データを取得しました。');
+          setSnackbarSeverity('success');  // 成功タイプに設定
+          setOpenSnackbar(true);
+        }
       } catch (error) {
-        console.error('Error fetching data:', error);
+        // エラーメッセージを設定しSnackbarを表示
+        setMessage('データの取得に失敗しました。');
+        setSnackbarSeverity('error');  // 警告タイプに設定
+        setOpenSnackbar(true);
       }
     }
   };
 
+  // Snackbarを閉じる処理
+  const handleSnackbarClose = () => {
+    setOpenSnackbar(false);
+  };
+  
   // ボタン押下時のハンドラ
   const handleButtonClick = () => {
     fetchData();
@@ -177,6 +204,8 @@ function SideList({ mode }: { mode: number }) {
             bgcolor: 'background.paper',
           }}
         >
+
+          {/* 取得したデータを表示 */}
           {data.length > 0 && (
             <FixedSizeList
               height={560}              // 表示リストの高さ
@@ -188,6 +217,18 @@ function SideList({ mode }: { mode: number }) {
               {renderRow}
             </FixedSizeList>
           )}
+
+          {/* Snackbarでエラーメッセージを表示 */}
+          <Snackbar
+            open={openSnackbar}
+            autoHideDuration={5000}  // 5秒後に自動で閉じる
+            onClose={handleSnackbarClose}
+          >
+            <Alert onClose={handleSnackbarClose} severity={snackbarSeverity}>
+              {errorMessage}
+            </Alert>
+          </Snackbar>
+
         </Box>
       </Toolbar>
     </Paper>
