@@ -189,16 +189,61 @@ def _filemerge(manage_ids, fiscal_date):
     delete_sql = "delete from t_merge_result where fiscal_date = %s"
 
     merge_sql = \
-    'insert into t_merge_result '\
-    "select fiscal_date, version, order_detail, t_fg_project_info.manage_id fg_id, null wip_id, cost_labor, cost_subcontract, cost, 0 as change_value, '1' as product_div from t_fg_project_info inner join m_file_info on t_fg_project_info.manage_id = m_file_info.manage_id where t_fg_project_info.manage_id in (%s)"\
-    'union all'\
-    "select fiscal_date, version, order_detail, null fg_id, t_wip_project_info.manage_id wip_id, cost_labor, cost_subcontract, cost, 0 as change_value, '2' as product_div from t_wip_project_info inner join m_file_info on t_wip_project_info.manage_id = m_file_info.manage_id where t_wip_project_info.manage_id in (%s)"
-
+    "insert into t_merge_result "\
+    "with wip as ( "\
+    "    select"\
+    "          order_detail"\
+    "        , sum(cost_labor) + sum(cost_subcontract) + sum(cost) as cost_wip "\
+    "    from"\
+    "        t_wip_info "\
+    "    where"\
+    "         fiscal_date < %s"\
+    "    group by"\
+    "        order_detail"\
+    ") "\
+    "select"\
+    "      fiscal_date"\
+    "    , version"\
+    "    , t_fg_project_info.order_detail"\
+    "    , t_fg_project_info.manage_id fg_id"\
+    "    , null wip_id"\
+    "    , cost_labor - coalesce(cost_wip, 0)   as cost_labor"\
+    "    , cost_subcontract"\
+    "    , cost"\
+    "    , null                                 as change_value"\
+    "    , '1'                                  as product_div "\
+    "from"\
+    "    t_fg_project_info "\
+    "    left join wip "\
+    "        on t_fg_project_info.order_detail = wip.order_detail "\
+    "    inner join m_file_info "\
+    "        on t_fg_project_info.manage_id = m_file_info.manage_id "\
+    "where"\
+    "    t_fg_project_info.manage_id in %s "\
+    "union all "\
+    "select"\
+    "      fiscal_date"\
+    "    , version"\
+    "    , t_wip_project_info.order_detail"\
+    "    , null fg_id"\
+    "    , t_wip_project_info.manage_id wip_id"\
+    "    , cost_labor - coalesce(cost_wip, 0)   as cost_labor"\
+    "    , cost_subcontract"\
+    "    , cost"\
+    "    , cost_labor + cost_subcontract + cost as change_value"\
+    "    , '2'                                  as product_div "\
+    "from"\
+    "    t_wip_project_info "\
+    "    left join wip "\
+    "        on t_wip_project_info.order_detail = wip.order_detail "\
+    "    inner join m_file_info "\
+    "        on t_wip_project_info.manage_id = m_file_info.manage_id "\
+    "where"\
+    "    t_wip_project_info.manage_id in %s"
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(delete_sql, (fiscal_date,))
-            cur.execute(merge_sql, manage_ids)
-
+            cur.execute(merge_sql, (fiscal_date, tuple(manage_ids),tuple(manage_ids),))
 
 # 勘定年月取得
 def _getFiscalDate():
