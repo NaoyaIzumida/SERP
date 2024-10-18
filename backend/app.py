@@ -74,6 +74,7 @@ def filedelete(fileid: str):
 def filematching():
     return jsonify({"status": 0, "result": "Oops!"})
 
+
 # API No.8 マージ要求
 @app.route("/serp/api/filemerge", methods=["PUT"])
 def filemerge():
@@ -99,10 +100,11 @@ def filemerge():
             return jsonify({"status": -1, "result": "管理IDの指定が重複しています"})
 
         fiscal_date = ''
+        file_div_result = []
         with get_connection() as conn:
+            manage_ids = [str(manage_id) for manage_id in manage_ids]
             for manage_id in manage_ids:
-                manage_id = str(manage_id)
-                work_date = _getFiscalDateByManageID(manage_id)
+                work_date = _getFiscalDateByManageID(conn, manage_id)
                 # 管理ID存在チェック
                 if work_date == '':
                     return jsonify({"status": -1, "result": "管理IDが不正です"})
@@ -111,7 +113,11 @@ def filemerge():
                 # 勘定年月が混在していたらNG
                 if fiscal_date != work_date:
                     return jsonify({"status": -1, "result": "指定された管理IDは勘定年月が混在しています"})
-                
+                file_div_result.append(_getfilediv(conn,manage_id))
+
+        if len(set(file_div_result)) != 3:
+            return jsonify({"status": -1, "result": "完成PJ,仕掛PJ,経費の3ファイルを指定してください"})
+
         # マージ処理
         _filemerge(manage_ids, fiscal_date)
 
@@ -186,7 +192,9 @@ def _filemergedetail(yyyymm: str, version: str):
 
 # マージ要求
 def _filemerge(manage_ids, fiscal_date):
-    delete_sql = "delete from t_merge_result where fiscal_date = %s"
+    delete_result_sql = "delete from t_merge_result where fiscal_date = %s"
+    delete_target_sql = "delete from t_merge_target where fiscal_date = %s"
+    insert_target_sql = 'insert into t_merge_target (fiscal_date, fg_id, wip_id, hrmos_id) values (%s,%s,%s,%s)'
 
     merge_sql = \
     "insert into t_merge_result "\
@@ -240,10 +248,27 @@ def _filemerge(manage_ids, fiscal_date):
     "        on t_wip_project_info.manage_id = m_file_info.manage_id "\
     "where"\
     "    t_wip_project_info.manage_id in %s"
+
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute(delete_sql, (fiscal_date,))
+            # 既存データを削除
+            cur.execute(delete_result_sql, (fiscal_date,))
+            cur.execute(delete_target_sql, (fiscal_date,))
+
+            # マージ処理
             cur.execute(merge_sql, (fiscal_date, tuple(manage_ids),tuple(manage_ids),))
+
+            # マージ対象ファイルIDを保存
+            for manage_id in manage_ids:
+                file_div = str(_getfilediv(conn,manage_id))
+                match file_div:
+                    case 'F':
+                        fg = manage_id
+                    case 'W':
+                        wip = manage_id
+                    case 'H':
+                        hrmos = manage_id
+            cur.execute(insert_target_sql, (fiscal_date,fg,wip,hrmos,))
 
 # 勘定年月取得
 def _getFiscalDate():
@@ -254,16 +279,14 @@ def _getFiscalDate():
     return lastmonth.strftime("%Y%m")
 
 # 勘定年月取得
-def _getFiscalDateByManageID(manage_id : str):
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                'select fiscal_date from m_file_info where manage_id = %s', (manage_id, ))
-            res = cur.fetchone()
-            if res is None:
-                return ''
-            return res[0]
-
+def _getFiscalDateByManageID(conn : any, manage_id : str):
+    with conn.cursor() as cur:
+        cur.execute(
+            'select fiscal_date from m_file_info where manage_id = %s', (manage_id, ))
+        res = cur.fetchone()
+        if res is None:
+            return ''
+        return res[0]
 
 # デバッグ用サーバー起動
 if __name__ == "__main__":
