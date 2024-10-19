@@ -12,7 +12,7 @@ import "./App.css";
 import { Main } from "./components/Main";
 
 const App: React.FC = () => {
-  const [isOpened, setOpened] = React.useState(true);
+  const [isOpened, setOpened] = React.useState(false);
 
   return (
     <BrowserRouter>

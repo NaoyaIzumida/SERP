@@ -17,7 +17,6 @@ import { FixedSizeList, ListChildComponentProps } from 'react-window';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import Switch from '@mui/material/Switch';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import dayjs, { Dayjs } from 'dayjs';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import apiClient from '../../api/api'; // API関数をインポート
@@ -59,9 +58,6 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect }) =
       justifyContent={'flex-end'}
       spacing={0.5}
     >
-      <IconButton color="primary" aria-label="Filter">
-        <FilterListIcon />
-      </IconButton>
     </Stack>
   );
 
@@ -74,9 +70,6 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect }) =
       spacing={0.5}
     >
       <Switch {...label} defaultChecked />
-      <IconButton color="primary" aria-label="Filter">
-        <FilterListIcon />
-      </IconButton>
     </Stack>
   );
 

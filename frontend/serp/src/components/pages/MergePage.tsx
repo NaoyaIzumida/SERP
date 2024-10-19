@@ -1,5 +1,4 @@
 import React from "react";
-import GenericTemplate from "../templates/GenericTemplate";
 
 const Upload: React.FC = () => {
   return (
