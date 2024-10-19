@@ -22,13 +22,33 @@ import dayjs, { Dayjs } from 'dayjs';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import apiClient from '../../api/api'; // API関数をインポート
 
-//他のファイルでこのファイルをimportすることで、ここの関数を使えるようになる
-export default SideList;
+// APIから取得するjsonの型定義
+interface DataItem {
+  manage_id: string;
+  fiscal_date: string;
+  version: string;
+  file_div: string;
+  file_nm: string;
+}
+
+// APIから取得するデータの型定義
+interface ApiResponse {
+  status: number;
+  result: DataItem[];
+}
+
+// SideListのプロパティ型
+interface SideListProps {
+  mode: number;                                     // SideListのモード
+  onDataFetch: (data: DataItem[]) => void;          // データ取得時に親へ通知する関数
+  onRowSelect: (selectedData: DataItem[]) => void;  // 行選択時に親へ通知する関数
+}
 
 //mode:1 Upload
 //mode:2 Compare  **不要のため破棄
 //mode:3 Merge
-function SideList({ mode }: { mode: number }) {
+const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect }) => {
+
   const label = { inputProps: { 'aria-label': 'Switch demo' } };
 
   // スライダー無しの描画
@@ -69,21 +89,6 @@ function SideList({ mode }: { mode: number }) {
     listHeader = switchStack;
   }
 
-  // APIから取得するjsonの型定義
-  interface DataItem {
-    manage_id: string;
-    fiscal_date: string;
-    version: string;
-    file_div: string;
-    file_nm: string;
-  }
-
-  // APIから取得するデータの型定義
-  interface ApiResponse {
-    status: number;
-    result: DataItem[];
-  }
-
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);                   // 選択された日付を管理
   const [data, setData] = useState<DataItem[]>([]);                                       // APIから取得したデータ
   const [openSnackbar, setOpenSnackbar] = useState(false);                                // Snackbarの開閉状態
@@ -108,6 +113,8 @@ function SideList({ mode }: { mode: number }) {
           setMessage('データを取得しました。');
           setSnackbarSeverity('success');  // 成功タイプに設定
           setOpenSnackbar(true);
+          setData(response.data.result);      // データをstateに保存
+          onDataFetch(response.data.result);  // 親にデータ取得を通知
         }
       } catch (error) {
         // エラーメッセージを設定しSnackbarを表示
@@ -132,12 +139,17 @@ function SideList({ mode }: { mode: number }) {
   const renderRow = ({ index, style }: ListChildComponentProps) => {
     const item = data[index];  // data[index]の存在を確認
     return (
-      // <div style={style}>
-      //   {item ? item.file_nm : 'データがありません'}  {/* file_nmプロパティを表示 */}
-      // </div>
       <ListItem style={style} key={index} component="div" disablePadding>
         <ListItemButton>
-          <ListItemText primary={item ? item.file_nm : 'データがありません'} data-manage-id={item?.manage_id} />
+          <ListItemText 
+            primary={item ? item.file_nm : 'データがありません'}
+            data-manage-id={item?.manage_id}
+            onClick={() => {
+              if (item) {
+                onRowSelect([item]);  // 行が選択されたら親に通知
+              }
+            }}
+          />
           <IconButton edge="end" aria-label="delete">
             <DeleteIcon />
           </IconButton>
@@ -150,6 +162,7 @@ function SideList({ mode }: { mode: number }) {
     <Paper
       sx={{
         p: 2,
+        width: '100%',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
@@ -234,3 +247,6 @@ function SideList({ mode }: { mode: number }) {
     </Paper>
   );
 }
+
+//他のファイルでこのファイルをimportすることで、ここの関数を使えるようになる
+export default SideList;
