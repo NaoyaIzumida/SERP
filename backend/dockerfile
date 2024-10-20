@@ -16,6 +16,7 @@ RUN pip install --upgrade psycopg2-binary
 RUN pip install --upgrade Flask
 RUN pip install --upgrade flask_cors
 RUN pip install --upgrade uwsgi
+RUN pip install --upgrade openpyxl
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=development
 
