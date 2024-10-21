@@ -48,7 +48,7 @@ interface SideListProps {
 //mode:3 Merge
 const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect }) => {
 
-  const label = { inputProps: { 'aria-label': 'Switch demo' } };
+  const switchParts = { inputProps: { 'aria-label': 'Switch demo' } };
 
   // スライダー無しの描画
   const noSwitchStack = (
@@ -69,18 +69,29 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect }) =
       alignItems="stretch"
       spacing={0.5}
     >
-      <Switch {...label} defaultChecked />
+      <Switch {...switchParts}  />
     </Stack>
   );
 
   let listHeader;
+  let listIcon;
   if (mode == 1) {
     // mode:1 Upload
     listHeader = noSwitchStack;
+    listIcon = (<IconButton edge="end" aria-label="delete">
+                  <DeleteIcon />
+                </IconButton>);
   } else {
     // mode:3 Merge
     listHeader = switchStack;
-  }
+    listIcon = (<IconButton edge="end" aria-label="Favorite">
+      <DeleteIcon />
+    </IconButton>);
+// listIcon = ( <IconButton
+    //              onClick={() => heartClick()}>
+    //              {favo ? <FavoriteIcon color={"secondary"} /> : <FavoriteBorderIcon />}
+    //              </IconButton>);
+}
 
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);                   // 選択された日付を管理
   const [data, setData] = useState<DataItem[]>([]);                                       // APIから取得したデータ
@@ -143,9 +154,7 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect }) =
               }
             }}
           />
-          <IconButton edge="end" aria-label="delete">
-            <DeleteIcon />
-          </IconButton>
+          {listIcon}
         </ListItemButton>
       </ListItem>
     );
