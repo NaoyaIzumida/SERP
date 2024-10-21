@@ -4,6 +4,8 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import Paper from '@mui/material/Paper';
 import Toolbar from '@mui/material/Toolbar';
 import Button from '@mui/material/Button';
@@ -143,8 +145,8 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect }) =
               }
             }}
           />
-          <IconButton edge="end" aria-label="delete">
-            <DeleteIcon />
+          <IconButton edge="end">
+            {mode == 1 ? <DeleteIcon /> : <FavoriteBorderIcon />}
           </IconButton>
         </ListItemButton>
       </ListItem>
