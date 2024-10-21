@@ -54,8 +54,8 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect }) =
   const noSwitchStack = (
     <Stack
       direction="row"
-      alignItems="center"
-      justifyContent={'flex-end'}
+      justifyContent="center"
+      alignItems="stretch"
       spacing={0.5}
     >
     </Stack>
@@ -65,8 +65,8 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect }) =
   const switchStack = (
     <Stack
       direction="row"
-      justifyContent="space-between"
-      alignItems="flex-start"
+      justifyContent="center"
+      alignItems="stretch"
       spacing={0.5}
     >
       <Switch {...label} defaultChecked />
@@ -94,17 +94,17 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect }) =
       const yearMonth = dayjs(selectedDate).format('YYYYMM');  // 選択された日付をyyyyMM形式に変換
       try {
         const response = await apiClient.get<ApiResponse>(`/filelist/${yearMonth}`);
-        setData(response.data.result);  // 取得したデータのresult部分(json)をstateに保存
+        // setData(response.data.result);  // 取得したデータのresult部分(json)をstateに保存
 
         // データが取得できない場合はメッセージを表示する
         if (response.data.status == 1) {
           // エラーメッセージを設定しSnackbarを表示
           setMessage('一致するデータがありません。');
-          setSnackbarSeverity('warning');  // 警告タイプに設定
+          setSnackbarSeverity('warning');     // 警告タイプに設定
           setOpenSnackbar(true);
         } else {
           setMessage('データを取得しました。');
-          setSnackbarSeverity('success');  // 成功タイプに設定
+          setSnackbarSeverity('success');     // 成功タイプに設定
           setOpenSnackbar(true);
           setData(response.data.result);      // データをstateに保存
           onDataFetch(response.data.result);  // 親にデータ取得を通知
@@ -156,7 +156,7 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect }) =
       sx={{
         p: 2,
         width: '100%',
-        height: '100%',
+        height: '80vh',
         display: 'flex',
         flexDirection: 'column',
       }}
@@ -166,7 +166,7 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect }) =
           direction="row"
           justifyContent="flex-start"
           alignItems="center"
-          spacing={1}
+          spacing={0.5}
         >
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
@@ -200,7 +200,7 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect }) =
           alignItems: 'center',
           justifyContent: 'flex-Start',
           px: [1],
-          padding: 1,
+          padding: 2,
         }}
       >
         <Box

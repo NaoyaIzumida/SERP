@@ -1,49 +1,45 @@
 import React from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 
-// APIから取得するデータの型（汎用的に定義）
-interface DataItem {
-  [key: string]: any; // フィールドが動的になるため、任意のキーと値を受け取れるようにする
-}
-
 // UploadDataGridのプロパティ型
 interface UploadDataGridProps {
-  gridData: DataItem[]; // 親から渡されるデータ
+  gridData: any[];        // 動的なデータを受け取る
+  columns: GridColDef[];  // 動的な列定義を受け取る
 }
 
 // DataGridコンポーネントの定義
-const UploadDataGrid: React.FC<UploadDataGridProps> = ({ gridData }) => {
-  // データに応じて列定義を動的に生成
-  const generateColumns = (data: DataItem[]): GridColDef[] => {
-    // データが空の場合は列を生成しない
-    if (data.length === 0) return [];
+const UploadDataGrid: React.FC<UploadDataGridProps> = ({ gridData, columns }) => {
 
-    // データの最初のアイテムのキーを列のヘッダー名として利用する
-    const columns: GridColDef[] = Object.keys(data[0]).map((key) => ({
-      field: key,      // フィールド名
-      headerName: key, // ヘッダー名としてフィールド名をそのまま使用
-      width: 150,      // 列幅は固定、もしくは調整可能
-    }));
-
-    return columns;
+  // 数値をカンマ区切りにフォーマットする関数
+  const formatNumberWithCommas = (value: number) => {
+    return value.toLocaleString('en-US');  // カンマ区切り形式で数値をフォーマット
   };
+
+  // 各列に対して flex を割り当てる
+  const columnsWithAutoWidth = columns.map((col) => ({
+    ...col,
+    flex: 1,  // 全ての列が自動的に同じ割合で幅を調整する
+    align: typeof gridData[0]?.[col.field] === 'number' ? 'right' : 'left',       // 数値列の場合は右詰め
+    valueFormatter: (params: any) => {
+      const value = params.value;
+      return typeof value === 'number' ? formatNumberWithCommas(value) : value;   // 数値ならカンマ区切り
+    },
+  }));
   
-  const columns = generateColumns(gridData);
-  
+  // ユニークなIDを生成する場合、例えばデータに連番を付与する
+  const rowsWithUniqueId = gridData.map((row, index) => ({
+    id: index,  // データがユニークでない場合にインデックスを使ってユニークIDを生成
+    ...row,
+  }));
+
   return (
-    <div style={{ height: 400, width: '100%' }}>
+    <div style={{ height: 700, width: '100%' }}>
       <DataGrid
-        rows={gridData}
-        columns={columns}
-        initialState={{
-          pagination: {
-            paginationModel: {
-              pageSize: 10,
-            },
-          },
-        }}
-        pageSizeOptions={[5]}
+        rows={rowsWithUniqueId}
+        columns={columnsWithAutoWidth}
+        pageSize={5}
         getRowId={(row) => row.id || row.manage_id || row[Object.keys(row)[0]]}  // 任意の一意なキーを指定
+        autoHeight={false}  // DataGridの高さをPaperに依存させる
       />
     </div>
   );
