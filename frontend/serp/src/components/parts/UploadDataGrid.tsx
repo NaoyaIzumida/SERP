@@ -19,10 +19,10 @@ const UploadDataGrid: React.FC<UploadDataGridProps> = ({ gridData, columns }) =>
   const columnsWithAutoWidth = columns.map((col) => ({
     ...col,
     flex: 1,  // 全ての列が自動的に同じ割合で幅を調整する
-    align: typeof gridData[0]?.[col.field] === 'number' ? 'right' : 'left',  // 数値列の場合は右詰め
+    align: typeof gridData[0]?.[col.field] === 'number' ? 'right' : 'left',       // 数値列の場合は右詰め
     valueFormatter: (params: any) => {
       const value = params.value;
-      return typeof value === 'number' ? formatNumberWithCommas(value) : value;  // 数値ならカンマ区切り
+      return typeof value === 'number' ? formatNumberWithCommas(value) : value;   // 数値ならカンマ区切り
     },
   }));
   
@@ -37,8 +37,9 @@ const UploadDataGrid: React.FC<UploadDataGridProps> = ({ gridData, columns }) =>
       <DataGrid
         rows={rowsWithUniqueId}
         columns={columnsWithAutoWidth}
-        pageSizeOptions={[10]}
+        pageSize={5}
         getRowId={(row) => row.id || row.manage_id || row[Object.keys(row)[0]]}  // 任意の一意なキーを指定
+        autoHeight={false}  // DataGridの高さをPaperに依存させる
       />
     </div>
   );
