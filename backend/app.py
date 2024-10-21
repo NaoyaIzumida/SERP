@@ -307,6 +307,9 @@ def _filedownload(yyyymm : str):
 
     # サマリー
     result = _loadmerge(yyyymm)
+    result_fg = _loadmerge_fg(yyyymm)
+    result_wip = _loadmerge_wip(yyyymm)
+    result_hrmos = _loadmerge_hrmos(yyyymm)
     
     summary_base = ws[3]
     ws.unmerge_cells('H8:I8')
@@ -365,7 +368,37 @@ def _filedownload(yyyymm : str):
     ws.cell(row, 10, '=SUM(J3:J' + str(row-2) + ')')  # 
     ws.cell(row, 11, '=SUM(K3:K' + str(row-2) + ')')  # 
     ws.cell(row, 12, '=SUM(L3:L' + str(row-2) + ')')  # 
-    row += 1
+    row += 7
+
+    # 完成PJ
+    fg_start_row = row
+    for item in result_fg:
+        ws.cell(row, 3, item['project_nm'])   # 件名
+        ws.cell(row, 4, item['cost_labor'])   # 労務費
+        ws.cell(row, 5, item['cost_subcontract'])   # 外注費
+        ws.cell(row, 6, item['cost'])   # 旅費交通費
+        ws.cell(row, 7, item['total_cost'])   # 合計
+        ws.cell(row, 8, item['sales'])   # 売上
+        row += 1   
+    row = fg_start_row + 16
+    ws.cell(row, 7, '=SUM(G' + str(fg_start_row) + ':G' + str(fg_start_row + 15) + ')')  # 小計
+    ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + 15) + ')')  # 小計
+    row += 4
+
+    # 仕掛PJ
+    wip_start_row = row
+    for item in result_wip:
+        ws.cell(row, 3, item['project_nm'])   # 件名
+        ws.cell(row, 4, item['cost_labor'])   # 労務費
+        ws.cell(row, 5, item['cost_subcontract'])   # 外注費
+        ws.cell(row, 6, item['cost'])   # 旅費交通費
+        ws.cell(row, 7, item['total_cost'])   # 合計
+        row += 1   
+    row = wip_start_row + 8
+    ws.cell(row, 7, '=SUM(G' + str(wip_start_row) + ':G' + str(wip_start_row + 7) + ')')  # 小計
+    row += 4
+   
+
 
     wb.save(target_file)
 
@@ -433,6 +466,77 @@ def _loadmerge(yyyymm : str):
                 sql, (yyyymm, yyyymm, yyyymm, ))
             return convertCursorToDict(cur)
     
+
+# マージ結果（完成）
+def _loadmerge_fg(yyyymm : str):
+    sql = "select "\
+        "      m_topic_info.project_nm "\
+        "    , cost_labor "\
+        "    , cost_subcontract "\
+        "    , cost "\
+        "    , cost_labor + cost_subcontract + cost as total_cost  "\
+        "    , sales "\
+        "from "\
+        "    t_fg_project_info  "\
+        "    left join m_topic_info  "\
+        "        on t_fg_project_info.order_detail = m_topic_info.order_detail  "\
+        "where "\
+        "    manage_id in (select fg_id from t_merge_target where fiscal_date = %s) "\
+        "order by "\
+        "    t_fg_project_info.order_detail  "
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                sql, (yyyymm, ))
+            return convertCursorToDict(cur)
+
+# マージ結果（仕掛）
+def _loadmerge_wip(yyyymm : str):
+    sql = "select "\
+        "      m_topic_info.project_nm "\
+        "    , cost_labor "\
+        "    , cost_subcontract "\
+        "    , cost "\
+        "    , cost_labor + cost_subcontract + cost as total_cost  "\
+        "from "\
+        "    t_wip_project_info  "\
+        "    left join m_topic_info  "\
+        "        on t_wip_project_info.order_detail = m_topic_info.order_detail  "\
+        "where "\
+        "    manage_id in (select wip_id from t_merge_target where fiscal_date = %s) "\
+        "order by "\
+        "    t_wip_project_info.order_detail  "
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                sql, (yyyymm, ))
+            return convertCursorToDict(cur)
+
+# マージ結果（HARMOS）
+def _loadmerge_hrmos(yyyymm : str):
+    sql = "select "\
+        "      m_topic_info.project_nm "\
+        "    , cost_labor "\
+        "    , cost_subcontract "\
+        "    , cost "\
+        "    , cost_labor + cost_subcontract + cost as total_cost  "\
+        "    , sales "\
+        "from "\
+        "    t_fg_project_info  "\
+        "    left join m_topic_info  "\
+        "        on t_fg_project_info.order_detail = m_topic_info.order_detail  "\
+        "where "\
+        "    manage_id in (select fg_id from t_merge_target where fiscal_date = %s) "\
+        "order by "\
+        "    t_fg_project_info.order_detail  "
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                sql, (yyyymm, ))
+            return convertCursorToDict(cur)
 
 # 勘定年月取得
 def _getFiscalDate():
