@@ -1,6 +1,11 @@
 import psycopg2
-from flask import Flask, jsonify
+from flask import Flask, request, make_response, jsonify
 from flask_cors import CORS
+import os
+import werkzeug
+from datetime import datetime
+import pandas as pd
+from sqlalchemy import create_engine
 
 app = Flask(__name__)
 app.json.sort_keys = False
@@ -22,10 +27,36 @@ def convertCursorToDict(cur):
 
     return data_with_column_name
 
-# ファイルアップロード
+# Excelファイルの列とテーブルのカラムのマッピング
+column_mapping = {
+    'div_cd': '原価部門コード',
+    'order_detail': '受注明細+受注行番号+部門コード',
+    'order_rowno': '受注明細+受注行番号+部門コード',
+    'customer': '得意先名',
+    'cost_material': '材料費',
+    'cost_labor': '労務費',
+    'cost_subconstract': '外注費',
+    'cost': '経費'
+}
+UPLOAD_DIR = os.getenv("C:/43期 勉強会/SERP/backend")
+
+# API No.1ファイルアップロード
 @app.route("/serp/api/fileupload", methods=["POST"])
 def fileupload():
-    return jsonify({"status": 0})
+    # ★ポイント3
+    if 'uploadFile' not in request.files:
+        make_response(jsonify({'result':'uploadFile is required.'}))
+
+    file = request.files['uploadFile']
+    fileName = file.filename
+    if '' == fileName:
+        make_response(jsonify({'result':'filename must not empty.'}))
+
+    # ★ポイント4
+    saveFileName = datetime.now().strftime("%Y%m%d_%H%M%S_") \
+        + werkzeug.utils.secure_filename(fileName)
+    file.save(os.path.join(UPLOAD_DIR, saveFileName))
+    return make_response(jsonify({'result':'upload OK.'}))
 
 # API No.2 ファイル一覧
 @app.route("/serp/api/filelist/<yyyymm>", methods=["GET"])
@@ -83,6 +114,24 @@ def filemerge():
 def filedownload(yyyymm: str):
     return jsonify({"status": 0})
 
+# ファイルアップロード
+def _fileupload():
+    if 'file' not in request.files:
+        return "No file part"
+    file = request.files['file']
+    if file.filename == '':
+        return "No selected file"
+    if file:
+        # Excelファイルを読み込む
+        df = pd.read_excel(file)
+        
+        # マッピングに従ってデータを選択し、PostgreSQLのテーブルに挿入
+        mapped_columns = [column_mapping[col] for col in df.columns if col in column_mapping]
+        df_mapped = df[mapped_columns]  # 必要な列のみを選択
+        df_mapped.columns = [col for col in column_mapping if col in df.columns]  # 列名をテーブルのカラム名に変更
+        df_mapped.to_sql('your_table_name', engine, if_exists='replace', index=False)
+        
+        return "File uploaded and data inserted into PostgreSQL table successfully"
 
 # ファイル情報マスタから勘定年月を指定して取得
 def _filelist(yyyymm: str):
