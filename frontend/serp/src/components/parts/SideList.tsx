@@ -56,7 +56,7 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect }) =
   const noSwitchStack = (
     <Stack
       direction="row"
-      justifyContent="center"
+      justifyContent="left"
       alignItems="stretch"
       spacing={0.5}
     >
@@ -67,7 +67,7 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect }) =
   const switchStack = (
     <Stack
       direction="row"
-      justifyContent="center"
+      justifyContent="left"
       alignItems="stretch"
       spacing={0.5}
     >
