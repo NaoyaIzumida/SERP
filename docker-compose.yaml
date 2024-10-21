@@ -1,14 +1,14 @@
 version: "3"
 services:
-  frontend:
-    build: ./frontend
-    container_name: react
-    hostname: react
-    tty: true
-    ports:
-      - 80:3000
-    volumes:
-      - ./react/:/usr/frontend
+#  frontend:
+#    build: ./frontend
+#    container_name: react
+#    hostname: react
+#    tty: true
+#    ports:
+#      - 80:3000
+#    volumes:
+#      - ./react/:/usr/frontend
 
   backend:
     build: ./backend
@@ -18,7 +18,7 @@ services:
     ports:
       - 5000:5000
     volumes:
-      - ./app/:/app
+      - ./backend/:/app
       
   postgres:
     build: ./postgres
