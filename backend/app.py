@@ -1,9 +1,6 @@
 import psycopg2
 from flask import Flask, request, make_response, jsonify
 from flask_cors import CORS
-import os
-import werkzeug
-from datetime import datetime
 import pandas as pd
 from sqlalchemy import create_engine
 
@@ -27,8 +24,19 @@ def convertCursorToDict(cur):
 
     return data_with_column_name
 
+POSTGRES_USER = 'serp'
+POSTGRES_PASSWORD = 'serp'
+POSTGRES_DB = 'serp'
+POSTGRES_HOST = 'postgres'
+POSTGRES_PORT = '5432'
+
+# PostgreSQLへの接続エンジンを作成
+db_url = ('postgresql://serp:serp@postgres:5432/serp')
+engine = create_engine(db_url)
+
 # Excelファイルの列とテーブルのカラムのマッピング
 column_mapping = {
+    'manage_id': '管理ID',
     'div_cd': '原価部門コード',
     'order_detail': '受注明細+受注行番号+部門コード',
     'order_rowno': '受注明細+受注行番号+部門コード',
@@ -38,24 +46,30 @@ column_mapping = {
     'cost_subconstract': '外注費',
     'cost': '経費'
 }
-UPLOAD_DIR = os.getenv("C:/43期 勉強会/SERP/backend")
 
 # API No.1ファイルアップロード
 @app.route("/serp/api/fileupload", methods=["POST"])
 def fileupload():
-    # ★ポイント3
+    # エラーチェック
     if 'uploadFile' not in request.files:
-        make_response(jsonify({'result':'uploadFile is required.'}))
+        return make_response(jsonify({'result':'uploadFile is required.'}))
 
     file = request.files['uploadFile']
     fileName = file.filename
     if '' == fileName:
-        make_response(jsonify({'result':'filename must not empty.'}))
+        return make_response(jsonify({'result':'filename must not empty.'}))
 
-    # ★ポイント4
-    saveFileName = datetime.now().strftime("%Y%m%d_%H%M%S_") \
-        + werkzeug.utils.secure_filename(fileName)
-    file.save(os.path.join(UPLOAD_DIR, saveFileName))
+    # ファイル読込
+    # Excelファイルを読み込む
+    df = pd.read_excel(file, sheet_name=0, skiprows=[0], skipfooter=1,index_col=0)
+
+    # マッピングに従ってデータを選択し、PostgreSQLのテーブルに挿入
+    mapped_columns = [column_mapping[col] for col in df.columns if col in column_mapping]
+    df_mapped = df[mapped_columns]  # 必要な列のみを選択
+    df_mapped.columns = [col for col in column_mapping if col in df.columns]  # 列名をテーブルのカラム名に変更
+    df_mapped['manage_id'] = 1
+    df_mapped.to_sql('t_wip_project_info_demo', engine, if_exists='append', index=False)
+
     return make_response(jsonify({'result':'upload OK.'}))
 
 # API No.2 ファイル一覧
@@ -116,21 +130,7 @@ def filedownload(yyyymm: str):
 
 # ファイルアップロード
 def _fileupload():
-    if 'file' not in request.files:
-        return "No file part"
-    file = request.files['file']
-    if file.filename == '':
-        return "No selected file"
-    if file:
-        # Excelファイルを読み込む
-        df = pd.read_excel(file)
-        
-        # マッピングに従ってデータを選択し、PostgreSQLのテーブルに挿入
-        mapped_columns = [column_mapping[col] for col in df.columns if col in column_mapping]
-        df_mapped = df[mapped_columns]  # 必要な列のみを選択
-        df_mapped.columns = [col for col in column_mapping if col in df.columns]  # 列名をテーブルのカラム名に変更
-        df_mapped.to_sql('your_table_name', engine, if_exists='replace', index=False)
-        
+
         return "File uploaded and data inserted into PostgreSQL table successfully"
 
 # ファイル情報マスタから勘定年月を指定して取得
