@@ -43,12 +43,13 @@ interface SideListProps {
   mode: number;                                     // SideListのモード
   onDataFetch: (data: DataItem[]) => void;          // データ取得時に親へ通知する関数
   onRowSelect: (selectedData: DataItem[]) => void;  // 行選択時に親へ通知する関数
+  onDelete: (id: string) => void;                   // 削除ボタン押下時のコールバック関数
 }
 
 //mode:1 Upload
 //mode:2 Compare  **不要のため破棄
 //mode:3 Merge
-const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect }) => {
+const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect, onDelete }) => {
 
   const label = { inputProps: { 'aria-label': 'Switch demo' } };
 
@@ -130,6 +131,33 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect }) =
     fetchData();
   };
 
+  // 削除（ゴミ箱）押下時のハンドラ
+  const handleDelete = async (manage_id: string) => {
+    // 削除のためのAPI呼び出しを行う
+    try {
+      console.log('call delete');
+      const response = await apiClient.delete(`/filedelete/${manage_id}`);
+      console.log('response.data.status:', response.data.status);
+      // データが取得できない場合はメッセージを表示する
+      if (response.data.status == 1) {
+        // エラーメッセージを設定しSnackbarを表示
+        setMessage('一致するデータがありません。');
+        setSnackbarSeverity('warning');     // 警告タイプに設定
+        setOpenSnackbar(true);
+      } else {
+        setMessage('データを削除しました。');
+        setSnackbarSeverity('success');     // 成功タイプに設定
+        setOpenSnackbar(true);
+        onDelete(manage_id);  // 削除後にコールバックを呼び出す
+      }
+    } catch (error) {
+      // エラーメッセージを設定しSnackbarを表示
+      setMessage('データの削除に失敗しました。');
+      setSnackbarSeverity('error');  // 警告タイプに設定
+      setOpenSnackbar(true);
+    }
+  };
+
   // FixedSizeListに表示するアイテム
   const renderRow = ({ index, style }: ListChildComponentProps) => {
     const item = data[index];  // data[index]の存在を確認
@@ -145,7 +173,7 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect }) =
               }
             }}
           />
-          <IconButton edge="end">
+          <IconButton edge="end" onClick={() => mode == 1 && handleDelete(item.manage_id)}>
             {mode == 1 ? <DeleteIcon /> : <FavoriteBorderIcon />}
           </IconButton>
         </ListItemButton>

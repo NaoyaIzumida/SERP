@@ -83,6 +83,11 @@ const UploadPage = () => {
     }
   };
 
+  const handleDelete = (manage_id: string) => {
+    // 削除されたアイテムをリストから削除
+    setData((prevItems) => prevItems.filter((item) => item.manage_id !== manage_id));
+  };
+
   const onDrop = useCallback((files: File[]) => {
     // ここでファイルの処理を行います
     <Alert severity="error">OK</Alert>;
@@ -131,6 +136,7 @@ const UploadPage = () => {
             mode={1}
             onDataFetch={handleDataFetch}
             onRowSelect={handleRowSelect}
+            onDelete={handleDelete}
           />
         </Grid>
         <Grid item lg={9} alignItems="stretch">
