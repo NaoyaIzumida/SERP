@@ -50,27 +50,14 @@ column_mapping = {
 # API No.1ファイルアップロード
 @app.route("/serp/api/fileupload", methods=["POST"])
 def fileupload():
-    # エラーチェック
-    if 'uploadFile' not in request.files:
-        return make_response(jsonify({'result':'uploadFile is required.'}))
-
-    file = request.files['uploadFile']
-    fileName = file.filename
-    if '' == fileName:
-        return make_response(jsonify({'result':'filename must not empty.'}))
-
-    # ファイル読込
-    # Excelファイルを読み込む
-    df = pd.read_excel(file, sheet_name=0, skiprows=[0], skipfooter=1,index_col=0)
-
-    # マッピングに従ってデータを選択し、PostgreSQLのテーブルに挿入
-    mapped_columns = [column_mapping[col] for col in df.columns if col in column_mapping]
-    df_mapped = df[mapped_columns]  # 必要な列のみを選択
-    df_mapped.columns = [col for col in column_mapping if col in df.columns]  # 列名をテーブルのカラム名に変更
-    df_mapped['manage_id'] = 1
-    df_mapped.to_sql('t_wip_project_info_demo', engine, if_exists='append', index=False)
-
-    return make_response(jsonify({'result':'upload OK.'}))
+    try:
+        result = _fileupload()
+        if result == 'upload OK.':
+            return jsonify({"status":0})
+        else:
+            return jsonify({"status":1})
+    except:
+        return jsonify({"status":-1})
 
 # API No.2 ファイル一覧
 @app.route("/serp/api/filelist/<yyyymm>", methods=["GET"])
@@ -130,8 +117,104 @@ def filedownload(yyyymm: str):
 
 # ファイルアップロード
 def _fileupload():
+    # リクエストパラメータの受取
+    fiscal_date = request.form["fiscal_date"]
+    file_nm = request.form["file_nm"]
+    file_div = request.form["file_div"]
 
-        return "File uploaded and data inserted into PostgreSQL table successfully"
+    # ファイル情報マスタ登録
+    with get_connection() as conn:
+        _insertFileInfo(conn, fiscal_date, file_div, file_nm)
+
+    # エラーチェック
+    if 'uploadFile' not in request.files:
+        return make_response(jsonify({'result':'uploadFile is required.'}))
+
+    file = request.files['uploadFile']
+    fileName = file.filename
+    if '' == fileName:
+        return make_response(jsonify({'result':'filename must not empty.'}))
+
+    # ファイル読込
+    df = pd.read_excel(file, sheet_name=0, skipfooter=1, skiprows=1)
+    
+    for index, data in df.iterrows():
+        div_cd = data[0]    #原価部門コード
+        orders = str(data[2]).split('-') #原価部門コード
+        order_detail = orders[0]            
+        order_rowno = orders[1]
+        project_nm = data[3]
+        customer = data[4]
+        cost_material = data[5]
+        cost_labor = data[6]
+        cost_subcontract = data[7]
+        cost = data[8]
+        sales = data[9]
+            
+        with get_connection() as conn:
+            match file_div:
+                case "F":
+                    _insertFgFileInfo(conn, div_cd, order_detail, order_rowno, customer, cost_material, cost_labor, cost_subcontract, cost, sales)
+                case "W":
+                    _insertWipFileInfo(conn, div_cd, order_detail, order_rowno, customer, cost_material, cost_labor, cost_subcontract, cost)
+            
+            _insertTopicInfo(conn, order_detail, project_nm)
+
+    return 'upload OK.'
+
+# 新規管理ID採番
+def _getNextManageID(conn : any):
+    with conn.cursor() as cur:
+        cur.execute(
+            "select cast(max(cast(manage_id as numeric)) + 1 as varchar(23)) as manage_id from m_file_info")
+        res = cur.fetchone()
+        if res is None:
+            return '1'
+        return res[0]
+
+# 新規バージョン採番
+def _getNextVersion(conn : any, fiscal_date : str, file_div : str):
+    with conn.cursor() as cur:
+        cur.execute(
+            "select coalesce(cast(max(cast(version as numeric)) + 1 as varchar(2)), '0') as version from m_file_info where fiscal_date = %s and file_div = %s", (fiscal_date, file_div))
+        res = cur.fetchone()
+        if res is None:
+            return '0'
+        return res[0]
+
+# ファイル管理登録
+def _insertFileInfo(conn : any, fiscal_date : str, file_div : str, file_name : str):
+    manage_id = _getNextManageID(conn)
+    version = _getNextVersion(conn, fiscal_date, file_div)
+ 
+    with conn.cursor() as cur:
+        cur.execute("insert into m_file_info (manage_id,fiscal_date,version,file_div,file_nm) values (%s, %s, %s, %s, %s)", (manage_id, fiscal_date, version, file_div, file_name))
+   
+    return manage_id
+
+# 完成PJ台帳登録
+def _insertFgFileInfo(conn : any, div_cd : str, order_detail : str, order_rowno : str, customer : str, cost_material : str, cost_labor : str, cost_subcontract : str, cost : str, sales : str):
+    manage_id = _getNextManageID(conn)
+ 
+    with conn.cursor() as cur:
+        cur.execute("insert into t_fg_project_info (manage_id,div_cd,order_detail,order_rowno,customer,cost_material,cost_labor,cost_subcontract,cost,sales) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (manage_id, div_cd, order_detail, order_rowno, customer, cost_material, cost_labor, cost_subcontract, cost, sales))
+   
+    return None
+
+# 仕掛PJ台帳登録
+def _insertWipFileInfo(conn : any, div_cd : str, order_detail : str, order_rowno : str, customer : str, cost_material : str, cost_labor : str, cost_subcontract : str, cost : str):
+    manage_id = _getNextManageID(conn)
+ 
+    with conn.cursor() as cur:
+        cur.execute("insert into t_wip_project_info (manage_id,div_cd,order_detail,order_rowno,customer,cost_material,cost_labor,cost_subcontract,cost) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (manage_id, div_cd, order_detail, order_rowno, customer, cost_material, cost_labor, cost_subcontract, cost))
+   
+    return None
+
+# 案件情報登録
+def _insertTopicInfo(conn : any, order_detail : str, project_nm : str):
+    with conn.cursor() as cur:
+        cur.execute("insert into m_topic_info (order_detail,project_nm) values (%s, %s)", (order_detail, project_nm))
+        return None
 
 # ファイル情報マスタから勘定年月を指定して取得
 def _filelist(yyyymm: str):
