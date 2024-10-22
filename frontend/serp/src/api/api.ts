@@ -8,8 +8,9 @@ const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    "Access-Control-Allow-Origin": "*",
   },
-  timeout: 5000, // タイムアウトを設定（オプション）
+  timeout: 5000,          // タイムアウトを設定（オプション）
 });
 
 export default apiClient;
