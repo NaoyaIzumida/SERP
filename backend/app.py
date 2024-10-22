@@ -416,8 +416,10 @@ def _filedownload(yyyymm : str):
         ws.cell(row, 4, item['cost_labor'])   # 労務費
         ws.cell(row, 5, item['cost_subcontract'])   # 外注費
         ws.cell(row, 6, item['cost'])   # 旅費交通費
-        ws.cell(row, 8, '=SUM(D' + str(row) + ':G' + str(row) + ')')   # 合計
         row += 1   
+    for index in range(6):
+        ws.cell(wip_start_row + index, 8, '=SUM(D' + str(wip_start_row + index) + ':F' + str(wip_start_row + index) + ')')   # 合計
+
     row = wip_start_row + 6
     ws.cell(row, 8, '=SUM(H' + str(wip_start_row) + ':H' + str(wip_start_row + 5) + ')')  # 小計
     row += 4
@@ -429,7 +431,7 @@ def _filedownload(yyyymm : str):
         ws.cell(row, 4, item['cost_labor'])   # 労務費
         ws.cell(row, 5, item['cost_subcontract'])   # 外注費
         ws.cell(row, 6, item['cost'])   # 旅費交通費
-        ws.cell(row, 8, '=SUM(D' + str(row) + ':F' + str(row) + ')')   # 合計
+        #ws.cell(row, 8, '=SUM(D' + str(row) + ':F' + str(row) + ')')   # 合計
         row += 1   
     row = total_start_row + 15
     for item in result_wip:
@@ -437,14 +439,17 @@ def _filedownload(yyyymm : str):
         ws.cell(row, 4, item['cost_labor'])   # 労務費
         ws.cell(row, 5, item['cost_subcontract'])   # 外注費
         ws.cell(row, 6, item['cost'])   # 旅費交通費
-        ws.cell(row, 8, '=SUM(D' + str(row) + ':F' + str(row) + ')')   # 合計
+        #ws.cell(row, 8, '=SUM(D' + str(row) + ':F' + str(row) + ')')   # 合計
         row += 1   
-    ws.cell(row, 4, '=SUM(D' + str(wip_start_row) + ':D' + str(wip_start_row + 22) + ')')  # 小計
-    ws.cell(row, 5, '=SUM(E' + str(wip_start_row) + ':E' + str(wip_start_row + 22) + ')')  # 小計
-    ws.cell(row, 6, '=SUM(F' + str(wip_start_row) + ':F' + str(wip_start_row + 22) + ')')  # 小計
-    ws.cell(row, 8, '=SUM(H' + str(wip_start_row) + ':H' + str(wip_start_row + 22) + ')')  # 小計
-    row += 4
-
+    for index in range(23):
+        ws.cell(total_start_row + index, 8, '=SUM(D' + str(total_start_row + index) + ':F' + str(total_start_row + index) + ')')   # 合計
+        
+    row = total_start_row + 23
+    ws.cell(row, 4, '=SUM(D' + str(total_start_row) + ':D' + str(total_start_row + 22) + ')')  # 小計
+    ws.cell(row, 5, '=SUM(E' + str(total_start_row) + ':E' + str(total_start_row + 22) + ')')  # 小計
+    ws.cell(row, 6, '=SUM(F' + str(total_start_row) + ':F' + str(total_start_row + 22) + ')')  # 小計
+    ws.cell(row, 8, '=SUM(H' + str(total_start_row) + ':H' + str(total_start_row + 22) + ')')  # 小計
+    row = total_start_row + 27
 
     #HRMOS経費
     hrmos_start_row = row
@@ -452,11 +457,11 @@ def _filedownload(yyyymm : str):
         ws.cell(row, 3, item['applicant'])   # 区分
         ws.cell(row, 4, item['job_cd'])   # TSジョブコード
         ws.cell(row, 5, item['cost'])   # 金額
-
-        ws.cell(row, 8, '=SUM(D' + str(row) + ':G' + str(row) + ')')   # 合計
         row += 1   
-    row = hrmos_start_row + 9
-    ws.cell(row, 8, '=SUM(F' + str(hrmos_start_row) + ':F' + str(hrmos_start_row + 8) + ')')  # 小計
+    for index in range(8):
+        ws.cell(hrmos_start_row + index, 6, '=E' + str(hrmos_start_row + index) + '/1.1')   # 合計
+    row = hrmos_start_row + 8
+    ws.cell(row, 6, '=SUM(F' + str(hrmos_start_row) + ':F' + str(hrmos_start_row + 7) + ')')  # 小計
 
     wb.save(target_file)
 
@@ -606,9 +611,17 @@ def _loadmerge_hrmos(yyyymm : str):
         "from "\
         "    t_hrmos_expense  "\
         "where "\
-        "    manage_id in (select fg_id from t_merge_target where fiscal_date = %s) "\
+        "    manage_id in (select hrmos_id from t_merge_target where fiscal_date = %s) "\
         "order by "\
-        "    apply_no  "
+        "    case "\
+        "        when job_cd is null "\
+        "            then 2 "\
+        "        when job_cd = '' "\
+        "            then 1 "\
+        "        else 0 "\
+        "        end "\
+        "    , job_cd "\
+        "    , apply_no "
 
     with get_connection() as conn:
         with conn.cursor() as cur:
