@@ -22,6 +22,12 @@ interface DataItem {
   file_nm: string;
 }
 
+// APIから取得するデータの型定義
+interface ApiResponse {
+  status: number;
+  result: DataItem[];
+}
+
 // 各データのフィールドが異なるため、動的な型にする
 interface GridDataItem {
   [key: string]: any;
@@ -35,15 +41,41 @@ const UploadPage = () => {
   const [snackbarSeverity, setSnackbarSeverity] = useState<'error' | 'warning' | 'success' | 'info'>('error'); // Snackbarのタイプ
   const [errorMessage, setMessage] = useState('');                // メッセージ
 
+  // API呼び出し関数
+  const handleSearch = async (selectedDate: string) => {
+    if (selectedDate) {
+      try {
+        const response = await apiClient.get<ApiResponse>(`/filelist/${selectedDate}`);
+        // データが取得できない場合はメッセージを表示する
+        if (response.data.status == 1) {
+          // エラーメッセージを設定しSnackbarを表示
+          setMessage('一致するデータがありません。');
+          setSnackbarSeverity('warning');     // 警告タイプに設定
+          setOpenSnackbar(true);
+        } else {
+          setMessage('データを取得しました。');
+          setSnackbarSeverity('success');     // 成功タイプに設定
+          setOpenSnackbar(true);
+          setData(response.data.result);      // データをstateに保存
+        }
+      } catch (error) {
+        // エラーメッセージを設定しSnackbarを表示
+        setMessage('データの取得に失敗しました。');
+        setSnackbarSeverity('error');  // 警告タイプに設定
+        setOpenSnackbar(true);
+      }
+    }
+  };
+
   // Snackbarを閉じる処理
   const handleSnackbarClose = () => {
     setOpenSnackbar(false);
   };
 
-  // SideListでデータが取得されたときに呼ばれる関数
-  const handleDataFetch = (fetchedData: DataItem[]) => {
-    setData(fetchedData);  // SideListからデータを受け取って保存
-  };
+  // // SideListでデータが取得されたときに呼ばれる関数
+  // const handleDataFetch = (fetchedData: DataItem[]) => {
+  //   setData(fetchedData);  // SideListからデータを受け取って保存
+  // };
 
   // SideListで行が選択されたときに呼ばれる関数
   const handleRowSelect = async (selectedData: DataItem[]) => {
@@ -134,7 +166,9 @@ const UploadPage = () => {
           {/* SideListにデータ取得と選択された行の処理を委譲 */}
           <SideList
             mode={1}
-            onDataFetch={handleDataFetch}
+            DataItem={data}
+            onSearch={handleSearch}
+            // onDataFetch={handleDataFetch}
             onRowSelect={handleRowSelect}
             onDelete={handleDelete}
           />

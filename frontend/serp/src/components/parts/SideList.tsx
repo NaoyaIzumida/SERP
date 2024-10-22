@@ -23,8 +23,8 @@ import dayjs, { Dayjs } from 'dayjs';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import apiClient from '../../api/api'; // API関数をインポート
 
-// APIから取得するjsonの型定義
-interface DataItem {
+// APIから取得するjsonの型定義（Switch Offの場合）
+interface FileListItem {
   manage_id: string;
   fiscal_date: string;
   version: string;
@@ -32,26 +32,46 @@ interface DataItem {
   file_nm: string;
 }
 
-// APIから取得するデータの型定義
-interface ApiResponse {
-  status: number;
-  result: DataItem[];
+// APIから取得するjsonの型定義（Switch Onの場合）
+interface FileMergeListItem {
+  fiscal_date: string;
+  version: string;
+  order_detail: string;
+  fg_id: string;
+  wip_id: string;
+  cost_labor: number;
+  cost_subcontract: number;
+  cost: number;
+  change_value: string;
+  product_div: string;
 }
 
 // SideListのプロパティ型
 interface SideListProps {
-  mode: number;                                     // SideListのモード
-  onDataFetch: (data: DataItem[]) => void;          // データ取得時に親へ通知する関数
-  onRowSelect: (selectedData: DataItem[]) => void;  // 行選択時に親へ通知する関数
-  onDelete: (id: string) => void;                   // 削除ボタン押下時のコールバック関数
+  mode: number;                                       // SideListのモード
+  DataItem: FileListItem[] | FileMergeListItem[];
+  onSearch: (selectedDate: string) => Promise<void>;  // 検索ボタンの動作を親から渡す
+  onRowSelect: (selectedData: FileListItem[] | FileMergeListItem[]) => void;    // 行選択時に親へ通知する関数
+  onDelete: (id: string) => void;                     // 削除ボタン押下時のコールバック関数
 }
 
 //mode:1 Upload
 //mode:2 Compare  **不要のため破棄
 //mode:3 Merge
-const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect, onDelete }) => {
+const SideList: React.FC<SideListProps> = ({ mode, DataItem, onSearch, onRowSelect, onDelete }) => {
 
-  const label = { inputProps: { 'aria-label': 'Switch demo' } };
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);                   // 選択された日付を管理
+  const [dataItem, setDataItem] = useState<FileListItem[] | FileMergeListItem[]>([]);     // データの状態
+  const [isSwitchOn, setIsSwitchOn] = useState(false);                                    // Switchの状態管理
+  const [favorites, setFavorites] = useState<string[]>([]);                               // お気に入り管理用
+  const [openSnackbar, setOpenSnackbar] = useState(false);                                // Snackbarの開閉状態
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'error' | 'warning' | 'success' | 'info'>('error'); // Snackbarのタイプ
+  const [errorMessage, setMessage] = useState('');                                        // メッセージ
+
+  // Switchの状態が変更されたときの処理
+  const handleSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setIsSwitchOn(event.target.checked); // Switchの状態を更新
+  };
 
   // スライダー無しの描画
   const noSwitchStack = (
@@ -72,7 +92,8 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect, onD
       alignItems="stretch"
       spacing={0.5}
     >
-      <Switch {...label} defaultChecked />
+      <Switch checked={isSwitchOn} onChange={handleSwitchChange} />
+      <Divider />
     </Stack>
   );
 
@@ -85,50 +106,28 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect, onD
     listHeader = switchStack;
   }
 
-  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);                   // 選択された日付を管理
-  const [data, setData] = useState<DataItem[]>([]);                                       // APIから取得したデータ
-  const [openSnackbar, setOpenSnackbar] = useState(false);                                // Snackbarの開閉状態
-  const [snackbarSeverity, setSnackbarSeverity] = useState<'error' | 'warning' | 'success' | 'info'>('error'); // Snackbarのタイプ
-  const [errorMessage, setMessage] = useState('');                                        // メッセージ
-
-  // API呼び出し関数
-  const fetchData = async () => {
-    if (selectedDate) {
-      const yearMonth = dayjs(selectedDate).format('YYYYMM');  // 選択された日付をyyyyMM形式に変換
-      try {
-        const response = await apiClient.get<ApiResponse>(`/filelist/${yearMonth}`);
-        // setData(response.data.result);  // 取得したデータのresult部分(json)をstateに保存
-
-        // データが取得できない場合はメッセージを表示する
-        if (response.data.status == 1) {
-          // エラーメッセージを設定しSnackbarを表示
-          setMessage('一致するデータがありません。');
-          setSnackbarSeverity('warning');     // 警告タイプに設定
-          setOpenSnackbar(true);
-        } else {
-          setMessage('データを取得しました。');
-          setSnackbarSeverity('success');     // 成功タイプに設定
-          setOpenSnackbar(true);
-          setData(response.data.result);      // データをstateに保存
-          onDataFetch(response.data.result);  // 親にデータ取得を通知
-        }
-      } catch (error) {
-        // エラーメッセージを設定しSnackbarを表示
-        setMessage('データの取得に失敗しました。');
-        setSnackbarSeverity('error');  // 警告タイプに設定
-        setOpenSnackbar(true);
-      }
-    }
-  };
-
   // Snackbarを閉じる処理
   const handleSnackbarClose = () => {
     setOpenSnackbar(false);
   };
   
-  // ボタン押下時のハンドラ
-  const handleButtonClick = () => {
-    fetchData();
+  // 検索ボタン押下時の処理
+  const handleSearchClick = async () => {
+    if (selectedDate) {
+      const formattedDate = selectedDate.format('YYYYMM');  // YYYYMM形式に変換
+      await onSearch(formattedDate);                        // 日付を引数に渡して検索
+    }
+  };
+
+  // お気に入りアイコンの切り替え
+  const handleToggleFavorite = (manageId: string) => {
+    if (favorites.includes(manageId)) {
+      // 既にお気に入りの場合はリストから削除
+      setFavorites(favorites.filter((id) => id !== manageId));
+    } else {
+      // お気に入りに追加
+      setFavorites([...favorites, manageId]);
+    }
   };
 
   // 削除（ゴミ箱）押下時のハンドラ
@@ -160,11 +159,15 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect, onD
 
   // FixedSizeListに表示するアイテム
   const renderRow = ({ index, style }: ListChildComponentProps) => {
-    const item = data[index];  // data[index]の存在を確認
+    const item = DataItem[index];  // data[index]の存在を確認
+    // Switchの状態に応じたListItemTextの内容を決定
+    const primaryText = isSwitchOn
+      ? `${item?.fiscal_date} / ${item?.version}` // SwitchがOnの場合
+      : item?.file_nm;                            // SwitchがOffの場合
     return (
       <ListItem style={style} key={index} component="div" disablePadding>
-        <ListItemButton>
-          <ListItemText 
+        <ListItemButton onClick={() => item && onRowSelect([item])}>
+          {/* <ListItemText 
             primary={item ? item.file_nm : 'データがありません'}
             data-manage-id={item?.manage_id}
             onClick={() => {
@@ -172,10 +175,35 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect, onD
                 onRowSelect([item]);  // 行が選択されたら親に通知
               }
             }}
-          />
-          <IconButton edge="end" onClick={() => mode == 1 && handleDelete(item.manage_id)}>
-            {mode == 1 ? <DeleteIcon /> : <FavoriteBorderIcon />}
-          </IconButton>
+          /> */}
+           {/* Modeが1の場合 */}
+          {mode === 1 && (
+            <ListItemText 
+              primary={item ? item.file_nm : 'データがありません'}
+              data-manage-id={item?.manage_id}
+            /> 
+          )}
+          {/* Modeが1以外の場合 */}
+          {mode !== 1 && (
+            <ListItemText 
+              primary={primaryText} // Switchの状態に応じて表示内容を切り替え
+            />
+          )}
+          {/* Modeが1の場合は削除ボタンを表示 */}
+          {mode === 1 ? (
+            <IconButton edge="end" onClick={() => handleDelete(item.manage_id)}>
+              <DeleteIcon />
+            </IconButton>
+          ) : (
+            // Modeが1以外の場合はお気に入りアイコンを表示
+            <IconButton edge="end" onClick={() => handleToggleFavorite(item.manage_id)}>
+              {favorites.includes(item.manage_id) ? (
+                <FavoriteIcon color="error" />
+              ) : (
+                <FavoriteBorderIcon />
+              )}
+            </IconButton>
+          )}
         </ListItemButton>
       </ListItem>
     );
@@ -215,7 +243,7 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect, onD
           <Button
             variant="outlined"
             startIcon={<SearchIcon />}
-            onClick={handleButtonClick}
+            onClick={handleSearchClick}
           >
             Search
           </Button>
@@ -223,7 +251,6 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect, onD
       </Toolbar>
       <Divider />
       {listHeader}
-      <Divider />
       <Toolbar
         sx={{
           display: 'flex',
@@ -242,13 +269,12 @@ const SideList: React.FC<SideListProps> = ({ mode, onDataFetch, onRowSelect, onD
         >
 
           {/* 取得したデータを表示 */}
-          {data.length > 0 && (
+          {DataItem.length > 0 && (
             <FixedSizeList
-              height={560}              // 表示リストの高さ
-              width="100%"              // 表示リストの幅
-              itemSize={40}             // 各アイテムの高さ
-              itemCount={data.length}   // リストアイテムの数(jsonのデータ数により可変)
-              overscanCount={5}
+              height={560}                  // 表示リストの高さ
+              width="100%"                  // 表示リストの幅
+              itemSize={40}                 // 各アイテムの高さ
+              itemCount={DataItem.length}   // リストアイテムの数(jsonのデータ数により可変)
             >
               {renderRow}
             </FixedSizeList>
