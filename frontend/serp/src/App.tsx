@@ -19,18 +19,14 @@ const App: React.FC = () => {
       <menuContext.Provider value={{ isOpened, setOpened }}>
         <Box sx={{ display: "flex" }}>
           <CssBaseline />
-
           {/* AppBar */}
           <MyAppBar />
-
           {/* Drawer */}
           <MyDrawer open={isOpened} />
-
           {/* Main */}
           <Main open={isOpened}>
             <Toolbar />
           </Main>
-
         </Box>
       </menuContext.Provider>
       <Routes>

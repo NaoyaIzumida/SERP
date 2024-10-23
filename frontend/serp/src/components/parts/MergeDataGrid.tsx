@@ -1,14 +1,14 @@
 import React from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 
-// UploadDataGridのプロパティ型
-interface UploadDataGridProps {
+// MergeDataGridのプロパティ型
+interface MergeDataGridProps {
   gridData: any[];        // 動的なデータを受け取る
   columns: GridColDef[];  // 動的な列定義を受け取る
 }
 
 // DataGridコンポーネントの定義
-const UploadDataGrid: React.FC<UploadDataGridProps> = ({ gridData, columns }) => {
+const MergeDataGrid: React.FC<MergeDataGridProps> = ({ gridData, columns }) => {
 
   // 数値をカンマ区切りにフォーマットする関数
   const formatNumberWithCommas = (value: number) => {
@@ -45,4 +45,4 @@ const UploadDataGrid: React.FC<UploadDataGridProps> = ({ gridData, columns }) =>
   );
 };
   
-export default UploadDataGrid;
+export default MergeDataGrid;
