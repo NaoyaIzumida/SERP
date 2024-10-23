@@ -152,8 +152,10 @@ const UploadPage: React.FC = () => {
         setSnackbarSeverity('success'); // 成功タイプに設定
         setOpenSnackbar(true);
 
-        fetchData();                    // ここでデータを再取得してリフレッシュ
         setDataItem([]);                // 削除成功後にデータグリッドをクリアする
+        setGridData([]);                // DataGrid を初期化
+        setColumns([]);
+        fetchData();                    // ここでデータを再取得してリフレッシュ
       }
 
     } catch (error) {
