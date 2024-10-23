@@ -67,7 +67,7 @@ interface GridDataItem {
 
 const MergePage: React.FC = () => {
   const [isSwitchOn, setIsSwitchOn] = useState(false);                                // Switchの状態管理
-  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());            // DatePickerの選択状態
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs().subtract(1, 'month'));            // DatePickerの選択状態
   const [dataItem, setDataItem] = useState<FileListItem[] | FileMergeListItem[]>([]); // データの状態
   const [loading, setLoading] = useState(false);                                      // API呼び出し中かどうかのフラグ
   const [favorites, setFavorites] = useState<string[]>([]);                           // お気に入りの manage_id を保持
@@ -89,7 +89,7 @@ const MergePage: React.FC = () => {
 
   // 選択された日付を 'YYYYMM' フォーマットに変換
   const getFormattedDate = (): string => {
-    return selectedDate ? selectedDate.format('YYYYMM') : dayjs().format('YYYYMM');
+    return selectedDate ? selectedDate.format('YYYYMM') : dayjs().subtract(1, 'month').format('YYYYMM');
   };
 
   // API呼び出し関数(検索)
@@ -265,7 +265,7 @@ const MergePage: React.FC = () => {
           </Paper>
         </Grid>
         {/* HistoryArea */}
-        <Grid item lg={2} alignItems="stretch">
+        <Grid item lg={3} alignItems="stretch">
           <Paper
             sx={{
               p: 2,
@@ -287,7 +287,7 @@ const MergePage: React.FC = () => {
                   <DatePicker
                     label="Account Months"
                     format="YYYYMM"
-                    defaultValue={dayjs()}
+                    defaultValue={dayjs().subtract(1, 'month')}  // 1ヶ月前の日付を設定
                     views={['year', 'month']} // 年月のみ選択可能にする
                     value={selectedDate}
                     onChange={(newDate) => {
@@ -386,7 +386,7 @@ const MergePage: React.FC = () => {
           </Paper>
         </Grid>
         {/* DataArea */}
-        <Grid item lg={10} alignItems="stretch">
+        <Grid item lg={9} alignItems="stretch">
           <Paper
             sx={{
               p: 2,
