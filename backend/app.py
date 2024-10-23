@@ -227,7 +227,7 @@ def _filemergedetail(yyyymm: str, version: str):
             return convertCursorToDict(cur)
 
 # マージ要求
-def _filemerge(manage_ids, fiscal_date):
+def _filemerge(manage_ids:str, fiscal_date:str):
     #delete_result_sql = "delete from t_merge_result where fiscal_date = %s"
     #delete_target_sql = "delete from t_merge_target where fiscal_date = %s"
     select_version_sql = "select version from t_merge_target where fiscal_date = %s order by version desc" 
@@ -311,6 +311,9 @@ def _filemerge(manage_ids, fiscal_date):
                         fg = manage_id
                     case 'W':
                         wip = manage_id
+                        # 勘定年月分の仕掛情報テーブルを洗替え
+                        cur.execute("delete from t_wip_info where fiscal_date = %s", (fiscal_date,))
+                        cur.execute("insert into t_wip_info (fiscal_date,order_detail,cost_labor,cost_subcontract,cost) select %s as fiscal_date, order_detail, cost_labor, cost_subcontract, cost from t_wip_project_info where manage_id = %s", (fiscal_date, manage_id,))
                     case 'H':
                         hrmos = manage_id
             cur.execute(insert_target_sql, (fiscal_date, version, fg,wip,hrmos,))
