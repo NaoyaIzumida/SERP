@@ -432,21 +432,21 @@ def _filedownload(yyyymm : str, version : str):
     
    # 完成PJ＋仕掛PJ
     total_start_row = row
-    for item in result_fg:
-        ws.cell(row, 3, item['project_nm'])   # 件名
-        ws.cell(row, 4, item['cost_labor'])   # 労務費
-        ws.cell(row, 5, item['cost_subcontract'])   # 外注費
-        ws.cell(row, 6, item['cost'])   # 旅費交通費
-        #ws.cell(row, 8, '=SUM(D' + str(row) + ':F' + str(row) + ')')   # 合計
-        row += 1   
+    for item in result:
+        if item['product_div'] == '1':
+            ws.cell(row, 3, item['project_nm'])   # 件名
+            ws.cell(row, 4, item['cost_labor'])   # 労務費
+            ws.cell(row, 5, item['cost_subcontract'])   # 外注費
+            ws.cell(row, 6, item['cost'])   # 旅費交通費
+            row += 1   
     row = total_start_row + 15
-    for item in result_wip:
-        ws.cell(row, 3, item['project_nm'])   # 件名
-        ws.cell(row, 4, item['cost_labor'])   # 労務費
-        ws.cell(row, 5, item['cost_subcontract'])   # 外注費
-        ws.cell(row, 6, item['cost'])   # 旅費交通費
-        #ws.cell(row, 8, '=SUM(D' + str(row) + ':F' + str(row) + ')')   # 合計
-        row += 1   
+    for item in result:
+        if item['product_div'] == '2':
+            ws.cell(row, 3, item['project_nm'])   # 件名
+            ws.cell(row, 4, item['cost_labor'])   # 労務費
+            ws.cell(row, 5, item['cost_subcontract'])   # 外注費
+            ws.cell(row, 6, item['cost'])   # 旅費交通費
+            row += 1   
     for index in range(23):
         ws.cell(total_start_row + index, 8, '=SUM(D' + str(total_start_row + index) + ':F' + str(total_start_row + index) + ')')   # 合計
         
