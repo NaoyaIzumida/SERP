@@ -1,13 +1,11 @@
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request, send_file, make_response
 import psycopg2
+from copy import copy
 import datetime
 from dateutil.relativedelta import relativedelta
-import shutil
 import os
+import shutil
 import openpyxl
-from copy import copy
-from flask import Flask, request, make_response, jsonify
-from flask_cors import CORS
 import pandas as pd
 
 app = Flask(__name__)
