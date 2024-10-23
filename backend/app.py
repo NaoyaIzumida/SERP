@@ -469,7 +469,7 @@ def _filedownload(yyyymm : str, version : str):
     #HRMOS経費
     hrmos_start_row = row
     for item in result_hrmos:
-        ws.cell(row, 3, item['applicant'])   # 区分
+        ws.cell(row, 3, item['apply_type'] + "：" + item['applicant'])   # 区分
         ws.cell(row, 4, item['job_cd'])   # TSジョブコード
         ws.cell(row, 5, item['cost'])   # 金額
         row += 1   
@@ -620,6 +620,7 @@ def _loatmerge_perv_wip(yyyymm:str):
 def _loadmerge_hrmos(yyyymm : str, version : str):
     sql = "select "\
         "      apply_no "\
+        "    , apply_type "\
         "    , applicant "\
         "    , job_cd "\
         "    , cost "\
