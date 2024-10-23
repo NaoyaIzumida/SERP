@@ -34,7 +34,7 @@ export const MyDrawer = (props: Props) => {
         <Box sx={{ overflow: "auto" }}>
           <List>
             <ListSubheader component="div" inset>
-              Select mode
+              Select Menu
             </ListSubheader>
             <ListItemButton
                 component={NavLink}
