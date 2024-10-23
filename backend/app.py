@@ -204,7 +204,7 @@ def _filedelete(manage_id: str):
             if file_div == []:
                 return file_div
             cur.execute(query.get(file_div), (manage_id,))        
-        cur.execute('delete from m_file_info where manage_id = %s', (manage_id,))
+            cur.execute('delete from m_file_info where manage_id = %s', (manage_id,))
         conn.commit()
 
 
