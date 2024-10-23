@@ -33,13 +33,13 @@ const MergeDataGrid: React.FC<MergeDataGridProps> = ({ gridData, columns }) => {
   }));
 
   return (
-    <div style={{ height: 700, width: '100%' }}>
+    <div style={{ height: 650, width: '100%' }}>
       <DataGrid
         rows={rowsWithUniqueId}
         columns={columnsWithAutoWidth}
         pageSize={5}
-        getRowId={(row) => row.id || row.manage_id || row[Object.keys(row)[0]]}  // 任意の一意なキーを指定
-        autoHeight={false}  // DataGridの高さをPaperに依存させる
+        getRowId={(row) => row.id || row.manage_id || row[Object.keys(row)[0]]}   // 任意の一意なキーを指定
+        autoHeight={false}                                                        // DataGridの高さをPaperに依存させる
       />
     </div>
   );

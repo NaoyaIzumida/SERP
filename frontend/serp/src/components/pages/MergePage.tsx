@@ -7,9 +7,12 @@ import ListItemText from '@mui/material/ListItemText';
 import IconButton from '@mui/material/IconButton';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import MergeIcon from '@mui/icons-material/Merge';
 import Paper from '@mui/material/Paper';
 import Toolbar from '@mui/material/Toolbar';
 import Button from '@mui/material/Button';
+import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Alert  from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
@@ -21,6 +24,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import Switch from '@mui/material/Switch';
 import dayjs, { Dayjs } from 'dayjs';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import Link from '@mui/material/Link';
 import apiClient from '../../api/api'; // API関数をインポート
 
 // Parts(子Component)のImport
@@ -87,7 +91,7 @@ const MergePage: React.FC = () => {
     return selectedDate ? selectedDate.format('YYYYMM') : dayjs().format('YYYYMM');
   };
 
-  // API呼び出し関数
+  // API呼び出し関数(検索)
   const fetchData = async () => {
     setLoading(true);
     const formattedDate = getFormattedDate();
@@ -103,18 +107,18 @@ const MergePage: React.FC = () => {
 
       if (response.data.status == 1) {
         setMessage('一致するファイル一覧がありません。');
-        setSnackbarSeverity('warning');                 // 警告タイプに設定
+        setSnackbarSeverity('warning'); // 警告タイプに設定
         setOpenSnackbar(true);
       } else {
         setMessage('データを取得しました。');
-        setSnackbarSeverity('success');                 // 成功タイプに設定
+        setSnackbarSeverity('success'); // 成功タイプに設定
         setOpenSnackbar(true);
         setDataItem(response.data.result);
       }
 
     } catch (error) {
       setMessage('データの取得に失敗しました。');
-      setSnackbarSeverity('error');  // 警告タイプに設定
+      setSnackbarSeverity('error'); // 警告タイプに設定
       setOpenSnackbar(true);
     } finally {
       setLoading(false);
@@ -137,12 +141,32 @@ const MergePage: React.FC = () => {
     }
   };
 
+  // ダウンロードボタン押下時に呼び出す処理
+  const handleDownload = () => {
+    downloadFile();
+  };
+
+  // API呼び出し関数(ダウンロード)
+  const downloadFile = async () => {
+    setLoading(true);
+    const formattedDate = getFormattedDate();
+    try {
+      await apiClient.get(`/filedownload/${formattedDate}`);
+    } catch (error) {
+      setMessage('ファイルダウンロードに失敗しました。');
+      setSnackbarSeverity('error'); // 警告タイプに設定
+      setOpenSnackbar(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Snackbarを閉じる処理
   const handleSnackbarClose = () => {
     setOpenSnackbar(false);
   };
 
-  // SideListで行が選択されたときに呼ばれる関数
+  // 行が選択されたときに呼ばれる関数
   const handleRowSelect = async (selectedData: FileListItem | FileMergeListItem) => {
 
     // Switchの状態に応じて表示する文字列を決定
@@ -151,11 +175,11 @@ const MergePage: React.FC = () => {
     if (isSwitchOn) {
       // SwitchがOnの場合
       const item = selectedData as FileMergeListItem;         // 型アサーション
-      displayString = `${item.fiscal_date},${item.version}`; // fiscal_dateとversionをカンマでつなげる
+      displayString = `${item.fiscal_date},${item.version}`;  // fiscal_dateとversionをカンマでつなげる
     } else {
       // SwitchがOffの場合
       const item = selectedData as FileListItem;              // 型アサーション
-      displayString = item.manage_id;                         // file_nmを設定
+      displayString = item.manage_id;                         // manage_idを設定
     }
 
     // Switchの状態に応じてAPIを呼び出す
@@ -166,15 +190,12 @@ const MergePage: React.FC = () => {
 
     // APIを呼び出し
     try {
-      console.log('displayString:', displayString);
       if (isSwitchOn) {
-        response = await apiClient.get(`/filemergedetail/${displayString}`); // データ取得
+        response = await apiClient.get(`/filemergedetail/${displayString}`); // マージ結果のデータ取得
       } else {
-        response = await apiClient.get(`/filedetail/${displayString}`);      // マージ結果のデータ取得
+        response = await apiClient.get(`/filedetail/${displayString}`);      // データ取得
       }
-      console.log('response.data.result:', response.data.result);
       const gridData = response.data.result;  // 取得したデータを保存
-
       if (gridData.length > 0) {
         // 取得したデータのキーに応じて列を動的に生成
         const firstItem = gridData[0];
@@ -200,12 +221,31 @@ const MergePage: React.FC = () => {
   return (
     <Box>
       <Grid container spacing={1} >
+        {/* ActionArea */}
+        <Grid item lg={12} alignItems="stretch">
+          <Paper
+            sx={{
+              p: 2,
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <Box justifyContent="flex-end" display="flex">
+              <Button variant="contained">
+                <MergeIcon />
+                Merge
+              </Button>
+            </Box>
+          </Paper>
+        </Grid>
+        {/* HistoryArea */}
         <Grid item lg={3} alignItems="stretch">
           <Paper
             sx={{
               p: 2,
               width: '100%',
-              height: '80vh',
+              height: '75vh',
               display: 'flex',
               flexDirection: 'column',
             }}
@@ -217,6 +257,7 @@ const MergePage: React.FC = () => {
                 alignItems="center"
                 spacing={0.5}
               >
+                {/* 検索条件.年月 */}
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <DatePicker
                     label="Account Months"
@@ -231,6 +272,7 @@ const MergePage: React.FC = () => {
                     }}
                   />
                 </LocalizationProvider>
+                {/* 検索ボタン */}
                 <Button
                   variant="outlined"
                   startIcon={<SearchIcon />}
@@ -247,6 +289,7 @@ const MergePage: React.FC = () => {
               alignItems="stretch"
               spacing={0.5}
             >
+              {/* Switch */}
               <Switch
                 checked={isSwitchOn}
                 onChange={handleSwitchChange}
@@ -273,6 +316,7 @@ const MergePage: React.FC = () => {
                     bgcolor: 'background.paper',
                   }}
                 >
+                  {/* Dataが取得できた場合、Listを作成 */}
                   {dataItem.length > 0 ? (
                     (dataItem as (FileListItem | FileMergeListItem)[]).map((item, index) => (
                       <ListItem key={index} onClick={() => handleRowSelect(item)}>
@@ -284,6 +328,14 @@ const MergePage: React.FC = () => {
                                 : (item as FileListItem).file_nm
                             }
                           />
+                          {isSwitchOn && (
+                            <IconButton
+                              edge="end"
+                              onClick={() => handleDownload()}
+                            >
+                              <FileDownloadIcon />
+                            </IconButton>
+                          )}
                           {!isSwitchOn && (
                             <IconButton
                               edge="end"
@@ -307,11 +359,12 @@ const MergePage: React.FC = () => {
             </Toolbar>
           </Paper>
         </Grid>
+        {/* DataArea */}
         <Grid item lg={9} alignItems="stretch">
           <Paper
             sx={{
               p: 2,
-              height: '80vh',
+              height: '75vh',
               display: 'flex',
               flexDirection: 'column',
             }}
@@ -323,6 +376,18 @@ const MergePage: React.FC = () => {
               )}
             </Box>
           </Paper>
+        </Grid>
+        {/* CopyrightArea */}
+        <Grid item lg={12} >
+          <Typography variant="body2" color="text.secondary" align="center">
+            {'Copyright © '}
+            <Link color="inherit" href="http://www.sci-it.co.jp/">
+              SCI
+            </Link>
+            {' '}
+            {new Date().getFullYear()}
+            {'.'}
+          </Typography>
         </Grid>
       </Grid>
 
