@@ -1,5 +1,6 @@
 import React from "react";
 import { useState, useEffect } from 'react';
+import { saveAs } from 'file-saver'; // ファイルを保存するためのライブラリ
 import Grid from '@mui/material/Grid';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -142,28 +143,24 @@ const MergePage: React.FC = () => {
   };
 
   // ダウンロードボタン押下時に呼び出す処理
-  const handleDownload = () => {
-    downloadFile();
-  };
-
-  // API呼び出し関数(ダウンロード)
-  const downloadFile = async () => {
-    setLoading(true);
-    const formattedDate = getFormattedDate();
+  const handleFileDownload = async (fiscalDate: string, version: string) => {
     try {
-      await apiClient.get(`/filedownload/${formattedDate}`);
+      const response = await apiClient.get(`/filedownload/${fiscalDate},${version}`, {
+        responseType: 'blob', // バイナリデータを受け取るために blob 形式に設定
+      });
+
+      const fileName = `${fiscalDate}_${version}.xlsx`; // ダウンロードファイル名
+      saveAs(response.data, fileName); // ファイルを保存
+
+      setMessage('ファイルをダウンロードしました。');
+      setSnackbarSeverity('success'); // 警告タイプに設定
+      setOpenSnackbar(true);
     } catch (error) {
-      setMessage('ファイルダウンロードに失敗しました。');
+      console.log('error:', error);
+      setMessage('ダウンロードに失敗しました。');
       setSnackbarSeverity('error'); // 警告タイプに設定
       setOpenSnackbar(true);
-    } finally {
-      setLoading(false);
     }
-  };
-
-  // Snackbarを閉じる処理
-  const handleSnackbarClose = () => {
-    setOpenSnackbar(false);
   };
 
   // 行が選択されたときに呼ばれる関数
@@ -218,6 +215,34 @@ const MergePage: React.FC = () => {
     }
   };
 
+  // APIに選択中のお気に入りデータを送信する処理
+  const handleMerge = async () => {
+    try {
+      const response = await apiClient.put('/filemerge', {
+        manage_id: favorites, // 選択された manage_id を送信
+      });
+      console.log('esponse.data.status:', response.data.status);
+      if (response.data.status == 0) {
+        setMessage('マージ処理を実行しました。');
+        setSnackbarSeverity('success'); // 成功タイプに設定
+        setOpenSnackbar(true);
+      } else {
+        setMessage('マージ処理に失敗しました。');
+        setSnackbarSeverity('error'); // 警告タイプに設定
+        setOpenSnackbar(true);
+      }
+    } catch (error) {
+      setMessage('マージ処理に失敗しました。');
+      setSnackbarSeverity('error'); // 警告タイプに設定
+      setOpenSnackbar(true);
+    }
+  };
+
+  // Snackbarを閉じる処理
+  const handleSnackbarClose = () => {
+    setOpenSnackbar(false);
+  };
+
   return (
     <Box>
       <Grid container spacing={1} >
@@ -232,7 +257,7 @@ const MergePage: React.FC = () => {
             }}
           >
             <Box justifyContent="flex-end" display="flex">
-              <Button variant="contained">
+              <Button variant="contained" onClick={handleMerge}>
                 <MergeIcon />
                 Merge
               </Button>
@@ -319,7 +344,7 @@ const MergePage: React.FC = () => {
                   {/* Dataが取得できた場合、Listを作成 */}
                   {dataItem.length > 0 ? (
                     (dataItem as (FileListItem | FileMergeListItem)[]).map((item, index) => (
-                      <ListItem key={index} onClick={() => handleRowSelect(item)}>
+                      <ListItem key={index}>
                         <ListItemButton>
                           <ListItemText
                             primary={
@@ -327,11 +352,12 @@ const MergePage: React.FC = () => {
                                 ? `${(item as FileMergeListItem).fiscal_date} - ${(item as FileMergeListItem).version}`
                                 : (item as FileListItem).file_nm
                             }
+                            onClick={() => handleRowSelect(item)}
                           />
                           {isSwitchOn && (
                             <IconButton
                               edge="end"
-                              onClick={() => handleDownload()}
+                              onClick={() => handleFileDownload(item.fiscal_date, item.version)}
                             >
                               <FileDownloadIcon />
                             </IconButton>
@@ -396,6 +422,7 @@ const MergePage: React.FC = () => {
         open={openSnackbar}
         autoHideDuration={5000}  // 5秒後に自動で閉じる
         onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}  // 右下に配置
       >
         <Alert onClose={handleSnackbarClose} severity={snackbarSeverity}>
           {errorMessage}

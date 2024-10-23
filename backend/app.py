@@ -9,7 +9,7 @@ import openpyxl
 from copy import copy
 
 app = Flask(__name__)
-CORS(app)  # すべてのオリジンからのアクセスを許可
+CORS(app, supports_credentials=True)  # すべてのオリジンからのアクセスを許可
 
 app.json.sort_keys = False
 
