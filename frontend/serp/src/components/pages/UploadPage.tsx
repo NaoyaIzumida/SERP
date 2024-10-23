@@ -333,6 +333,7 @@ const UploadPage: React.FC = () => {
         open={openSnackbar}
         autoHideDuration={5000}  // 5秒後に自動で閉じる
         onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}  // 右下に配置
       >
         <Alert onClose={handleSnackbarClose} severity={snackbarSeverity}>
           {errorMessage}
