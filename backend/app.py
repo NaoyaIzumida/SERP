@@ -1,5 +1,4 @@
 from flask import Flask, jsonify, request, send_file
-from flask_cors import CORS
 import psycopg2
 import datetime
 from dateutil.relativedelta import relativedelta
@@ -9,9 +8,15 @@ import openpyxl
 from copy import copy
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True)  # すべてのオリジンからのアクセスを許可
-
 app.json.sort_keys = False
+
+#CORS
+@app.after_request
+def after_request(response):
+  response.headers.add('Access-Control-Allow-Origin', '*')
+  response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+  response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+  return response
 
 # SERP DB - PostgreSQL接続
 def get_connection():
@@ -71,12 +76,13 @@ def filemergedetail(yyyymm: str, version: str):
         return jsonify({"status": -1})
 
 # API No.6 ファイル削除
-@app.route("/serp/api/filedelete/<fileid>", methods=["DELETE"])
+@app.route("/serp/api/filedelete/<manage_id>", methods=["DELETE"])
 def filedelete(manage_id: str):
     try:
         return jsonify({"status": 0, "result": _filedelete(manage_id)})
     except:
         return jsonify({"status": -1})
+
 # ファイル照合
 @app.route("/serp/api/filematching", methods=["PUT"])
 def filematching():
