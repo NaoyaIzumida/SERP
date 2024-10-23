@@ -134,9 +134,9 @@ def filemerge():
         return jsonify({"status": -1})
 
 # API No.9 ファイルダウンロード
-@app.route("/serp/api/filedownload/<yyyymm>", methods=["GET"])
-def filedownload(yyyymm: str):    
-    filepath = "./" + _filedownload(yyyymm)
+@app.route("/serp/api/filedownload/<yyyymm>,<version>", methods=["GET"])
+def filedownload(yyyymm: str, version: str):    
+    filepath = "./" + _filedownload(yyyymm, version)
     filename = os.path.basename(filepath)
     return send_file(filepath, as_attachment=True,
                      download_name=filename,
@@ -166,7 +166,7 @@ def _filemergelist(yyyymm: str):
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                'select * from t_merge_result where fiscal_date = %s', (yyyymm, ))
+                'select t.fiscal_date, t.version, t.fg_id, f.file_nm as fg_file_name, t.wip_id, w.file_nm as wip_file_name, t.hrmos_id, h.file_nm as hrmos_file_name from t_merge_target t left join m_file_info f on t.fg_id = f.manage_id left join m_file_info w on t.wip_id = w.manage_id left join m_file_info h on t.hrmos_id = h.manage_id where t.fiscal_date = %s order by version', (yyyymm, ))
             return convertCursorToDict(cur)
 
 # データ取得
@@ -222,9 +222,10 @@ def _filemergedetail(yyyymm: str, version: str):
 
 # マージ要求
 def _filemerge(manage_ids, fiscal_date):
-    delete_result_sql = "delete from t_merge_result where fiscal_date = %s"
-    delete_target_sql = "delete from t_merge_target where fiscal_date = %s"
-    insert_target_sql = 'insert into t_merge_target (fiscal_date, fg_id, wip_id, hrmos_id) values (%s,%s,%s,%s)'
+    #delete_result_sql = "delete from t_merge_result where fiscal_date = %s"
+    #delete_target_sql = "delete from t_merge_target where fiscal_date = %s"
+    select_version_sql = "select version from t_merge_target where fiscal_date = %s order by version desc" 
+    insert_target_sql = 'insert into t_merge_target (fiscal_date, version, fg_id, wip_id, hrmos_id) values (%s,%s,%s,%s,%s)'
 
     merge_sql = \
     "insert into t_merge_result "\
@@ -244,7 +245,7 @@ def _filemerge(manage_ids, fiscal_date):
     ") "\
     "select"\
     "      fiscal_date"\
-    "    , version"\
+    "    , %s as version"\
     "    , t_fg_project_info.order_detail"\
     "    , t_fg_project_info.manage_id fg_id"\
     "    , null wip_id"\
@@ -264,7 +265,7 @@ def _filemerge(manage_ids, fiscal_date):
     "union all "\
     "select"\
     "      fiscal_date"\
-    "    , version"\
+    "    , %s as version"\
     "    , t_wip_project_info.order_detail"\
     "    , null fg_id"\
     "    , t_wip_project_info.manage_id wip_id"\
@@ -283,14 +284,19 @@ def _filemerge(manage_ids, fiscal_date):
     "    t_wip_project_info.manage_id in %s"
 
     with get_connection() as conn:
+        # バージョン採番
+        version = '0'
         with conn.cursor() as cur:
-            # 既存データを削除
-            cur.execute(delete_result_sql, (fiscal_date,))
-            cur.execute(delete_target_sql, (fiscal_date,))
+            cur.execute(select_version_sql, (fiscal_date,))
+            res = cur.fetchone()
+            if res is None:
+                version = '0'
+            else:
+                version = str(int(res[0]) + 1)
 
-            # マージ処理
-            cur.execute(merge_sql, (fiscal_date, tuple(manage_ids),tuple(manage_ids),))
-
+        # マージ処理
+        with conn.cursor() as cur:
+            cur.execute(merge_sql, (_getPrevMonth(fiscal_date), version, tuple(manage_ids), version, tuple(manage_ids),))
             # マージ対象ファイルIDを保存
             for manage_id in manage_ids:
                 file_div = str(_getfilediv(conn,manage_id))
@@ -301,9 +307,9 @@ def _filemerge(manage_ids, fiscal_date):
                         wip = manage_id
                     case 'H':
                         hrmos = manage_id
-            cur.execute(insert_target_sql, (_getPrevMonth(fiscal_date),fg,wip,hrmos,))
+            cur.execute(insert_target_sql, (fiscal_date, version, fg,wip,hrmos,))
 
-def _filedownload(yyyymm : str):
+def _filedownload(yyyymm : str, version : str):
     target_file = yyyymm + '.xlsx'
 
     shutil.copy('template.xlsx', target_file)
@@ -316,11 +322,11 @@ def _filedownload(yyyymm : str):
     ws.cell(1, 2, yyyymm[0:4] + "年" + yyyymm[4:6] + "月　仕掛 原価一覧")
 
     # サマリー
-    result = _loadmerge(yyyymm)
-    result_fg = _loadmerge_fg(yyyymm)
-    result_wip = _loadmerge_wip(yyyymm)
+    result = _loadmerge(yyyymm, version)
+    result_fg = _loadmerge_fg(yyyymm, version)
+    result_wip = _loadmerge_wip(yyyymm, version)
     result_prev_wip = _loatmerge_perv_wip(yyyymm)
-    result_hrmos = _loadmerge_hrmos(yyyymm)
+    result_hrmos = _loadmerge_hrmos(yyyymm, version)
     
     summary_base = ws[3]
     ws.unmerge_cells('H8:I8')
@@ -468,7 +474,7 @@ def _filedownload(yyyymm : str):
     return target_file
 
 # マージ結果
-def _loadmerge(yyyymm : str):
+def _loadmerge(yyyymm : str, version : str):
     sql = "with wip as ( "\
         "    select"\
         "          order_detail"\
@@ -502,7 +508,7 @@ def _loadmerge(yyyymm : str):
         "    inner join m_file_info "\
         "        on t_fg_project_info.manage_id = m_file_info.manage_id "\
         "where"\
-        "    t_fg_project_info.manage_id in (select fg_id from t_merge_target where fiscal_date = %s) "\
+        "    t_fg_project_info.manage_id in (select fg_id from t_merge_target where fiscal_date = %s and version = %s) "\
         "union all "\
         "select"\
         "     t_wip_project_info.order_detail"\
@@ -523,17 +529,17 @@ def _loadmerge(yyyymm : str):
         "    inner join m_file_info "\
         "        on t_wip_project_info.manage_id = m_file_info.manage_id "\
         "where"\
-        "    t_wip_project_info.manage_id in (select wip_id from t_merge_target where fiscal_date = %s)"\
+        "    t_wip_project_info.manage_id in (select wip_id from t_merge_target where fiscal_date = %s and version = %s)"\
         " order by order_detail"
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                sql, (_getPrevMonth(yyyymm), yyyymm, yyyymm, ))
+                sql, (_getPrevMonth(yyyymm), yyyymm, version, yyyymm, version, ))
             return convertCursorToDict(cur)
     
 
 # マージ結果（完成）
-def _loadmerge_fg(yyyymm : str):
+def _loadmerge_fg(yyyymm : str, version : str):
     sql = "select "\
         "      m_topic_info.project_nm "\
         "    , cost_labor "\
@@ -546,18 +552,18 @@ def _loadmerge_fg(yyyymm : str):
         "    left join m_topic_info  "\
         "        on t_fg_project_info.order_detail = m_topic_info.order_detail  "\
         "where "\
-        "    manage_id in (select fg_id from t_merge_target where fiscal_date = %s) "\
+        "    manage_id in (select fg_id from t_merge_target where fiscal_date = %s and version = %s) "\
         "order by "\
         "    t_fg_project_info.order_detail  "
 
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                sql, (yyyymm, ))
+                sql, (yyyymm, version, ))
             return convertCursorToDict(cur)
 
 # マージ結果（仕掛）
-def _loadmerge_wip(yyyymm : str):
+def _loadmerge_wip(yyyymm : str, version : str):
     sql = "select "\
         "      m_topic_info.project_nm "\
         "    , cost_labor "\
@@ -569,14 +575,14 @@ def _loadmerge_wip(yyyymm : str):
         "    left join m_topic_info  "\
         "        on t_wip_project_info.order_detail = m_topic_info.order_detail  "\
         "where "\
-        "    manage_id in (select wip_id from t_merge_target where fiscal_date = %s) "\
+        "    manage_id in (select wip_id from t_merge_target where fiscal_date = %s and version = %s) "\
         "order by "\
         "    t_wip_project_info.order_detail  "
 
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                sql, (yyyymm, ))
+                sql, (yyyymm, version, ))
             return convertCursorToDict(cur)
 
 def _loatmerge_perv_wip(yyyymm:str):
@@ -602,7 +608,7 @@ def _loatmerge_perv_wip(yyyymm:str):
             return convertCursorToDict(cur)
 
 # マージ結果（HARMOS）
-def _loadmerge_hrmos(yyyymm : str):
+def _loadmerge_hrmos(yyyymm : str, version : str):
     sql = "select "\
         "      apply_no "\
         "    , applicant "\
@@ -611,7 +617,7 @@ def _loadmerge_hrmos(yyyymm : str):
         "from "\
         "    t_hrmos_expense  "\
         "where "\
-        "    manage_id in (select hrmos_id from t_merge_target where fiscal_date = %s) "\
+        "    manage_id in (select hrmos_id from t_merge_target where fiscal_date = %s and version = %s) "\
         "order by "\
         "    case "\
         "        when job_cd is null "\
@@ -626,7 +632,7 @@ def _loadmerge_hrmos(yyyymm : str):
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                sql, (yyyymm, ))
+                sql, (yyyymm, version, ))
             return convertCursorToDict(cur)
 
 # 勘定年月取得
