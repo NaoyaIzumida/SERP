@@ -207,7 +207,7 @@ const UploadPage: React.FC = () => {
           )}
         </Grid>
         {/* HistoryArea */}
-        <Grid item lg={3} alignItems="stretch">
+        <Grid item lg={2} alignItems="stretch">
           <Paper
             sx={{
               p: 2,
@@ -297,7 +297,7 @@ const UploadPage: React.FC = () => {
           </Paper>
         </Grid>
         {/* DataArea */}
-        <Grid item lg={9} alignItems="stretch">
+        <Grid item lg={10} alignItems="stretch">
           <Paper
             sx={{
               p: 2,

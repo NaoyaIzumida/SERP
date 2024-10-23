@@ -240,7 +240,7 @@ const MergePage: React.FC = () => {
           </Paper>
         </Grid>
         {/* HistoryArea */}
-        <Grid item lg={3} alignItems="stretch">
+        <Grid item lg={2} alignItems="stretch">
           <Paper
             sx={{
               p: 2,
@@ -360,7 +360,7 @@ const MergePage: React.FC = () => {
           </Paper>
         </Grid>
         {/* DataArea */}
-        <Grid item lg={9} alignItems="stretch">
+        <Grid item lg={10} alignItems="stretch">
           <Paper
             sx={{
               p: 2,
