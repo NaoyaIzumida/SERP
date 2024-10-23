@@ -48,7 +48,7 @@ interface GridDataItem {
 }
 
 const UploadPage: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs());    // DatePickerの選択状態
+  const [selectedDate, setSelectedDate] = useState<Dayjs | null>(dayjs().subtract(1, 'month'));    // DatePickerの選択状態
   const [dataItem, setDataItem] = useState<FileListItem[]>([]);               // 検索時APIから受け取るデータ
   const [loading, setLoading] = useState(false);                              // API呼び出し中かどうかのフラグ
   const [gridData, setGridData] = useState<GridDataItem[]>([]);               // GridDataItem に表示するデータ
@@ -64,7 +64,7 @@ const UploadPage: React.FC = () => {
 
   // 選択された日付を 'YYYYMM' フォーマットに変換
   const getFormattedDate = (): string => {
-    return selectedDate ? selectedDate.format('YYYYMM') : dayjs().format('YYYYMM');
+    return selectedDate ? selectedDate.format('YYYYMM') : dayjs().subtract(1, 'month').format('YYYYMM');
   };
 
   // API呼び出し関数(検索)
@@ -151,7 +151,11 @@ const UploadPage: React.FC = () => {
         setMessage('データを削除しました。');
         setSnackbarSeverity('success'); // 成功タイプに設定
         setOpenSnackbar(true);
-        setDataItem(response.data.result);
+
+        setDataItem([]);                // 削除成功後にデータグリッドをクリアする
+        setGridData([]);                // DataGrid を初期化
+        setColumns([]);
+        fetchData();                    // ここでデータを再取得してリフレッシュ
       }
 
     } catch (error) {
@@ -207,7 +211,7 @@ const UploadPage: React.FC = () => {
           )}
         </Grid>
         {/* HistoryArea */}
-        <Grid item lg={2} alignItems="stretch">
+        <Grid item lg={3} alignItems="stretch">
           <Paper
             sx={{
               p: 2,
@@ -229,7 +233,7 @@ const UploadPage: React.FC = () => {
                   <DatePicker
                     label="Account Months"
                     format="YYYYMM"
-                    defaultValue={dayjs()}
+                    defaultValue={dayjs().subtract(1, 'month')}  // 1ヶ月前の日付を設定
                     views={['year', 'month']} // 年月のみ選択可能にする
                     value={selectedDate}
                     onChange={(newDate) => {
@@ -297,7 +301,7 @@ const UploadPage: React.FC = () => {
           </Paper>
         </Grid>
         {/* DataArea */}
-        <Grid item lg={10} alignItems="stretch">
+        <Grid item lg={9} alignItems="stretch">
           <Paper
             sx={{
               p: 2,
