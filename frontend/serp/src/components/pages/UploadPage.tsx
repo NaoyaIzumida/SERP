@@ -167,12 +167,89 @@ const UploadPage: React.FC = () => {
     }
   };
 
-  const onDrop = useCallback((files: File[]) => {
-    // ここでファイルの処理を行います
-    <Alert severity="error">OK</Alert>;
-    console.log('files:', files);
+// API呼び出し関数（ファイルアップロード）
+const uploadFile = async (file: File, fiscalDate: string, fileNm: string, fileDiv: string) => {
+  const formData = new FormData();
+  formData.append('uploadFile', file);
+  formData.append('fiscal_date', fiscalDate);
+  formData.append('file_nm', fileNm);
+  formData.append('file_div', fileDiv);
+
+  try {
+    const response = await apiClient.post('/fileupload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    // レスポンスをチェックして必要に応じてエラーメッセージや成功メッセージを表示
+    if (response.data.status === 0) {
+      setMessage('アップロードに成功しました。');
+      setSnackbarSeverity('success'); // 成功タイプに設定
+      setOpenSnackbar(true);
+    } else {
+      setMessage('アップロードに失敗しました。');
+      setSnackbarSeverity('warning'); // 警告タイプに設定
+      setOpenSnackbar(true);
+    }
+  } catch (error) {
+    setMessage('アップロードError');
+    setSnackbarSeverity('error'); // 警告タイプに設定
+    setOpenSnackbar(true);
+  }
+};
+
+// ファイルから勘定年月・ファイル名・ファイル区分を決定
+const parseFileName = (fileName: string) => {
+  // fiscalDateを抽出 (YYYYMMフォーマット) - 和暦対応
+  let fiscalDate = '';
+  
+  // 西暦が含まれている場合
+  const dateMatch = fileName.match(/\d{4}(年)(\d{1,2})月/);
+  if (dateMatch) {
+    const year = dateMatch[0].substring(0, 4);    // 2024年の場合、2024を取得
+    const month = dateMatch[2].padStart(2, '0');  // 9月 -> 09 に変換
+    fiscalDate = `${year}${month}`;
+  } else {
+    // 他の形式で6桁の年月がある場合に対応
+    const defaultMatch = fileName.match(/\d{6}/);
+    if (defaultMatch) {
+      fiscalDate = defaultMatch[0]; // 202409など
+    }
+  }
+
+  // fileNmは拡張子を除いた部分を使用
+  const fileNm = fileName.replace(/\.[^/.]+$/, ''); // 拡張子を削除
+
+  // fileDivの判定
+  let fileDiv = '';
+  if (fileNm.includes('HRMOS経費')) {
+    fileDiv = 'H';
+  } else if (fileNm.includes('仕掛PJ台帳')) {
+    fileDiv = 'W';
+  } else if (fileNm.includes('完成PJ台帳')) {
+    fileDiv = 'F';
+  }
+
+  return { fiscalDate, fileNm, fileDiv };
+};
+
+  // Dropzoneのコールバック
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length === 1) {
+      const file = acceptedFiles[0];
+      const { fiscalDate, fileNm, fileDiv } = parseFileName(file.name); // ファイル名から情報を取得
+
+      console.log('fiscalDate:', fiscalDate);
+      console.log('fileNm:', fileNm);
+      console.log('fileDiv:', fileDiv);
+
+      // ファイルのアップロードを実行
+      uploadFile(file, fiscalDate, fileNm, fileDiv);
+    }
   }, []);
 
+  // Dropzoneの設定
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     maxFiles: 1,
