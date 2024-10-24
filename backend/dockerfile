@@ -17,6 +17,8 @@ RUN pip install --upgrade Flask
 RUN pip install --upgrade flask_cors
 RUN pip install --upgrade uwsgi
 RUN pip install --upgrade openpyxl
+RUN pip install --upgrade python-dateutil
+RUN pip install --upgrade pandas
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=development
 
