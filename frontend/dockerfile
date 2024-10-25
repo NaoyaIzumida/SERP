@@ -1,6 +1,12 @@
 # React
 FROM node:latest
 
+# 作業ディレクトリを設定
+WORKDIR /app
+
+# パッケージファイルをコピー
+COPY ./serp/package.json ./serp/package-lock.json ./
+
 RUN apt-get update
 RUN apt-get -y install locales && \
     localedef -f UTF-8 -i ja_JP ja_JP.UTF-8
@@ -9,7 +15,8 @@ ENV LANGUAGE jp_JP:ja
 ENV LC_ALL ja_JP.UTF-8
 ENV TZ JST-9
 ENV WATCHPACK_POLLING=true
+ENV VITE_API_BASE_URL=http://flask:5000/serp/api/
 
-RUN npm install -g create-react-app@latest
-# frontend用フォルダ
-WORKDIR /usr/frontend/serp
+RUN npm install
+# 実行用サーバの起動
+CMD ["npm", "run", "serv"]

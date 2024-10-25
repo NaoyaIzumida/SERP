@@ -1,14 +1,14 @@
-version: "3"
+version: '3'
 services:
-#  frontend:
-#    build: ./frontend
-#    container_name: react
-#    hostname: react
-#    tty: true
-#    ports:
-#      - 80:3000
-#    volumes:
-#      - ./react/:/usr/frontend
+  frontend:
+    build: ./frontend
+    container_name: react
+    hostname: react
+    tty: true
+    ports:
+      - 3000:3000
+    volumes:
+      - ./frontend/serp:/app
 
   backend:
     build: ./backend
@@ -19,7 +19,7 @@ services:
       - 5000:5000
     volumes:
       - ./backend/:/app
-      
+
   postgres:
     build: ./postgres
     container_name: postgres
@@ -29,6 +29,6 @@ services:
       - 5433:5432
     volumes:
       - postgres-store:/var/lib/postgresql/data
-
+      - ./postgres/init:/docker-entrypoint-initdb.d
 volumes:
   postgres-store:
