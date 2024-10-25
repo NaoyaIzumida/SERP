@@ -1,11 +1,12 @@
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request, send_file, make_response
 import psycopg2
+from copy import copy
 import datetime
 from dateutil.relativedelta import relativedelta
-import shutil
 import os
+import shutil
 import openpyxl
-from copy import copy
+import pandas as pd
 
 app = Flask(__name__)
 app.json.sort_keys = False
@@ -34,10 +35,22 @@ def convertCursorToDict(cur):
 
     return data_with_column_name
 
-# ファイルアップロード
+# API No.1ファイルアップロード
 @app.route("/serp/api/fileupload", methods=["POST"])
 def fileupload():
-    return jsonify({"status": 0})
+    # エラーチェック
+    if 'uploadFile' not in request.files:
+        return jsonify({"status":-1, 'result':'uploadFile is required.'})
+
+    file = request.files['uploadFile']
+    fileName = file.filename
+    if fileName == '' :
+        return jsonify({"status":-1, 'result':'filename must not empty.'})
+
+    try:
+        return jsonify({"status":_fileupload(file)})
+    except:
+        return jsonify({"status":-1})
 
 # API No.2 ファイル一覧
 @app.route("/serp/api/filelist/<yyyymm>", methods=["GET"])
@@ -149,6 +162,106 @@ def filedownload(yyyymm: str, version: str):
                      mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     return jsonify({"status": 0})
 
+# ファイルアップロード
+def _fileupload(file : any):
+    # リクエストパラメータの受取
+    fiscal_date = request.form["fiscal_date"]
+    file_nm = request.form["file_nm"]
+    file_div = request.form["file_div"]
+
+    # ファイル読込
+    with get_connection() as conn:
+        # ファイル情報マスタ登録
+        manege_id = _insertFileInfo(conn, fiscal_date, file_div, file_nm)
+
+        if file_div == 'H':
+            df = pd.read_excel(file, sheet_name=0, skipfooter=1, skiprows=5, usecols=['申請No.', '申請書', '申請者', 'TSジョブコード', '金額'], dtype=object)
+            df_no_na = df.dropna(subset=['申請No.'])
+            
+            for index, data in df_no_na.iterrows():
+                apply_no = data[0]      #申請No.
+                apply_type = data[1]    #申請書
+                applicant = data[2]     #申請者
+                job_cd = data[3]        #TSジョブコード
+                cost = data[4]          #金額
+
+                # HRMOS経費分原価登録
+                _insertHrmosExpense(conn, manege_id, apply_no, apply_type, applicant, job_cd, cost)
+        else:
+            df = pd.read_excel(file, sheet_name=0, skipfooter=1, skiprows=1)
+
+            for index, data in df.iterrows():
+                div_cd = data[0]                    #原価部門コード
+                orders = str(data[2]).split('-')    #原価部門コード
+                order_detail = orders[0]            #受注明細
+                order_rowno = orders[1]             #受注行番号
+                project_nm = data[3]                #契約工事略名
+                customer = data[4]                  #得意先名
+                cost_material = data[5]             #材料費
+                cost_labor = data[6]                #労務費
+                cost_subcontract = data[7]          #外注費
+                cost = data[8]                      #経費
+                sales = data[9]                     #売上高
+            
+                match file_div:
+                    case "F":
+                        _insertFgFileInfo(conn, manege_id, div_cd, order_detail, order_rowno, customer, cost_material, cost_labor, cost_subcontract, cost, sales)
+                    case "W":
+                        _insertWipFileInfo(conn, manege_id, div_cd, order_detail, order_rowno, customer, cost_material, cost_labor, cost_subcontract, cost)
+            
+                _insertTopicInfo(conn, order_detail, project_nm)
+
+    return 0
+
+# 新規管理ID採番
+def _getNextManageID(conn : any):
+    with conn.cursor() as cur:
+        cur.execute(
+            "select coalesce(cast(max(cast(manage_id as numeric)) + 1 as varchar(23)), '1') as manage_id from m_file_info")
+        res = cur.fetchone()
+        if res is None:
+            return '1'
+        return res[0]
+
+# 新規バージョン採番
+def _getNextVersion(conn : any, fiscal_date : str, file_div : str):
+    with conn.cursor() as cur:
+        cur.execute(
+            "select coalesce(cast(max(cast(version as numeric)) + 1 as varchar(2)), '1') as version from m_file_info where fiscal_date = %s and file_div = %s", (fiscal_date, file_div))
+        res = cur.fetchone()
+        if res is None:
+            return '0'
+        return res[0]
+
+# ファイル管理登録
+def _insertFileInfo(conn : any, fiscal_date : str, file_div : str, file_name : str):
+    manage_id = _getNextManageID(conn)
+    version = _getNextVersion(conn, fiscal_date, file_div)
+ 
+    with conn.cursor() as cur:
+        cur.execute("insert into m_file_info (manage_id,fiscal_date,version,file_div,file_nm) values (%s, %s, %s, %s, %s)", (manage_id, fiscal_date, version, file_div, file_name))
+   
+    return manage_id
+
+# HRMOS経費分原価登録
+def _insertHrmosExpense(conn : any, manage_id : str, apply_no : str, apply_type : str, applicant : str, job_cd : str, cost : str):
+    with conn.cursor() as cur:
+        cur.execute("insert into t_hrmos_expense (manage_id,apply_no,apply_type,applicant,job_cd,cost) values (%s, %s, %s, %s, %s, %s)", (manage_id, apply_no, apply_type, applicant, job_cd, cost))
+
+# 完成PJ台帳登録
+def _insertFgFileInfo(conn : any, manage_id : str, div_cd : str, order_detail : str, order_rowno : str, customer : str, cost_material : str, cost_labor : str, cost_subcontract : str, cost : str, sales : str):
+    with conn.cursor() as cur:
+        cur.execute("insert into t_fg_project_info (manage_id,div_cd,order_detail,order_rowno,customer,cost_material,cost_labor,cost_subcontract,cost,sales) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (manage_id, div_cd, order_detail, order_rowno, customer, cost_material, cost_labor, cost_subcontract, cost, sales))
+
+# 仕掛PJ台帳登録
+def _insertWipFileInfo(conn : any, manage_id : str, div_cd : str, order_detail : str, order_rowno : str, customer : str, cost_material : str, cost_labor : str, cost_subcontract : str, cost : str):
+    with conn.cursor() as cur:
+        cur.execute("insert into t_wip_project_info (manage_id,div_cd,order_detail,order_rowno,customer,cost_material,cost_labor,cost_subcontract,cost) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (manage_id, div_cd, order_detail, order_rowno, customer, cost_material, cost_labor, cost_subcontract, cost))
+
+# 案件情報登録
+def _insertTopicInfo(conn : any, order_detail : str, project_nm : str):
+    with conn.cursor() as cur:
+        cur.execute("insert into m_topic_info (order_detail,project_nm) select %s, %s where not exists(SELECT order_detail FROM m_topic_info WHERE order_detail = %s)", (order_detail, project_nm, order_detail))
 
 # ファイル情報マスタから勘定年月を指定して取得
 def _filelist(yyyymm: str):
@@ -227,7 +340,7 @@ def _filemergedetail(yyyymm: str, version: str):
             return convertCursorToDict(cur)
 
 # マージ要求
-def _filemerge(manage_ids, fiscal_date):
+def _filemerge(manage_ids:str, fiscal_date:str):
     #delete_result_sql = "delete from t_merge_result where fiscal_date = %s"
     #delete_target_sql = "delete from t_merge_target where fiscal_date = %s"
     select_version_sql = "select version from t_merge_target where fiscal_date = %s order by version desc" 
@@ -311,6 +424,9 @@ def _filemerge(manage_ids, fiscal_date):
                         fg = manage_id
                     case 'W':
                         wip = manage_id
+                        # 勘定年月分の仕掛情報テーブルを洗替え
+                        cur.execute("delete from t_wip_info where fiscal_date = %s", (fiscal_date,))
+                        cur.execute("insert into t_wip_info (fiscal_date,order_detail,cost_labor,cost_subcontract,cost) select %s as fiscal_date, order_detail, cost_labor, cost_subcontract, cost from t_wip_project_info where manage_id = %s", (fiscal_date, manage_id,))
                     case 'H':
                         hrmos = manage_id
             cur.execute(insert_target_sql, (fiscal_date, version, fg,wip,hrmos,))
@@ -438,21 +554,21 @@ def _filedownload(yyyymm : str, version : str):
     
    # 完成PJ＋仕掛PJ
     total_start_row = row
-    for item in result_fg:
-        ws.cell(row, 3, item['project_nm'])   # 件名
-        ws.cell(row, 4, item['cost_labor'])   # 労務費
-        ws.cell(row, 5, item['cost_subcontract'])   # 外注費
-        ws.cell(row, 6, item['cost'])   # 旅費交通費
-        #ws.cell(row, 8, '=SUM(D' + str(row) + ':F' + str(row) + ')')   # 合計
-        row += 1   
+    for item in result:
+        if item['product_div'] == '1':
+            ws.cell(row, 3, item['project_nm'])   # 件名
+            ws.cell(row, 4, item['cost_labor'])   # 労務費
+            ws.cell(row, 5, item['cost_subcontract'])   # 外注費
+            ws.cell(row, 6, item['cost'])   # 旅費交通費
+            row += 1   
     row = total_start_row + 15
-    for item in result_wip:
-        ws.cell(row, 3, item['project_nm'])   # 件名
-        ws.cell(row, 4, item['cost_labor'])   # 労務費
-        ws.cell(row, 5, item['cost_subcontract'])   # 外注費
-        ws.cell(row, 6, item['cost'])   # 旅費交通費
-        #ws.cell(row, 8, '=SUM(D' + str(row) + ':F' + str(row) + ')')   # 合計
-        row += 1   
+    for item in result:
+        if item['product_div'] == '2':
+            ws.cell(row, 3, item['project_nm'])   # 件名
+            ws.cell(row, 4, item['cost_labor'])   # 労務費
+            ws.cell(row, 5, item['cost_subcontract'])   # 外注費
+            ws.cell(row, 6, item['cost'])   # 旅費交通費
+            row += 1   
     for index in range(23):
         ws.cell(total_start_row + index, 8, '=SUM(D' + str(total_start_row + index) + ':F' + str(total_start_row + index) + ')')   # 合計
         
@@ -466,7 +582,7 @@ def _filedownload(yyyymm : str, version : str):
     #HRMOS経費
     hrmos_start_row = row
     for item in result_hrmos:
-        ws.cell(row, 3, item['applicant'])   # 区分
+        ws.cell(row, 3, item['apply_type'] + "：" + item['applicant'])   # 区分
         ws.cell(row, 4, item['job_cd'])   # TSジョブコード
         ws.cell(row, 5, item['cost'])   # 金額
         row += 1   
@@ -617,6 +733,7 @@ def _loatmerge_perv_wip(yyyymm:str):
 def _loadmerge_hrmos(yyyymm : str, version : str):
     sql = "select "\
         "      apply_no "\
+        "    , apply_type "\
         "    , applicant "\
         "    , job_cd "\
         "    , cost "\
