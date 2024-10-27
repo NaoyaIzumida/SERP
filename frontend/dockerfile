@@ -17,6 +17,6 @@ ENV TZ JST-9
 ENV WATCHPACK_POLLING=true
 ENV VITE_API_BASE_URL=http://flask:5000/serp/api/
 
-RUN npm install
+RUN yarn install
 # 実行用サーバの起動
-CMD ["npm", "run", "serv"]
+CMD ["npm", "run", "build"]
