@@ -1,14 +1,16 @@
 version: '3'
 services:
   frontend:
-    build: ./frontend
+    build: ./frontend/serp
     container_name: react
     hostname: react
     tty: true
     ports:
-      - 3000:3000
-    volumes:
-      - ./frontend/serp:/app
+      - 3000:80
+    depends_on:
+      - backend
+    networks:
+      - production_nw
 
   backend:
     build: ./backend
@@ -19,6 +21,10 @@ services:
       - 5000:5000
     volumes:
       - ./backend/:/app
+    depends_on:
+      - postgres
+    networks:
+      - production_nw
 
   postgres:
     build: ./postgres
@@ -30,5 +36,11 @@ services:
     volumes:
       - postgres-store:/var/lib/postgresql/data
       - ./postgres/init:/docker-entrypoint-initdb.d
+    networks:
+      - production_nw
 volumes:
   postgres-store:
+
+networks:
+  production_nw:
+    driver: bridge
