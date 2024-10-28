@@ -182,7 +182,10 @@ def _fileupload(file : any):
                 apply_no = data[0]      #申請No.
                 apply_type = data[1]    #申請書
                 applicant = data[2]     #申請者
-                job_cd = data[3]        #TSジョブコード
+                if (str(data[3])) == 'nan':
+                    job_cd = ""         #TSジョブコード
+                else:
+                    job_cd = data[3] 
                 cost = data[4]          #金額
 
                 # HRMOS経費分原価登録
@@ -291,9 +294,9 @@ def _filemergelist(yyyymm: str):
 # データ取得
 def _filedetail(manage_id: str):
     query = {
-        'F': 'select * from t_fg_project_info where manage_id = %s',
-        'W': 'select * from t_wip_project_info where manage_id = %s',
-        'H': 'select * from t_hrmos_expense where manage_id = %s'
+        'F': 'select f.div_cd AS "原価部門コード", md.div_nm as "原価部門名", f.order_detail as "受注明細", f.order_rowno as "受注行番号", mti.project_nm as "契約工事略名", f.customer as "得意先名", coalesce(cost_material, 0) as "材料費", coalesce(cost_labor, 0) as "労務費", coalesce(cost_subcontract, 0) as "外注費", coalesce(cost, 0) as "経費", coalesce(sales, 0) as "売上高" from t_fg_project_info f left join m_topic_info mti on f.order_detail = mti.order_detail left join m_div md on f.div_cd = md.div_cd where manage_id = %s',
+        'W': 'select w.div_cd AS "原価部門コード", md.div_nm as "原価部門名", w.order_detail as "受注明細", w.order_rowno as "受注行番号", mti.project_nm as "契約工事略名", w.customer as "得意先名", coalesce(cost_material, 0) as "材料費", coalesce(cost_labor, 0) as "労務費", coalesce(cost_subcontract, 0) as "外注費", coalesce(cost, 0) as "経費" from t_wip_project_info w left join m_topic_info mti on w.order_detail = mti.order_detail left join m_div md on w.div_cd = md.div_cd where manage_id = %s',
+        'H': 'select apply_no as "申請No", apply_type as "申請書", applicant as "申請者", job_cd as "TSジョブコード", cost as "経費" from t_hrmos_expense where manage_id = %s'
     }
 
     with get_connection() as conn:
@@ -804,4 +807,4 @@ def _getPrevMonth(yyyymm : str):
 
 # デバッグ用サーバー起動
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True,host='0.0.0.0',port=5000)
