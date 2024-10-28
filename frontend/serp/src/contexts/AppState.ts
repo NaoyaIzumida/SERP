@@ -1,6 +1,8 @@
-import { createContext } from "react";
+import { createContext, Dispatch, SetStateAction } from "react";
 
-export const menuContext = createContext({
-  isOpened: false,
-  setOpened: (isOpen: boolean) => {}
-});
+type MenuContextType = {
+  isOpened: boolean;
+  setOpened: Dispatch<SetStateAction<boolean>>;
+} | undefined;
+
+export const menuContext = createContext<MenuContextType>(undefined);

@@ -12,11 +12,11 @@ import "./App.css";
 import { Main } from "./components/Main";
 
 const App: React.FC = () => {
-  const [isOpened, setOpened] = React.useState(false);
+  const [isOpened, setIsOpened] = React.useState(false);
 
   return (
     <BrowserRouter>
-      <menuContext.Provider value={{ isOpened, setOpened }}>
+      <menuContext.Provider value={{ isOpened, setOpened: setIsOpened }}>
         <Box sx={{ display: "flex" }}>
           <CssBaseline />
           {/* AppBar */}

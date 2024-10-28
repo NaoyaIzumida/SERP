@@ -7,10 +7,12 @@ import logo from "../images/logo.png";
 
 export const MyAppBar = () => {
   // AppState.ts の menuContext を引数に与える
-  const { isOpened, setOpened } = useContext(menuContext);
+  const context = useContext(menuContext);
+  if (!context) {
+    throw new Error("MenuComponent must be used within a MenuProvider");
+  }
 
-  // menuContext の isOpened プロパティを切り替える
-  const toggleOpen = () => setOpened(!isOpened);
+  const { isOpened, setOpened } = context;
 
   return (
     <>
@@ -24,7 +26,7 @@ export const MyAppBar = () => {
               color="inherit"
               aria-label="open drawer"
               edge="end"
-              onClick={toggleOpen}
+              onClick={() => setOpened(!isOpened)}
               sx={{ mr: 2 }}
             >
               <MenuIcon />
