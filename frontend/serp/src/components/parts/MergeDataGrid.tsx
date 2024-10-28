@@ -33,13 +33,13 @@ const MergeDataGrid: React.FC<MergeDataGridProps> = ({ gridData, columns }) => {
   }));
 
   return (
-    <div style={{ height: 650, width: '100%' }}>
+    <div style={{ height: 640, width: '100%' }}>
       <DataGrid
         rows={rowsWithUniqueId}
         columns={columnsWithAutoWidth}
         initialState={{
           pagination: {
-            paginationModel: { pageSize: 5 },
+            paginationModel: { pageSize: 10 },
           },
         }}
         pagination  // 追加: Paginationを有効化

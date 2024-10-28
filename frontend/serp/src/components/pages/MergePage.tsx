@@ -270,7 +270,7 @@ const MergePage: React.FC = () => {
             sx={{
               p: 2,
               width: '100%',
-              height: '75vh',
+              height: '73vh',
               display: 'flex',
               flexDirection: 'column',
             }}
@@ -390,7 +390,7 @@ const MergePage: React.FC = () => {
           <Paper
             sx={{
               p: 2,
-              height: '75vh',
+              height: '73vh',
               display: 'flex',
               flexDirection: 'column',
             }}

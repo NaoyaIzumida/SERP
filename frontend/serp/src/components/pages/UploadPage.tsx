@@ -293,7 +293,7 @@ const parseFileName = (fileName: string) => {
             sx={{
               p: 2,
               width: '100%',
-              height: '75vh',
+              height: '73vh',
               display: 'flex',
               flexDirection: 'column',
             }}
@@ -382,7 +382,7 @@ const parseFileName = (fileName: string) => {
           <Paper
             sx={{
               p: 2,
-              height: '75vh',
+              height: '73vh',
               display: 'flex',
               flexDirection: 'column',
             }}
