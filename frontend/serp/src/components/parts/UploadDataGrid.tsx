@@ -16,7 +16,7 @@ const UploadDataGrid: React.FC<UploadDataGridProps> = ({ gridData, columns }) =>
   };
 
   // 各列に対して flex を割り当てる
-  const columnsWithAutoWidth = columns.map((col) => ({
+  const columnsWithAutoWidth: GridColDef[] = columns.map((col) => ({
     ...col,
     flex: 1,  // 全ての列が自動的に同じ割合で幅を調整する
     align: typeof gridData[0]?.[col.field] === 'number' ? 'right' : 'left',       // 数値列の場合は右詰め
@@ -37,7 +37,12 @@ const UploadDataGrid: React.FC<UploadDataGridProps> = ({ gridData, columns }) =>
       <DataGrid
         rows={rowsWithUniqueId}
         columns={columnsWithAutoWidth}
-        pageSize={5}
+        initialState={{
+          pagination: {
+            paginationModel: { pageSize: 5 },
+          },
+        }}
+        pagination  // 追加: Paginationを有効化
         getRowId={(row) => row.id || row.manage_id || row[Object.keys(row)[0]]}   // 任意の一意なキーを指定
         autoHeight={false}                                                        // DataGridの高さをPaperに依存させる
       />
