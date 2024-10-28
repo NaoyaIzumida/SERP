@@ -182,7 +182,10 @@ def _fileupload(file : any):
                 apply_no = data[0]      #申請No.
                 apply_type = data[1]    #申請書
                 applicant = data[2]     #申請者
-                job_cd = data[3]        #TSジョブコード
+                if (str(data[3])) == 'nan':
+                    job_cd = ""         #TSジョブコード
+                else:
+                    job_cd = data[3] 
                 cost = data[4]          #金額
 
                 # HRMOS経費分原価登録
