@@ -333,10 +333,32 @@ def _getfilediv(conn: any, manage_id: str):
 
 # マージ結果テーブルから勘定年月とバージョンを指定して取得
 def _filemergedetail(yyyymm: str, version: str):
+    sql = ""\
+    "select "\
+    "      case "\
+    "        when t.product_div = '1' "\
+    "            then '' "\
+    "        when t.product_div = '2' "\
+    "            then '○' "\
+    "        end as 繰越対象 "\
+    "    , t.order_detail as 受注明細 "\
+    "    , mti.project_nm as 件名"\
+    "    , coalesce(cost_labor, 0)                as 労務費 "\
+    "    , coalesce(cost_subcontract, 0)          as 外注費 "\
+    "    , coalesce(cost, 0)                      as 旅費交通費 "\
+    "    , coalesce(change_value, 0)              as 翌月繰越    "\
+    "from "\
+    "    t_merge_result t "\
+    "    left join m_topic_info mti "\
+    "        on t.order_detail = mti.order_detail "\
+    "where "\
+    "    t.fiscal_date = %s "\
+    "    and t.version = %s"
+
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                'select * from t_merge_result where fiscal_date = %s and version = %s', (yyyymm, version))
+                sql, (yyyymm, version))
             return convertCursorToDict(cur)
 
 # マージ要求
