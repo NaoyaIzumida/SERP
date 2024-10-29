@@ -110,6 +110,10 @@ const MergePage: React.FC = () => {
         setMessage('一致するファイル一覧がありません。');
         setSnackbarSeverity('warning'); // 警告タイプに設定
         setOpenSnackbar(true);
+
+        setDataItem([]);                // 削除成功後にデータグリッドをクリアする
+        setGridData([]);                // DataGrid を初期化
+        setColumns([]);
       } else {
         setMessage('データを取得しました。');
         setSnackbarSeverity('success'); // 成功タイプに設定

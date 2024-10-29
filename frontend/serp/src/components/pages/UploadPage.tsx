@@ -77,6 +77,10 @@ const UploadPage: React.FC = () => {
         setMessage('一致するデータがありません。');
         setSnackbarSeverity('warning'); // 警告タイプに設定
         setOpenSnackbar(true);
+
+        setDataItem([]);                // 削除成功後にデータグリッドをクリアする
+        setGridData([]);                // DataGrid を初期化
+        setColumns([]);
       } else {
         setMessage('データを取得しました。');
         setSnackbarSeverity('success'); // 成功タイプに設定
@@ -239,10 +243,6 @@ const parseFileName = (fileName: string) => {
     if (acceptedFiles.length === 1) {
       const file = acceptedFiles[0];
       const { fiscalDate, fileNm, fileDiv } = parseFileName(file.name); // ファイル名から情報を取得
-
-      console.log('fiscalDate:', fiscalDate);
-      console.log('fileNm:', fileNm);
-      console.log('fileDiv:', fileDiv);
 
       // ファイルのアップロードを実行
       uploadFile(file, fiscalDate, fileNm, fileDiv);
