@@ -340,7 +340,7 @@ def _filemergedetail(yyyymm: str, version: str):
     "        when t.product_div = '1' "\
     "            then '' "\
     "        when t.product_div = '2' "\
-    "            then '○' "\
+    "            then '対象' "\
     "        end as 繰越対象 "\
     "    , t.order_detail as 受注明細 "\
     "    , mti.project_nm as 件名"\
