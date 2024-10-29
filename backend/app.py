@@ -68,7 +68,11 @@ def filelist(yyyymm : str) :
 @app.route("/serp/api/filemergelist/<yyyymm>", methods=["GET"])
 def filemergelist(yyyymm: str):
   try:
-    return jsonify({"status":0, "result": _filemergelist(yyyymm)})
+    result = _filemergelist(yyyymm)
+    if result == []:
+        return jsonify({"status":1, "result":result})
+    else:
+        return jsonify({"status":0, "result":result})
   except:
     return jsonify({"status":-1})
 
@@ -95,12 +99,6 @@ def filedelete(manage_id: str):
         return jsonify({"status": 0, "result": _filedelete(manage_id)})
     except:
         return jsonify({"status": -1})
-
-# ファイル照合
-@app.route("/serp/api/filematching", methods=["PUT"])
-def filematching():
-    return jsonify({"status": 0, "result": "Oops!"})
-
 
 # API No.8 マージ要求
 @app.route("/serp/api/filemerge", methods=["PUT"])
