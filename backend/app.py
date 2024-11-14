@@ -193,7 +193,7 @@ def _fileupload(file : any):
 
             for index, data in df.iterrows():
                 div_cd = data[0]                    #原価部門コード
-                orders = str(data[2]).split('-')    #原価部門コード
+                orders = str(data[2]).split('-')    #受注明細＋受注行番号＋部門コード
                 order_detail = orders[0]            #受注明細
                 order_rowno = orders[1]             #受注行番号
                 project_nm = data[3]                #契約工事略名
@@ -202,7 +202,7 @@ def _fileupload(file : any):
                 cost_labor = data[6]                #労務費
                 cost_subcontract = data[7]          #外注費
                 cost = data[8]                      #経費
-                sales = data[9]                     #売上高
+                sales = data[10]                    #売上高
             
                 match file_div:
                     case "F":
