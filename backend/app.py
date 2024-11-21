@@ -202,7 +202,11 @@ def _fileupload(file : any):
                 cost_labor = data[6]                #労務費
                 cost_subcontract = data[7]          #外注費
                 cost = data[8]                      #経費
-                sales = data[10]                    #売上高
+                match file_div:
+                    case "F":
+                        sales = data[10]            #売上高
+                    case "W":
+                        sales = data[9]             #売上高
             
                 match file_div:
                     case "F":
