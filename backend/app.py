@@ -172,46 +172,70 @@ def _fileupload(file : any):
         # ファイル情報マスタ登録
         manege_id = _insertFileInfo(conn, fiscal_date, file_div, file_nm)
 
-        if file_div == 'H':
-            df = pd.read_excel(file, sheet_name=0, skipfooter=1, skiprows=5, usecols=['申請No.', '申請書', '申請者', 'TSジョブコード', '金額'], dtype=object)
-            df_no_na = df.dropna(subset=['申請No.'])
-            
-            for index, data in df_no_na.iterrows():
-                apply_no = data[0]      #申請No.
-                apply_type = data[1]    #申請書
-                applicant = data[2]     #申請者
-                if (str(data[3])) == 'nan':
-                    job_cd = ""         #TSジョブコード
-                else:
-                    job_cd = data[3] 
-                cost = data[4]          #金額
+        # ファイル区分別登録処理
+        match file_div:
+            case "F":   # 完成プロジェクト
+                # Excelファイル読み込み
+                df = pd.read_excel(file, sheet_name=0, skipfooter=1, skiprows=1)
 
-                # HRMOS経費分原価登録
-                _insertHrmosExpense(conn, manege_id, apply_no, apply_type, applicant, job_cd, cost)
-        else:
-            df = pd.read_excel(file, sheet_name=0, skipfooter=1, skiprows=1)
+                # 取得内容を1行・1カラムずつ分解して登録
+                for index, data in df.iterrows():
+                    div_cd = data[0]                    #原価部門コード
+                    orders = str(data[2]).split('-')    #受注明細＋受注行番号＋部門コード
+                    order_detail = orders[0]            #受注明細
+                    order_rowno = orders[1]             #受注行番号
+                    project_nm = data[3]                #契約工事略名
+                    customer = data[4]                  #得意先名
+                    cost_material = data[5]             #材料費
+                    cost_labor = data[6]                #労務費
+                    cost_subcontract = data[7]          #外注費
+                    cost = data[8]                      #経費
+                    sales = data[10]                    #売上高
 
-            for index, data in df.iterrows():
-                div_cd = data[0]                    #原価部門コード
-                orders = str(data[2]).split('-')    #受注明細＋受注行番号＋部門コード
-                order_detail = orders[0]            #受注明細
-                order_rowno = orders[1]             #受注行番号
-                project_nm = data[3]                #契約工事略名
-                customer = data[4]                  #得意先名
-                cost_material = data[5]             #材料費
-                cost_labor = data[6]                #労務費
-                cost_subcontract = data[7]          #外注費
-                cost = data[8]                      #経費
-                sales = data[10]                    #売上高
-            
-                match file_div:
-                    case "F":
-                        _insertFgFileInfo(conn, manege_id, div_cd, order_detail, order_rowno, customer, cost_material, cost_labor, cost_subcontract, cost, sales)
-                    case "W":
-                        _insertWipFileInfo(conn, manege_id, div_cd, order_detail, order_rowno, customer, cost_material, cost_labor, cost_subcontract, cost)
-            
-                _insertTopicInfo(conn, order_detail, project_nm)
+                    # 感性情報1レコード登録
+                    _insertFgFileInfo(conn, manege_id, div_cd, order_detail, order_rowno, customer, cost_material, cost_labor, cost_subcontract, cost, sales)
+                    # 案件情報登録
+                    _insertTopicInfo(conn, order_detail, project_nm)
+            case "W":   # 仕掛プロジェクト
+                # Excelファイル読み込み
+                df = pd.read_excel(file, sheet_name=0, skipfooter=1, skiprows=1)
 
+                # 取得内容を1行・1カラムずつ分解して登録
+                for index, data in df.iterrows():
+                    div_cd = data[0]                    #原価部門コード
+                    orders = str(data[2]).split('-')    #受注明細＋受注行番号＋部門コード
+                    order_detail = orders[0]            #受注明細
+                    order_rowno = orders[1]             #受注行番号
+                    project_nm = data[3]                #契約工事略名
+                    customer = data[4]                  #得意先名
+                    cost_material = data[5]             #材料費
+                    cost_labor = data[6]                #労務費
+                    cost_subcontract = data[7]          #外注費
+                    cost = data[8]                      #経費
+
+                    # 仕掛情報1レコード登録
+                    _insertWipFileInfo(conn, manege_id, div_cd, order_detail, order_rowno, customer, cost_material, cost_labor, cost_subcontract, cost)
+                    # 案件情報登録
+                    _insertTopicInfo(conn, order_detail, project_nm)
+            case "H":   # HRMOS経費
+                # Excelファイル読み込み
+                df = pd.read_excel(file, sheet_name=0, skipfooter=1, skiprows=5, usecols=['申請No.', '申請書', '申請者', 'TSジョブコード', '金額'], dtype=object)
+                df_no_na = df.dropna(subset=['申請No.'])
+                
+                # 取得内容を1行・1カラムずつ分解して登録
+                for index, data in df_no_na.iterrows():
+                    apply_no = data[0]      #申請No.
+                    apply_type = data[1]    #申請書
+                    applicant = data[2]     #申請者
+                    if (str(data[3])) == 'nan':
+                        job_cd = ""         #TSジョブコード
+                    else:
+                        job_cd = data[3] 
+                    cost = data[4]          #金額
+
+                    # HRMOS経費分原価登録
+                    _insertHrmosExpense(conn, manege_id, apply_no, apply_type, applicant, job_cd, cost)
+ 
     return 0
 
 # 新規管理ID採番
