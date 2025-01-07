@@ -140,9 +140,6 @@ def filemerge():
                     return jsonify({"status": -1, "result": "指定された管理IDは勘定年月が混在しています"})
                 file_div_result.append(_getfilediv(conn,manage_id))
 
-        if len(set(file_div_result)) != 3:
-            return jsonify({"status": -1, "result": "完成PJ,仕掛PJ,経費の3ファイルを指定してください"})
-
         # マージ処理
         _filemerge(manage_ids, fiscal_date)
 
@@ -463,6 +460,12 @@ def _filemerge(manage_ids:str, fiscal_date:str):
         # マージ処理
         with conn.cursor() as cur:
             cur.execute(merge_sql, (_getPrevMonth(fiscal_date), version, tuple(manage_ids), version, tuple(manage_ids),))
+            
+            # ID初期化
+            fg = '';
+            wip = '';
+            hrmos = '';
+            
             # マージ対象ファイルIDを保存
             for manage_id in manage_ids:
                 file_div = str(_getfilediv(conn,manage_id))
