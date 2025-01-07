@@ -545,15 +545,15 @@ def _filedownload(yyyymm : str, version : str):
     row += 1
     # 空行スキップ
     row += 1
-    ws.cell(row, 4, '=SUM(D3:D' + str(row-2) + ')')  # 
-    ws.cell(row, 5, '=SUM(E3:E' + str(row-2) + ')')  # 
-    ws.cell(row, 6, '=SUM(F3:F' + str(row-2) + ')')  # 
-    ws.cell(row, 7, '=SUM(G3:G' + str(row-2) + ')')  # 
-    ws.cell(row, 8, '=SUM(H3:H' + str(row-2) + ')')  # 
-    ws.cell(row, 9, '=SUM(I3:I' + str(row-2) + ')')  # 
-    ws.cell(row, 10, '=SUM(J3:J' + str(row-2) + ')')  # 
-    ws.cell(row, 11, '=SUM(K3:K' + str(row-2) + ')')  # 
-    ws.cell(row, 12, '=SUM(L3:L' + str(row-2) + ')')  # 
+    ws.cell(row, 4, '=SUM(D2:D' + str(row-2) + ')')  # 
+    ws.cell(row, 5, '=SUM(E2:E' + str(row-2) + ')')  # 
+    ws.cell(row, 6, '=SUM(F2:F' + str(row-2) + ')')  # 
+    ws.cell(row, 7, '=SUM(G2:G' + str(row-2) + ')')  # 
+    ws.cell(row, 8, '=SUM(H2:H' + str(row-2) + ')')  # 
+    ws.cell(row, 9, '=SUM(I2:I' + str(row-2) + ')')  # 
+    ws.cell(row, 10, '=SUM(J2:J' + str(row-2) + ')')  # 
+    ws.cell(row, 11, '=SUM(K2:K' + str(row-2) + ')')  # 
+    ws.cell(row, 12, '=SUM(L2:L' + str(row-2) + ')')  # 
     row += 7
 
     # 完成PJ
