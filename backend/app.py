@@ -511,9 +511,11 @@ def _filedownload(yyyymm : str, version : str):
     ws.cell(len(result) + 6, 8, '=H' + str(len(result) + 5) + '+I' + str(len(result) + 5))
     
     row = 3
+    noIndirect = 0;
     for item in result:
         if item['order_detail'] == 'ZAB202300017':
             indirect = copy(item)
+            noIndirect = 1;
             continue
         if item['product_div'] == '2':
             ws.cell(row, 2, "○")  # 繰越(仕掛)
@@ -535,14 +537,16 @@ def _filedownload(yyyymm : str, version : str):
     ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')  # 翌月繰越
     # 計算式を更新（間接プロジェクト）
     row += 1
-    ws.cell(row, 6, indirect['cost_labor'])   # 労務費
-    ws.cell(row, 7, indirect['cost_subcontract'])   # 外注費
-    ws.cell(row, 8, 0)   # 旅費交通費
-    ws.cell(row, 9, indirect['cost'])   # その他
-    ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')  # 小計
-    ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')')  # 振替額
-    ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')  # 翌月繰越
-    row += 1
+    # 間接プロジェクトがある場合のみ
+    if noIndirect == 1:
+        ws.cell(row, 6, indirect['cost_labor'])   # 労務費
+        ws.cell(row, 7, indirect['cost_subcontract'])   # 外注費
+        ws.cell(row, 8, 0)   # 旅費交通費
+        ws.cell(row, 9, indirect['cost'])   # その他
+        ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')  # 小計
+        ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')')  # 振替額
+        ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')  # 翌月繰越
+        row += 1
     # 空行スキップ
     row += 1
     ws.cell(row, 4, '=SUM(D2:D' + str(row-2) + ')')  # 
