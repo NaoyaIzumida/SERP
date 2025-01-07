@@ -117,9 +117,6 @@ def filemerge():
 
         if manage_ids == []:
             return jsonify({"status": -1, "result": "管理IDを指定してください"})
-
-        if len(manage_ids) == 1:
-            return jsonify({"status": -1, "result": "管理IDの指定が1件のためマージ出来ません"})
         
         if len(manage_ids) != len(list(set(manage_ids))):
             return jsonify({"status": -1, "result": "管理IDの指定が重複しています"})
