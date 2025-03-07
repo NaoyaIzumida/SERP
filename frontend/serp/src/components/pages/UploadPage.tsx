@@ -240,19 +240,18 @@ const parseFileName = (fileName: string) => {
 
   // Dropzoneのコールバック
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length === 1) {
-      const file = acceptedFiles[0];
+    acceptedFiles.forEach(file => {
       const { fiscalDate, fileNm, fileDiv } = parseFileName(file.name); // ファイル名から情報を取得
 
       // ファイルのアップロードを実行
       uploadFile(file, fiscalDate, fileNm, fileDiv);
-    }
+    });
   }, []);
 
   // Dropzoneの設定
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    maxFiles: 1,
+    maxFiles: 3,
   });
 
   return (
