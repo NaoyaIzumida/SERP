@@ -117,9 +117,6 @@ def filemerge():
 
         if manage_ids == []:
             return jsonify({"status": -1, "result": "管理IDを指定してください"})
-
-        if len(manage_ids) == 1:
-            return jsonify({"status": -1, "result": "管理IDの指定が1件のためマージ出来ません"})
         
         if len(manage_ids) != len(list(set(manage_ids))):
             return jsonify({"status": -1, "result": "管理IDの指定が重複しています"})
@@ -139,9 +136,6 @@ def filemerge():
                 if fiscal_date != work_date:
                     return jsonify({"status": -1, "result": "指定された管理IDは勘定年月が混在しています"})
                 file_div_result.append(_getfilediv(conn,manage_id))
-
-        if len(set(file_div_result)) != 3:
-            return jsonify({"status": -1, "result": "完成PJ,仕掛PJ,経費の3ファイルを指定してください"})
 
         # マージ処理
         _filemerge(manage_ids, fiscal_date)
@@ -463,6 +457,12 @@ def _filemerge(manage_ids:str, fiscal_date:str):
         # マージ処理
         with conn.cursor() as cur:
             cur.execute(merge_sql, (_getPrevMonth(fiscal_date), version, tuple(manage_ids), version, tuple(manage_ids),))
+            
+            # ID初期化
+            fg = '';
+            wip = '';
+            hrmos = '';
+            
             # マージ対象ファイルIDを保存
             for manage_id in manage_ids:
                 file_div = str(_getfilediv(conn,manage_id))
@@ -511,9 +511,11 @@ def _filedownload(yyyymm : str, version : str):
     ws.cell(len(result) + 6, 8, '=H' + str(len(result) + 5) + '+I' + str(len(result) + 5))
     
     row = 3
+    noIndirect = 0;
     for item in result:
         if item['order_detail'] == 'ZAB202300017':
             indirect = copy(item)
+            noIndirect = 1;
             continue
         if item['product_div'] == '2':
             ws.cell(row, 2, "○")  # 繰越(仕掛)
@@ -535,25 +537,27 @@ def _filedownload(yyyymm : str, version : str):
     ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')  # 翌月繰越
     # 計算式を更新（間接プロジェクト）
     row += 1
-    ws.cell(row, 6, indirect['cost_labor'])   # 労務費
-    ws.cell(row, 7, indirect['cost_subcontract'])   # 外注費
-    ws.cell(row, 8, 0)   # 旅費交通費
-    ws.cell(row, 9, indirect['cost'])   # その他
-    ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')  # 小計
-    ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')')  # 振替額
-    ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')  # 翌月繰越
-    row += 1
+    # 間接プロジェクトがある場合のみ
+    if noIndirect == 1:
+        ws.cell(row, 6, indirect['cost_labor'])   # 労務費
+        ws.cell(row, 7, indirect['cost_subcontract'])   # 外注費
+        ws.cell(row, 8, 0)   # 旅費交通費
+        ws.cell(row, 9, indirect['cost'])   # その他
+        ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')  # 小計
+        ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')')  # 振替額
+        ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')  # 翌月繰越
+        row += 1
     # 空行スキップ
     row += 1
-    ws.cell(row, 4, '=SUM(D3:D' + str(row-2) + ')')  # 
-    ws.cell(row, 5, '=SUM(E3:E' + str(row-2) + ')')  # 
-    ws.cell(row, 6, '=SUM(F3:F' + str(row-2) + ')')  # 
-    ws.cell(row, 7, '=SUM(G3:G' + str(row-2) + ')')  # 
-    ws.cell(row, 8, '=SUM(H3:H' + str(row-2) + ')')  # 
-    ws.cell(row, 9, '=SUM(I3:I' + str(row-2) + ')')  # 
-    ws.cell(row, 10, '=SUM(J3:J' + str(row-2) + ')')  # 
-    ws.cell(row, 11, '=SUM(K3:K' + str(row-2) + ')')  # 
-    ws.cell(row, 12, '=SUM(L3:L' + str(row-2) + ')')  # 
+    ws.cell(row, 4, '=SUM(D2:D' + str(row-2) + ')')  # 
+    ws.cell(row, 5, '=SUM(E2:E' + str(row-2) + ')')  # 
+    ws.cell(row, 6, '=SUM(F2:F' + str(row-2) + ')')  # 
+    ws.cell(row, 7, '=SUM(G2:G' + str(row-2) + ')')  # 
+    ws.cell(row, 8, '=SUM(H2:H' + str(row-2) + ')')  # 
+    ws.cell(row, 9, '=SUM(I2:I' + str(row-2) + ')')  # 
+    ws.cell(row, 10, '=SUM(J2:J' + str(row-2) + ')')  # 
+    ws.cell(row, 11, '=SUM(K2:K' + str(row-2) + ')')  # 
+    ws.cell(row, 12, '=SUM(L2:L' + str(row-2) + ')')  # 
     row += 7
 
     # 完成PJ
