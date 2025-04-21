@@ -513,7 +513,8 @@ def _filedownload(yyyymm : str, version : str):
     row = 3
     noIndirect = 0;
     for item in result:
-        if item['order_detail'] == 'ZAB202300017':
+        # 課題No3暫定対応
+        if item['order_detail'] == 'ZAB202400001':
             indirect = copy(item)
             noIndirect = 1;
             continue
