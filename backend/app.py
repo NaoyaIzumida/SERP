@@ -163,12 +163,13 @@ def _fileupload(file : any):
 
     # ファイル読込
     with get_connection() as conn:
-        # ファイル情報マスタ登録
+        # ファイル情報マスタ 登録
         manege_id = _insertFileInfo(conn, fiscal_date, file_div, file_nm)
 
         # ファイル区分別登録処理
         match file_div:
             case "F":   # 完成プロジェクト
+
                 # Excelファイル読み込み
                 df = pd.read_excel(file, sheet_name=0, skipfooter=1, skiprows=1)
 
@@ -186,11 +187,13 @@ def _fileupload(file : any):
                     cost = data[8]                      #経費
                     sales = data[10]                    #売上高
 
-                    # 感性情報1レコード登録
-                    _insertFgFileInfo(conn, manege_id, div_cd, order_detail, order_rowno, customer, cost_material, cost_labor, cost_subcontract, cost, sales)
-                    # 案件情報登録
-                    _insertTopicInfo(conn, order_detail, project_nm)
+                    # 完成PJ台帳 登録
+                    _insertFgFileInfo(conn, manege_id, index, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost, sales)
+                    # 案件情報マスタ 登録
+                    _insertTopicInfo(conn, order_detail, order_rowno, project_nm)
+
             case "W":   # 仕掛プロジェクト
+
                 # Excelファイル読み込み
                 df = pd.read_excel(file, sheet_name=0, skipfooter=1, skiprows=1)
 
@@ -207,28 +210,10 @@ def _fileupload(file : any):
                     cost_subcontract = data[7]          #外注費
                     cost = data[8]                      #経費
 
-                    # 仕掛情報1レコード登録
-                    _insertWipFileInfo(conn, manege_id, div_cd, order_detail, order_rowno, customer, cost_material, cost_labor, cost_subcontract, cost)
-                    # 案件情報登録
-                    _insertTopicInfo(conn, order_detail, project_nm)
-            case "H":   # HRMOS経費
-                # Excelファイル読み込み
-                df = pd.read_excel(file, sheet_name=0, skipfooter=1, skiprows=5, usecols=['申請No.', '申請書', '申請者', 'TSジョブコード', '金額'], dtype=object)
-                df_no_na = df.dropna(subset=['申請No.'])
-                
-                # 取得内容を1行・1カラムずつ分解して登録
-                for index, data in df_no_na.iterrows():
-                    apply_no = data[0]      #申請No.
-                    apply_type = data[1]    #申請書
-                    applicant = data[2]     #申請者
-                    if (str(data[3])) == 'nan':
-                        job_cd = ""         #TSジョブコード
-                    else:
-                        job_cd = data[3] 
-                    cost = data[4]          #金額
-
-                    # HRMOS経費分原価登録
-                    _insertHrmosExpense(conn, manege_id, apply_no, apply_type, applicant, job_cd, cost)
+                    # 仕掛PJ台帳 登録
+                    _insertWipFileInfo(conn, manege_id, index, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost)
+                    # 案件情報マスタ 登録
+                    _insertTopicInfo(conn, order_detail, order_rowno, project_nm)
  
     return 0
 
@@ -252,35 +237,30 @@ def _getNextVersion(conn : any, fiscal_date : str, file_div : str):
             return '0'
         return res[0]
 
-# ファイル管理登録
+# ファイル情報マスタ登録
 def _insertFileInfo(conn : any, fiscal_date : str, file_div : str, file_name : str):
     manage_id = _getNextManageID(conn)
     version = _getNextVersion(conn, fiscal_date, file_div)
  
     with conn.cursor() as cur:
-        cur.execute("insert into m_file_info (manage_id,fiscal_date,version,file_div,file_nm) values (%s, %s, %s, %s, %s)", (manage_id, fiscal_date, version, file_div, file_name))
+        cur.execute("insert into m_file_info (manage_id, fiscal_date, version, file_div, file_nm, modified_date) values (%s, %s, %s, %s, %s, CURRENT_TIMESTAMP)", (manage_id, fiscal_date, version, file_div, file_name))
    
     return manage_id
 
-# HRMOS経費分原価登録
-def _insertHrmosExpense(conn : any, manage_id : str, apply_no : str, apply_type : str, applicant : str, job_cd : str, cost : str):
+# 案件情報マスタ登録
+def _insertTopicInfo(conn : any, order_detail : str, order_rowno : str, project_nm : str):
     with conn.cursor() as cur:
-        cur.execute("insert into t_hrmos_expense (manage_id,apply_no,apply_type,applicant,job_cd,cost) values (%s, %s, %s, %s, %s, %s)", (manage_id, apply_no, apply_type, applicant, job_cd, cost))
+        cur.execute("insert into m_topic_info (order_detail, order_rowno, project_nm, disp_seq, modified_date) select %s, %s, %s, 1, CURRENT_TIMESTAMP where not exists(SELECT order_detail FROM m_topic_info WHERE order_detail = %s and order_rowno = %s)", (order_detail, order_rowno, project_nm, order_detail, order_rowno))
 
 # 完成PJ台帳登録
-def _insertFgFileInfo(conn : any, manage_id : str, div_cd : str, order_detail : str, order_rowno : str, customer : str, cost_material : str, cost_labor : str, cost_subcontract : str, cost : str, sales : str):
+def _insertFgFileInfo(conn : any, manage_id : str, row_no : str, div_cd : str, order_detail : str, order_rowno : str, project_nm : str, customer : str, cost_material : str, cost_labor : str, cost_subcontract : str, cost : str, sales : str):
     with conn.cursor() as cur:
-        cur.execute("insert into t_fg_project_info (manage_id,div_cd,order_detail,order_rowno,customer,cost_material,cost_labor,cost_subcontract,cost,sales) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (manage_id, div_cd, order_detail, order_rowno, customer, cost_material, cost_labor, cost_subcontract, cost, sales))
+        cur.execute("insert into t_fg_project_info (manage_id, row_no, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost, sales, modified_date) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)", (manage_id, row_no, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost, sales))
 
 # 仕掛PJ台帳登録
-def _insertWipFileInfo(conn : any, manage_id : str, div_cd : str, order_detail : str, order_rowno : str, customer : str, cost_material : str, cost_labor : str, cost_subcontract : str, cost : str):
+def _insertWipFileInfo(conn : any, manage_id : str, row_no : str, div_cd : str, order_detail : str, order_rowno : str, project_nm : str,customer : str, cost_material : str, cost_labor : str, cost_subcontract : str, cost : str):
     with conn.cursor() as cur:
-        cur.execute("insert into t_wip_project_info (manage_id,div_cd,order_detail,order_rowno,customer,cost_material,cost_labor,cost_subcontract,cost) values (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (manage_id, div_cd, order_detail, order_rowno, customer, cost_material, cost_labor, cost_subcontract, cost))
-
-# 案件情報登録
-def _insertTopicInfo(conn : any, order_detail : str, project_nm : str):
-    with conn.cursor() as cur:
-        cur.execute("insert into m_topic_info (order_detail,project_nm) select %s, %s where not exists(SELECT order_detail FROM m_topic_info WHERE order_detail = %s)", (order_detail, project_nm, order_detail))
+        cur.execute("insert into t_wip_project_info (manage_id, row_no, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost, modified_date) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)", (manage_id, row_no, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost))
 
 # ファイル情報マスタから勘定年月を指定して取得
 def _filelist(yyyymm: str):
@@ -289,7 +269,6 @@ def _filelist(yyyymm: str):
             cur.execute(
                 'select * from m_file_info where fiscal_date = %s', (yyyymm, ))
             return convertCursorToDict(cur)
-
 
 # 仕掛情報テーブルから勘定年月を指定して取得
 def _wiplist(yyyymm: str):
@@ -311,8 +290,7 @@ def _filemergelist(yyyymm: str):
 def _filedetail(manage_id: str):
     query = {
         'F': 'select f.div_cd AS "原価部門コード", md.div_nm as "原価部門名", f.order_detail as "受注明細", f.order_rowno as "受注行番号", mti.project_nm as "契約工事略名", f.customer as "得意先名", coalesce(cost_material, 0) as "材料費", coalesce(cost_labor, 0) as "労務費", coalesce(cost_subcontract, 0) as "外注費", coalesce(cost, 0) as "経費", coalesce(sales, 0) as "売上高" from t_fg_project_info f left join m_topic_info mti on f.order_detail = mti.order_detail left join m_div md on f.div_cd = md.div_cd where manage_id = %s',
-        'W': 'select w.div_cd AS "原価部門コード", md.div_nm as "原価部門名", w.order_detail as "受注明細", w.order_rowno as "受注行番号", mti.project_nm as "契約工事略名", w.customer as "得意先名", coalesce(cost_material, 0) as "材料費", coalesce(cost_labor, 0) as "労務費", coalesce(cost_subcontract, 0) as "外注費", coalesce(cost, 0) as "経費" from t_wip_project_info w left join m_topic_info mti on w.order_detail = mti.order_detail left join m_div md on w.div_cd = md.div_cd where manage_id = %s',
-        'H': 'select apply_no as "申請No", apply_type as "申請書", applicant as "申請者", job_cd as "TSジョブコード", cost as "経費" from t_hrmos_expense where manage_id = %s'
+        'W': 'select w.div_cd AS "原価部門コード", md.div_nm as "原価部門名", w.order_detail as "受注明細", w.order_rowno as "受注行番号", mti.project_nm as "契約工事略名", w.customer as "得意先名", coalesce(cost_material, 0) as "材料費", coalesce(cost_labor, 0) as "労務費", coalesce(cost_subcontract, 0) as "外注費", coalesce(cost, 0) as "経費" from t_wip_project_info w left join m_topic_info mti on w.order_detail = mti.order_detail left join m_div md on w.div_cd = md.div_cd where manage_id = %s'
     }
 
     with get_connection() as conn:
@@ -326,8 +304,7 @@ def _filedetail(manage_id: str):
 def _filedelete(manage_id: str):
     query = {
         'F': 'delete from t_fg_project_info where manage_id = %s',
-        'W': 'delete from t_wip_project_info where manage_id = %s',
-        'H': 'delete from t_hrmos_expense where manage_id = %s'
+        'W': 'delete from t_wip_project_info where manage_id = %s'
     }
 
     with get_connection() as conn:
@@ -495,7 +472,6 @@ def _filedownload(yyyymm : str, version : str):
     result_fg = _loadmerge_fg(yyyymm, version)
     result_wip = _loadmerge_wip(yyyymm, version)
     result_prev_wip = _loatmerge_perv_wip(yyyymm)
-    result_hrmos = _loadmerge_hrmos(yyyymm, version)
     
     summary_base = ws[3]
     ws.unmerge_cells('H8:I8')
@@ -630,18 +606,6 @@ def _filedownload(yyyymm : str, version : str):
     ws.cell(row, 6, '=SUM(F' + str(total_start_row) + ':F' + str(total_start_row + 22) + ')')  # 小計
     ws.cell(row, 8, '=SUM(H' + str(total_start_row) + ':H' + str(total_start_row + 22) + ')')  # 小計
     row = total_start_row + 27
-
-    #HRMOS経費
-    hrmos_start_row = row
-    for item in result_hrmos:
-        ws.cell(row, 3, item['apply_type'] + "：" + item['applicant'])   # 区分
-        ws.cell(row, 4, item['job_cd'])   # TSジョブコード
-        ws.cell(row, 5, item['cost'])   # 金額
-        row += 1   
-    for index in range(8):
-        ws.cell(hrmos_start_row + index, 6, '=E' + str(hrmos_start_row + index) + '/1.1')   # 合計
-    row = hrmos_start_row + 8
-    ws.cell(row, 6, '=SUM(F' + str(hrmos_start_row) + ':F' + str(hrmos_start_row + 7) + ')')  # 小計
 
     wb.save(target_file)
 
@@ -779,35 +743,6 @@ def _loatmerge_perv_wip(yyyymm:str):
         with conn.cursor() as cur:
             cur.execute(
                 sql, (_getPrevMonth(yyyymm), ))
-            return convertCursorToDict(cur)
-
-# マージ結果（HARMOS）
-def _loadmerge_hrmos(yyyymm : str, version : str):
-    sql = "select "\
-        "      apply_no "\
-        "    , apply_type "\
-        "    , applicant "\
-        "    , job_cd "\
-        "    , cost "\
-        "from "\
-        "    t_hrmos_expense  "\
-        "where "\
-        "    manage_id in (select hrmos_id from t_merge_target where fiscal_date = %s and version = %s) "\
-        "order by "\
-        "    case "\
-        "        when job_cd is null "\
-        "            then 2 "\
-        "        when job_cd = '' "\
-        "            then 1 "\
-        "        else 0 "\
-        "        end "\
-        "    , job_cd "\
-        "    , apply_no "
-
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                sql, (yyyymm, version, ))
             return convertCursorToDict(cur)
 
 # 勘定年月取得
