@@ -179,7 +179,7 @@ create table t_merge_result (
   fiscal_date character varying(6)
   , version character varying(2)
   , order_detail character varying(12)
-  , row_no integer
+  , order_rowno character varying(2)
   , fg_id character varying(23)
   , wip_id character varying(23)
   , cost_labor integer
@@ -188,14 +188,14 @@ create table t_merge_result (
   , change_value integer
   , product_div character varying(2)
   , modified_date timestamp with time zone
-  , constraint t_merge_result_pk primary key (fiscal_date, version, order_detail, row_no)
+  , constraint t_merge_result_pk primary key (fiscal_date, version, order_detail, order_rowno)
 ) ;
 
 comment on table t_merge_result is 'マージ結果';
 comment on column t_merge_result.fiscal_date is '勘定年月';
 comment on column t_merge_result.version is 'バージョン';
 comment on column t_merge_result.order_detail is '受注明細';
-comment on column t_merge_result.row_no is '行番号';
+comment on column t_merge_result.order_rowno is '受注行番号';
 comment on column t_merge_result.fg_id is '完成管理ID';
 comment on column t_merge_result.wip_id is '仕掛管理ID';
 comment on column t_merge_result.cost_labor is '労務費';
@@ -203,4 +203,4 @@ comment on column t_merge_result.cost_subcontract is '外注費';
 comment on column t_merge_result.cost is '経費';
 comment on column t_merge_result.change_value is '振替額';
 comment on column t_merge_result.product_div is '完成仕掛区分';
-comment on column t_merge_result.modified_date is '行番号';
+comment on column t_merge_result.modified_date is '更新日時';

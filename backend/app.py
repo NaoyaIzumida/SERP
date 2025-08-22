@@ -383,6 +383,7 @@ def _filemerge(manage_ids:str, fiscal_date:str):
     "    fiscal_date "\
     "    , %s as version "\
     "    , t_fg_project_info.order_detail "\
+    "    , t_fg_project_info.order_rowno "\
     "    , t_fg_project_info.manage_id as g_id "\
     "    , null as wip_id "\
     "    , cost_labor - coalesce(cost_labor_wip, 0) as cost_labor "\
@@ -390,6 +391,7 @@ def _filemerge(manage_ids:str, fiscal_date:str):
     "    , cost - coalesce(cost_wip, 0) as cost "\
     "    , null as change_value "\
     "    , '1' as product_div "\
+    "    , current_timestamp as modified_date "\
     "from "\
     "    t_fg_project_info "\
     "    left join wip "\
@@ -404,6 +406,7 @@ def _filemerge(manage_ids:str, fiscal_date:str):
     "    fiscal_date "\
     "    , %s as version "\
     "    , t_wip_project_info.order_detail "\
+    "    , t_wip_project_info.order_rowno "\
     "    , null as fg_id "\
     "    , t_wip_project_info.manage_id as wip_id "\
     "    , cost_labor - coalesce(cost_labor_wip, 0) as cost_labor "\
@@ -411,6 +414,7 @@ def _filemerge(manage_ids:str, fiscal_date:str):
     "    , cost - coalesce(cost_wip, 0) as cost "\
     "    , cost_labor + cost_subcontract + cost as change_value "\
     "    , '2' as product_div "\
+    "    , current_timestamp as modified_date "\
     "from "\
     "    t_wip_project_info "\
     "    left join wip "\
