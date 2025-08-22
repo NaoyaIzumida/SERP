@@ -110,8 +110,8 @@ def filemerge():
         # リクエストからJSON形式でデータを取得
         # 書式エラー時は例外が発生する
 
-        # パラメータチェック
-        manage_ids = request.json['manage_id']
+        # パラメータチェック(管理ID)
+        manage_ids = request.json['manage_ids']
         if not isinstance(manage_ids, list):
             return jsonify({"status": -1, "result": "管理IDは配列で指定してください"})
 
@@ -135,7 +135,7 @@ def filemerge():
                 # 勘定年月が混在していたらNG
                 if fiscal_date != work_date:
                     return jsonify({"status": -1, "result": "指定された管理IDは勘定年月が混在しています"})
-                file_div_result.append(_getfilediv(conn,manage_id))
+                file_div_result.append(_getfilediv(conn, manage_id))
 
         # マージ処理
         _filemerge(manage_ids, fiscal_date)
@@ -243,24 +243,24 @@ def _insertFileInfo(conn : any, fiscal_date : str, file_div : str, file_name : s
     version = _getNextVersion(conn, fiscal_date, file_div)
  
     with conn.cursor() as cur:
-        cur.execute("insert into m_file_info (manage_id, fiscal_date, version, file_div, file_nm, modified_date) values (%s, %s, %s, %s, %s, CURRENT_TIMESTAMP)", (manage_id, fiscal_date, version, file_div, file_name))
+        cur.execute("insert into m_file_info (manage_id, fiscal_date, version, file_div, file_nm, modified_date) values (%s, %s, %s, %s, %s, current_timestamp)", (manage_id, fiscal_date, version, file_div, file_name))
    
     return manage_id
 
 # 案件情報マスタ登録
 def _insertTopicInfo(conn : any, order_detail : str, order_rowno : str, project_nm : str):
     with conn.cursor() as cur:
-        cur.execute("insert into m_topic_info (order_detail, order_rowno, project_nm, disp_seq, modified_date) select %s, %s, %s, 1, CURRENT_TIMESTAMP where not exists(SELECT order_detail FROM m_topic_info WHERE order_detail = %s and order_rowno = %s)", (order_detail, order_rowno, project_nm, order_detail, order_rowno))
+        cur.execute("insert into m_topic_info (order_detail, order_rowno, project_nm, disp_seq, modified_date) select %s, %s, %s, 1, current_timestamp where not exists(SELECT order_detail FROM m_topic_info WHERE order_detail = %s and order_rowno = %s)", (order_detail, order_rowno, project_nm, order_detail, order_rowno))
 
 # 完成PJ台帳登録
 def _insertFgFileInfo(conn : any, manage_id : str, row_no : str, div_cd : str, order_detail : str, order_rowno : str, project_nm : str, customer : str, cost_material : str, cost_labor : str, cost_subcontract : str, cost : str, sales : str):
     with conn.cursor() as cur:
-        cur.execute("insert into t_fg_project_info (manage_id, row_no, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost, sales, modified_date) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)", (manage_id, row_no, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost, sales))
+        cur.execute("insert into t_fg_project_info (manage_id, row_no, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost, sales, modified_date) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, current_timestamp)", (manage_id, row_no, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost, sales))
 
 # 仕掛PJ台帳登録
 def _insertWipFileInfo(conn : any, manage_id : str, row_no : str, div_cd : str, order_detail : str, order_rowno : str, project_nm : str,customer : str, cost_material : str, cost_labor : str, cost_subcontract : str, cost : str):
     with conn.cursor() as cur:
-        cur.execute("insert into t_wip_project_info (manage_id, row_no, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost, modified_date) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)", (manage_id, row_no, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost))
+        cur.execute("insert into t_wip_project_info (manage_id, row_no, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost, modified_date) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, current_timestamp)", (manage_id, row_no, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost))
 
 # ファイル情報マスタから勘定年月を指定して取得
 def _filelist(yyyymm: str):
@@ -359,66 +359,67 @@ def _filemergedetail(yyyymm: str, version: str):
 
 # マージ要求
 def _filemerge(manage_ids:str, fiscal_date:str):
-    #delete_result_sql = "delete from t_merge_result where fiscal_date = %s"
-    #delete_target_sql = "delete from t_merge_target where fiscal_date = %s"
     select_version_sql = "select version from t_merge_target where fiscal_date = %s order by version desc" 
-    insert_target_sql = 'insert into t_merge_target (fiscal_date, version, fg_id, wip_id, hrmos_id) values (%s,%s,%s,%s,%s)'
+    insert_target_sql = 'insert into t_merge_target (fiscal_date, version, fg_id, wip_id, modified_date) values (%s, %s, %s, %s, current_timestamp)'
 
     merge_sql = \
     "insert into t_merge_result "\
     "with wip as ( "\
-    "    select"\
-    "          order_detail"\
-        "        , sum(cost_labor) + sum(cost_subcontract) + sum(cost) as total_cost_wip"\
-        "        , sum(cost_labor) as cost_labor_wip"\
-        "        , sum(cost_subcontract) as cost_subcontract_wip"\
-        "        , sum(cost) as cost_wip"\
-    "    from"\
+    "    select "\
+    "        order_detail "\
+    "        , order_rowno "\
+    "        , sum(cost_labor) + sum(cost_subcontract) + sum(cost) as total_cost_wip "\
+    "        , sum(cost_labor) as cost_labor_wip "\
+    "        , sum(cost_subcontract) as cost_subcontract_wip "\
+    "        , sum(cost) as cost_wip "\
+    "    from "\
     "        t_wip_info "\
-    "    where"\
-    "         fiscal_date = %s"\
-    "    group by"\
-    "        order_detail"\
+    "    where "\
+    "        fiscal_date = %s "\
+    "    group by "\
+    "        order_detail, order_rowno "\
     ") "\
-    "select"\
-    "      fiscal_date"\
-    "    , %s as version"\
-    "    , t_fg_project_info.order_detail"\
-    "    , t_fg_project_info.manage_id fg_id"\
-    "    , null wip_id"\
-    "    , cost_labor - coalesce(cost_labor_wip, 0)   as cost_labor"\
-    "    , cost_subcontract - coalesce(cost_subcontract_wip, 0) as cost_subcontract"\
-    "    , cost - coalesce(cost_wip, 0)   as cost"\
-    "    , null                                 as change_value"\
-    "    , '1'                                  as product_div "\
-    "from"\
+    "select "\
+    "    fiscal_date "\
+    "    , %s as version "\
+    "    , t_fg_project_info.order_detail "\
+    "    , t_fg_project_info.manage_id as g_id "\
+    "    , null as wip_id "\
+    "    , cost_labor - coalesce(cost_labor_wip, 0) as cost_labor "\
+    "    , cost_subcontract - coalesce(cost_subcontract_wip, 0) as cost_subcontract "\
+    "    , cost - coalesce(cost_wip, 0) as cost "\
+    "    , null as change_value "\
+    "    , '1' as product_div "\
+    "from "\
     "    t_fg_project_info "\
     "    left join wip "\
     "        on t_fg_project_info.order_detail = wip.order_detail "\
+    "       and t_fg_project_info.order_rowno = wip.order_rowno "\
     "    inner join m_file_info "\
     "        on t_fg_project_info.manage_id = m_file_info.manage_id "\
-    "where"\
+    "where "\
     "    t_fg_project_info.manage_id in %s "\
     "union all "\
-    "select"\
-    "      fiscal_date"\
-    "    , %s as version"\
-    "    , t_wip_project_info.order_detail"\
-    "    , null fg_id"\
-    "    , t_wip_project_info.manage_id wip_id"\
-    "    , cost_labor - coalesce(cost_labor_wip, 0)   as cost_labor"\
-    "    , cost_subcontract - coalesce(cost_subcontract_wip, 0) as cost_subcontract"\
-    "    , cost - coalesce(cost_wip, 0)   as cost"\
-    "    , cost_labor + cost_subcontract + cost as change_value"\
-    "    , '2'                                  as product_div "\
-    "from"\
+    "select "\
+    "    fiscal_date "\
+    "    , %s as version "\
+    "    , t_wip_project_info.order_detail "\
+    "    , null as fg_id "\
+    "    , t_wip_project_info.manage_id as wip_id "\
+    "    , cost_labor - coalesce(cost_labor_wip, 0) as cost_labor "\
+    "    , cost_subcontract - coalesce(cost_subcontract_wip, 0) as cost_subcontract "\
+    "    , cost - coalesce(cost_wip, 0) as cost "\
+    "    , cost_labor + cost_subcontract + cost as change_value "\
+    "    , '2' as product_div "\
+    "from "\
     "    t_wip_project_info "\
     "    left join wip "\
     "        on t_wip_project_info.order_detail = wip.order_detail "\
+    "       and t_wip_project_info.order_rowno = wip.order_rowno "\
     "    inner join m_file_info "\
     "        on t_wip_project_info.manage_id = m_file_info.manage_id "\
-    "where"\
-    "    t_wip_project_info.manage_id in %s"
+    "where "\
+    "    t_wip_project_info.manage_id in %s "
 
     with get_connection() as conn:
         # バージョン採番
@@ -435,14 +436,13 @@ def _filemerge(manage_ids:str, fiscal_date:str):
         with conn.cursor() as cur:
             cur.execute(merge_sql, (_getPrevMonth(fiscal_date), version, tuple(manage_ids), version, tuple(manage_ids),))
             
-            # ID初期化
+            # 管理ID初期化
             fg = '';
             wip = '';
-            hrmos = '';
             
             # マージ対象ファイルIDを保存
             for manage_id in manage_ids:
-                file_div = str(_getfilediv(conn,manage_id))
+                file_div = str(_getfilediv(conn, manage_id))
                 match file_div:
                     case 'F':
                         fg = manage_id
@@ -450,10 +450,8 @@ def _filemerge(manage_ids:str, fiscal_date:str):
                         wip = manage_id
                         # 勘定年月分の仕掛情報テーブルを洗替え
                         cur.execute("delete from t_wip_info where fiscal_date = %s", (fiscal_date,))
-                        cur.execute("insert into t_wip_info (fiscal_date,order_detail,cost_labor,cost_subcontract,cost) select %s as fiscal_date, order_detail, cost_labor, cost_subcontract, cost from t_wip_project_info where manage_id = %s", (fiscal_date, manage_id,))
-                    case 'H':
-                        hrmos = manage_id
-            cur.execute(insert_target_sql, (fiscal_date, version, fg,wip,hrmos,))
+                        cur.execute("insert into t_wip_info (fiscal_date, order_detail, order_rowno, cost_labor, cost_subcontract, cost, modified_date) select %s as fiscal_date, order_detail, order_rowno, cost_labor, cost_subcontract, cost, current_timestamp from t_wip_project_info where manage_id = %s", (fiscal_date, manage_id,))
+            cur.execute(insert_target_sql, (fiscal_date, version, fg, wip,))
 
 def _filedownload(yyyymm : str, version : str):
     target_file = yyyymm + '.xlsx'

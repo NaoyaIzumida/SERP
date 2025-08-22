@@ -1,26 +1,24 @@
---delete from M_DIV;
-insert into M_DIV(DIV_CD, DIV_NM, MODIFIED_DATE) values 
- ('14000100', '技術部', CURRENT_TIMESTAMP)
+delete from m_div;
+insert into m_div(div_cd, div_nm, modified_date) values 
+ ('14000100', '技術部', current_timestamp)
 ;
 
---delete from M_TOPIC_INFO;
-insert into M_TOPIC_INFO(ORDER_DETAIL, ORDER_ROWNO, PROJECT_NM, MODIFIED_DATE) values 
- ('ZAB202300064', '1', '【AE0172420】AFP,ACSｼｽﾃﾑｻﾎﾟｰﾄ2024上期', CURRENT_TIMESTAMP)
-,('ZAB202300095', '2', '【AE0174795】KJ様　ｻｰﾊﾞｰﾒﾝﾃﾅﾝｽ手順書作成', CURRENT_TIMESTAMP)
-,('ZAB202300099', '1', '【AE0174850】調合原材料天秤計量ｼｽﾃﾑ追加', CURRENT_TIMESTAMP)
+delete from m_topic_info;
+insert into m_topic_info(order_detail, order_rowno, project_nm, modified_date) values 
+ ('ZAB202300064', '1', '【AE0172420】AFP,ACSｼｽﾃﾑｻﾎﾟｰﾄ2024上期', current_timestamp)
+,('ZAB202300095', '2', '【AE0174795】KJ様　ｻｰﾊﾞｰﾒﾝﾃﾅﾝｽ手順書作成', current_timestamp)
+,('ZAB202300099', '1', '【AE0174850】調合原材料天秤計量ｼｽﾃﾑ追加', current_timestamp)
 ;
 
---delete from T_WIP_INFO;
-insert into T_WIP_INFO(FISCAL_DATE, ORDER_DETAIL, ORDER_ROWNO, COST_LABOR, COST_SUBCONTRACT, COST, MODIFIED_DATE) values 
- ('202408', 'ZAB202300064', '1', 200366, 0, 0, CURRENT_TIMESTAMP)
-,('202408', 'ZAB202300095', '1', 64330, 0, 0, CURRENT_TIMESTAMP)
-,('202408', 'ZAB202300099', '1', 119248, 0, 0, CURRENT_TIMESTAMP)
+delete from t_wip_info;
+insert into t_wip_info(fiscal_date, order_detail, order_rowno, cost_labor, cost_subcontract, cost, modified_date) values 
+ ('202408', 'ZAB202300064', '1', 200366, 0, 0, current_timestamp)
+,('202408', 'ZAB202300095', '1', 64330, 0, 0, current_timestamp)
+,('202408', 'ZAB202300099', '1', 119248, 0, 0, current_timestamp)
 ;
 
-/*
-delete from M_FILE_INFO;
-delete from T_WIP_PROJECT_INFO;
-delete from T_FG_PROJECT_INFO;
-delete from T_MERGE_TARGET;
-delete from T_MERGE_RESULT;
-*/
+delete from m_file_info;
+delete from t_wip_project_info;
+delete from t_fg_project_info;
+delete from t_merge_target;
+delete from t_merge_result;
