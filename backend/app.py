@@ -162,6 +162,48 @@ def topicdetail(group_id_flg: bool):
     except:
         return jsonify({"status": -1})
 
+# API No.10 案件情報マスタデータ更新
+@app.route("/serp/api/topicinfoupdate", methods=["PUT"])
+def topicinfoupdate():
+    try:
+        if not request.is_json:
+            return jsonify({"status": -1, "result": "Content-Type:application/jsonを指定してください"})
+
+        topics = request.json.get("topics")
+        if not isinstance(topics, list):
+            return jsonify({"status": -1, "result": "topics は配列で指定してください"})
+        if not topics:
+            return jsonify({"status": -1, "result": "更新対象がありません"})
+
+        updated = 0
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                for t in topics:
+                    order_detail = t.get("order_detail")
+                    order_rowno  = t.get("order_rowno")
+                    group_id     = t.get("group_id")
+                    disp_seq     = t.get("disp_seq")
+
+                    if not order_detail or not order_rowno:
+                        return jsonify({"status": -1, "result": "order_detail と order_rowno は必須です"})
+
+                    sql = """
+                        update public.m_topic_info
+                           set group_id = %s
+                             , disp_seq = %s
+                             , modified_date = current_timestamp
+                         where order_detail = %s
+                           and order_rowno  = %s
+                    """
+                    cur.execute(sql, (group_id, disp_seq, order_detail, order_rowno))
+                    updated += cur.rowcount
+
+            conn.commit()
+
+        return jsonify({"status": 0, "result": updated})
+    except:
+        return jsonify({"status": -1})
+
 # ファイルアップロード
 def _fileupload(file : any):
     # リクエストパラメータの受取
@@ -291,7 +333,7 @@ def _filemergelist(yyyymm: str):
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                'select t.fiscal_date, t.version, t.fg_id, f.file_nm as fg_file_name, t.wip_id, w.file_nm as wip_file_name, t.hrmos_id, h.file_nm as hrmos_file_name from t_merge_target t left join m_file_info f on t.fg_id = f.manage_id left join m_file_info w on t.wip_id = w.manage_id left join m_file_info h on t.hrmos_id = h.manage_id where t.fiscal_date = %s order by version', (yyyymm, ))
+                'select t.fiscal_date, t.version, t.fg_id, f.file_nm as fg_file_name, t.wip_id, w.file_nm as wip_file_name from t_merge_target t left join m_file_info f on t.fg_id = f.manage_id left join m_file_info w on t.wip_id = w.manage_id where t.fiscal_date = %s order by version', (yyyymm, ))
             return convertCursorToDict(cur)
 
 # データ取得
