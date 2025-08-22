@@ -381,8 +381,6 @@ components:
           type: string
         order_rowno:
           type: string
-        project_nm:
-          type: string
         group_id:
           nullable: true
           type: string
