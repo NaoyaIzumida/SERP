@@ -37,6 +37,19 @@ services:
       - ./postgres/init:/docker-entrypoint-initdb.d
     networks:
       - production_nw
+
+  swagger-ui:
+    image: swaggerapi/swagger-ui:latest
+    container_name: serpent-swagger-ui
+    ports:
+      - "8080:8080"
+    environment:
+      SWAGGER_JSON: /spec/openapi.yaml
+    volumes:
+      - ./openapi.yaml:/spec/openapi.yaml:ro
+    networks:
+      - production_nw
+
 volumes:
   postgres-store:
 
