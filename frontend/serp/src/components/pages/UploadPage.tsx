@@ -191,6 +191,7 @@ const uploadFile = async (file: File, fiscalDate: string, fileNm: string, fileDi
       setMessage('アップロードに成功しました。');
       setSnackbarSeverity('success'); // 成功タイプに設定
       setOpenSnackbar(true);
+      fetchData();
     } else {
       setMessage('アップロードに失敗しました。');
       setSnackbarSeverity('warning'); // 警告タイプに設定
