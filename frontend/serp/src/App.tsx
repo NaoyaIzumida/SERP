@@ -5,6 +5,7 @@ import Toolbar from '@mui/material/Toolbar';
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import UploadPage from "./components/pages/UploadPage";
 import MergePage from "./components/pages/MergePage";
+import TopicInfoMstPage from "./components/pages/TopicInfoMstPage";
 import { menuContext } from "./contexts/AppState";
 import { MyAppBar } from "./components/MyAppBar";
 import { MyDrawer } from "./components/MyDrawer";
@@ -31,6 +32,7 @@ const App: React.FC = () => {
       </menuContext.Provider>
       <Routes>
         <Route path="/" element={<UploadPage />} />
+        <Route path="TopicInfoMstPage" element={<TopicInfoMstPage />} />
         <Route path="UploadPage" element={<UploadPage />} />
         <Route path="MergePage" element={<MergePage />} />
       </Routes>
