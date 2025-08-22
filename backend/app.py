@@ -154,6 +154,14 @@ def filedownload(yyyymm: str, version: str):
                      mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     return jsonify({"status": 0})
 
+# API No.10 案件情報マスタデータ取得
+@app.route("/serp/api/topicinfolist/<group_id_flg>", methods=["GET"])
+def topicdetail(group_id_flg: bool):
+    try:
+        return jsonify({"status": 0, "result": _topicdetail(group_id_flg)})
+    except:
+        return jsonify({"status": -1})
+
 # ファイルアップロード
 def _fileupload(file : any):
     # リクエストパラメータの受取
@@ -300,6 +308,7 @@ def _filedetail(manage_id: str):
                 return file_div
             cur.execute(query.get(file_div), (manage_id,))
             return convertCursorToDict(cur)
+
 # データ削除
 def _filedelete(manage_id: str):
     query = {
@@ -315,7 +324,6 @@ def _filedelete(manage_id: str):
             cur.execute(query.get(file_div), (manage_id,))        
             cur.execute('delete from m_file_info where manage_id = %s', (manage_id,))
         conn.commit()
-
 
 # ファイル区分取得
 def _getfilediv(conn: any, manage_id: str):
@@ -339,14 +347,15 @@ def _filemergedetail(yyyymm: str, version: str):
     "        end as 繰越対象 "\
     "    , t.order_detail as 受注明細 "\
     "    , mti.project_nm as 件名"\
-    "    , coalesce(cost_labor, 0)                as 労務費 "\
-    "    , coalesce(cost_subcontract, 0)          as 外注費 "\
-    "    , coalesce(cost, 0)                      as 旅費交通費 "\
-    "    , coalesce(change_value, 0)              as 翌月繰越    "\
+    "    , coalesce(cost_labor, 0)       as 労務費 "\
+    "    , coalesce(cost_subcontract, 0) as 外注費 "\
+    "    , coalesce(cost, 0)             as 旅費交通費 "\
+    "    , coalesce(change_value, 0)     as 翌月繰越    "\
     "from "\
     "    t_merge_result t "\
     "    left join m_topic_info mti "\
     "        on t.order_detail = mti.order_detail "\
+    "       and t.order_rowno = mti.order_rowno "\
     "where "\
     "    t.fiscal_date = %s "\
     "    and t.version = %s"
@@ -739,12 +748,31 @@ def _loatmerge_perv_wip(yyyymm:str):
         "    fiscal_date = %s  "\
         "order by "\
         "    t_wip_info.order_detail "
-    
 
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 sql, (_getPrevMonth(yyyymm), ))
+            return convertCursorToDict(cur)
+
+# 案件情報マスタからgroup_idの有無を指定して取得
+def _topicdetail(group_id_flg: bool):
+    sql = "select "\
+        "      order_detail "\
+        "    , order_rowno "\
+        "    , project_nm "\
+        "    , group_id "\
+        "    , disp_seq "\
+        "from "\
+        "    m_topic_info  "\
+        "where "\
+        "    (%s = FALSE OR group_id IS NULL) "\
+        "order by "\
+        "    group_id, disp_seq "
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (group_id_flg,))
             return convertCursorToDict(cur)
 
 # 勘定年月取得
