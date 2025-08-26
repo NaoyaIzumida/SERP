@@ -69,7 +69,7 @@ const TopicInfoMstPage: React.FC = () => {
 	];
 
 	 // グループID未設定のみチェックボックスの状態が変更されたときの処理
-	 const handleCheckBoxChange = (event: SyntheticEvent<Element, Event>, checked: boolean) => {
+	 const handleCheckBoxChange = (_event: SyntheticEvent<Element, Event>, checked: boolean) => {
     setIsGroupIdFlg(checked);
   };
 
