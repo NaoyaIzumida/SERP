@@ -230,6 +230,8 @@ const MergePage: React.FC = () => {
         setMessage('マージ処理を実行しました。');
         setSnackbarSeverity('success'); // 成功タイプに設定
         setOpenSnackbar(true);
+        setFavorites([]);
+        fetchData();
       } else {
         setMessage('マージ処理に失敗しました。');
         setSnackbarSeverity('error'); // 警告タイプに設定
