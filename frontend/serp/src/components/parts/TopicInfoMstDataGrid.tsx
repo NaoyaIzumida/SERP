@@ -1,15 +1,21 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 
 interface TopicInfoMstDataGridProps {
 	rows: any[];
 	columns: GridColDef[];
 	processRowUpdate?: (newRow: any, oldRow: any) => any;
+	selectedRowIds: (number | string)[];
+	onSelectionModelChange: (ids: (number | string)[]) => void;
 }
 
-const TopicInfoMstDataGrid: React.FC<TopicInfoMstDataGridProps> = ({ rows, columns, processRowUpdate }) => {
-	const [sortModel, setSortModel] = useState([]);
-
+const TopicInfoMstDataGrid: React.FC<TopicInfoMstDataGridProps> = ({
+	rows,
+	columns,
+	processRowUpdate,
+	selectedRowIds,
+	onSelectionModelChange,
+}) => {
 	const columnsWithAutoWidth: GridColDef[] = columns.map((col) => ({
 		...col,
 		flex: 1,
@@ -17,7 +23,7 @@ const TopicInfoMstDataGrid: React.FC<TopicInfoMstDataGridProps> = ({ rows, colum
 	}));
 
 	const rowsWithUniqueId = rows.map((row, index) => ({
-		id: index,
+		id: row.id ?? index,
 		...row,
 	}));
 
@@ -27,16 +33,16 @@ const TopicInfoMstDataGrid: React.FC<TopicInfoMstDataGridProps> = ({ rows, colum
 				rows={rowsWithUniqueId}
 				columns={columnsWithAutoWidth}
 				processRowUpdate={processRowUpdate}
-				initialState={{
-					pagination: {
-						paginationModel: { pageSize: 10 },
-					},
-				}}
+				checkboxSelection
+				disableRowSelectionOnClick
+				rowSelectionModel={selectedRowIds}
+				onRowSelectionModelChange={(ids) => onSelectionModelChange(ids)}
 				pagination
-				getRowId={(row) => row.id || row.manage_id || row[Object.keys(row)[0]]}
+				initialState={{
+					pagination: { paginationModel: { pageSize: 10 } },
+				}}
 				autoHeight={false}
-				sortModel={sortModel}
-				onSortModelChange={() => setSortModel([])}
+				getRowId={(row) => row.id}
 			/>
 		</div>
 	);

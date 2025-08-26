@@ -33,6 +33,7 @@ const TopicInfoMstPage: React.FC = () => {
 	const [snackbarSeverity, setSnackbarSeverity] = useState<'error' | 'warning' | 'success' | 'info'>('error');
 	const [openSnackbar, setOpenSnackbar] = useState(false);
 	const [dataItem, setDataItem] = useState<TopicInfoMstList[]>([]);
+	const [selectedRowIds, setSelectedRowIds] = useState<(number | string)[]>([]);
 	
 	// カラム設定
 	const columns = [
@@ -122,8 +123,14 @@ const TopicInfoMstPage: React.FC = () => {
 				: row
 		);
 		setDataItem(updatedRows);
-  return newRow;
-};
+	
+		// 編集された行の id を選択状態に追加（重複は避ける）
+		if (!selectedRowIds.includes(newRow.id)) {
+			setSelectedRowIds((prev) => [...prev, newRow.id]);
+		}
+	
+		return newRow;
+	};
 
 	// 案件情報マスタ更新処理
   const handleUpdate = async () => {
@@ -192,8 +199,12 @@ const TopicInfoMstPage: React.FC = () => {
 			{/* TopicInfoMstDataGridに取得したデータを渡して表示 */}
 			<Box sx={{ height: '100%', width: '100%' }}>
 			{dataItem.length > 0 && (
-				<TopicInfoMstDataGrid rows={dataItem} columns={columns}
-				processRowUpdate={handleRowEdit}
+				<TopicInfoMstDataGrid 
+				rows={dataItem}
+  			columns={columns}
+  			processRowUpdate={handleRowEdit}
+  			selectedRowIds={selectedRowIds}
+  			onSelectionModelChange={setSelectedRowIds}
 				/>
 			)}
 		</Box>
