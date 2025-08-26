@@ -84,17 +84,16 @@ const TopicInfoMstPage: React.FC = () => {
 	// API呼び出し関数(検索)
 	const fetchData = async () => {
 
-		// API呼び出し中の場合は処理を抜ける
-		if (isRequesting){
-			return;
-		} else {
-			setIsRequesting(true);
-		}
-
 		// DataGridのチェックボックスをクリア
 		setSelectedRowIds([])
 
 		try {
+			// API呼び出し中の場合は処理を抜ける
+			if (isRequesting){
+				return;
+			} else {
+				setIsRequesting(true);
+			}
 
 			// 案件情報マスタ取得
 			let response = await apiClient.get<ApiResponse>(`/topicinfolist/${isGroupIdFlg}`);
@@ -139,18 +138,23 @@ const TopicInfoMstPage: React.FC = () => {
 
 	// 案件情報マスタ更新処理
   const handleUpdate = async () => {
-
-		// API呼び出し中の場合は処理を抜ける
-		if (isRequesting){
-			return;
-		} else {
-			setIsRequesting(true);
-		}
-
-		// 選択されている行だけを抽出
+		// 編集されている行だけを抽出
     const selectedData = dataItem.filter(item => selectedRowIds.includes(item.id));
 
+		// 編集済の行が無ければ処理を抜ける
+		if(selectedData.length <= 0){
+			setSelectedRowIds([])
+			return;
+		}
+
 		try {
+			// API呼び出し中の場合は処理を抜ける
+			if (isRequesting){
+				return;
+			} else {
+				setIsRequesting(true);
+			}
+
 			const response = await apiClient.put('/topicinfoupdate', {
 				topics: selectedData.map(item => ({
 					order_detail: item.order_detail,
@@ -175,6 +179,9 @@ const TopicInfoMstPage: React.FC = () => {
 			setMessage('更新処理に失敗しました。');
 			setSnackbarSeverity('error'); // 警告タイプに設定
 			setOpenSnackbar(true);
+		}
+		finally{
+			setIsRequesting(false);
 		}
   };
 
