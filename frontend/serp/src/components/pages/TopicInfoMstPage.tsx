@@ -58,7 +58,7 @@ const TopicInfoMstPage: React.FC = () => {
 			field: 'group_id',
 			headerName: 'グループID',
 			editable: true,
-			renderEditCell: (params: GridRenderEditCellParams) => <FullWidthInputDisabledCell {...params} /*maxLength={2}*/ />,
+			renderEditCell: (params: GridRenderEditCellParams) => <FullWidthInputDisabledCell {...params} maxLength={2} />,
 		},
 		{
 			field: 'disp_seq',
@@ -94,7 +94,7 @@ const TopicInfoMstPage: React.FC = () => {
 			let response = await apiClient.get<ApiResponse>(`/topicinfolist/${isGroupIdFlg}`);
 
 		  if (response.data.status == 1) {
-        setMessage('一致するファイル一覧がありません。');
+        setMessage('案件情報がありません。');
         setSnackbarSeverity('warning');
         setOpenSnackbar(true);
         setDataItem([]);
@@ -114,6 +114,7 @@ const TopicInfoMstPage: React.FC = () => {
     }
 	};
 
+	// DataGrid編集時処理
 	const handleRowEdit = (newRow: TopicInfoMstList, oldRow: TopicInfoMstList): TopicInfoMstList => {
 		const updatedRows = dataItem.map((row) =>
 			row.order_detail === oldRow.order_detail && row.order_rowno === oldRow.order_rowno
