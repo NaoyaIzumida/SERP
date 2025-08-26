@@ -224,9 +224,9 @@ const MergePage: React.FC = () => {
   const handleMerge = async () => {
     try {
       const response = await apiClient.put('/filemerge', {
-        manage_id: favorites, // 選択された manage_id を送信
+        manage_ids: favorites, // 選択された manage_id を送信
       });
-      console.log('esponse.data.status:', response.data.status);
+      console.log('response.data.status:', response.data.status);
       if (response.data.status == 0) {
         setMessage('マージ処理を実行しました。');
         setSnackbarSeverity('success'); // 成功タイプに設定

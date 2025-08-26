@@ -191,6 +191,7 @@ const uploadFile = async (file: File, fiscalDate: string, fileNm: string, fileDi
       setMessage('アップロードに成功しました。');
       setSnackbarSeverity('success'); // 成功タイプに設定
       setOpenSnackbar(true);
+      fetchData();
     } else {
       setMessage('アップロードに失敗しました。');
       setSnackbarSeverity('warning'); // 警告タイプに設定
@@ -227,9 +228,7 @@ const parseFileName = (fileName: string) => {
 
   // fileDivの判定
   let fileDiv = '';
-  if (fileNm.includes('HRMOS経費')) {
-    fileDiv = 'H';
-  } else if (fileNm.includes('仕掛PJ台帳')) {
+  if (fileNm.includes('仕掛PJ台帳')) {
     fileDiv = 'W';
   } else if (fileNm.includes('完成PJ台帳')) {
     fileDiv = 'F';

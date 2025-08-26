@@ -8,6 +8,7 @@ import ListSubheader from '@mui/material/ListSubheader';
 import Toolbar from '@mui/material/Toolbar';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import MergeOutlinedIcon from '@mui/icons-material/MergeOutlined';
+import TopicInfoIcon from '@mui/icons-material/Topic';
 import { NavLink } from "react-router-dom";
 import { lightBlue } from "@mui/material/colors";
 
@@ -36,6 +37,18 @@ export const MyDrawer = (props: Props) => {
             <ListSubheader component="div" inset>
               Select Menu
             </ListSubheader>
+            <ListItemButton
+                component={NavLink}
+                to={"/TopicInfoMstPage"}
+                sx={{ '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
+                end
+            >
+              <ListItemIcon>
+                {/* 案件情報マスタメンテナンス */}
+                <TopicInfoIcon />
+              </ListItemIcon>
+              <ListItemText primary={"TopicInfoMst"} />
+            </ListItemButton>
             <ListItemButton
                 component={NavLink}
                 to={"/UploadPage"}
