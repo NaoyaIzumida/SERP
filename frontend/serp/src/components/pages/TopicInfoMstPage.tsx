@@ -145,9 +145,12 @@ const TopicInfoMstPage: React.FC = () => {
 			setIsRequesting(true);
 		}
 
+		// 選択されている行だけを抽出
+    const selectedData = dataItem.filter(item => selectedRowIds.includes(item.id));
+
 		try {
 			const response = await apiClient.put('/topicinfoupdate', {
-				topics: dataItem.map(item => ({
+				topics: selectedData.map(item => ({
 					order_detail: item.order_detail,
 					order_rowno: item.order_rowno,
 					group_id: item.group_id,
