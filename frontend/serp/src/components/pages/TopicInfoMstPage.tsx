@@ -9,6 +9,7 @@ import UpdateRoundedIcon from '@mui/icons-material/UpdateRounded';
 import TopicInfoMstDataGrid from '../parts/TopicInfoMstDataGrid';
 import { GridRenderEditCellParams } from '@mui/x-data-grid';
 import FullWidthInputDisabledCell from "../parts/FullWidthInputDisabledCell";
+import MaxNumberEditCell from "../parts/MaxNumberEditCell";
 
 // 案件情報マスタデータ
 interface TopicInfoMstList {
@@ -66,6 +67,7 @@ const TopicInfoMstPage: React.FC = () => {
 			headerName: '表示順',
 			type: 'number',
 			editable: true,
+			renderEditCell: (params: GridRenderEditCellParams) => <MaxNumberEditCell {...params} maxNumber={2147483647} />, // 入力の最大値をpostgreDBinteger型に設定
 		},
 	];
 
