@@ -11,13 +11,23 @@ import MergeOutlinedIcon from '@mui/icons-material/MergeOutlined';
 import TopicInfoIcon from '@mui/icons-material/Topic';
 import { NavLink } from "react-router-dom";
 import { lightBlue } from "@mui/material/colors";
+import {useContext} from "react";
+import {menuContext} from "../contexts/AppState.ts";
 
 type Props = {
   open: boolean;
 };
 
 export const MyDrawer = (props: Props) => {
-  return (
+    // AppState.ts の menuContext を引数に与える
+    const context = useContext(menuContext);
+    if (!context) {
+        throw new Error("MenuComponent must be used within a MenuProvider");
+    }
+
+    const { isOpened, setOpened } = context;
+
+    return (
     <>
       <Drawer
         sx={{
@@ -53,6 +63,7 @@ export const MyDrawer = (props: Props) => {
                 component={NavLink}
                 to={"/UploadPage"}
                 sx={{ '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
+                onClick={() => setOpened(!isOpened)}
                 end
             >
               <ListItemIcon>
@@ -65,6 +76,7 @@ export const MyDrawer = (props: Props) => {
                 component={NavLink}
                 to={"/MergePage"}
                 sx={{ '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
+                onClick={() => setOpened(!isOpened)}
                 end
             >
               <ListItemIcon>
