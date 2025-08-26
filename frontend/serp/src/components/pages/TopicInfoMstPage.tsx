@@ -89,6 +89,9 @@ const TopicInfoMstPage: React.FC = () => {
 			setIsRequesting(true);
 		}
 
+		// DataGridのチェックボックスをクリア
+		setSelectedRowIds([])
+
 		try {
 
 			// 案件情報マスタ取得
@@ -134,6 +137,14 @@ const TopicInfoMstPage: React.FC = () => {
 
 	// 案件情報マスタ更新処理
   const handleUpdate = async () => {
+
+		// API呼び出し中の場合は処理を抜ける
+		if (isRequesting){
+			return;
+		} else {
+			setIsRequesting(true);
+		}
+
 		try {
 			const response = await apiClient.put('/topicinfoupdate', {
 				topics: dataItem.map(item => ({
