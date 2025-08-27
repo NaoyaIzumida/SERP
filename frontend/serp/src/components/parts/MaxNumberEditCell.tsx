@@ -39,6 +39,7 @@ const MaxNumberEditCell: React.FC<GridRenderEditCellParams> = (params: CustomEdi
 
   return (
     <TextField
+      autoFocus
       type="number"
       value={stringValue}
       onChange={handleChange}
