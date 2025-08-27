@@ -51,6 +51,7 @@ export const MyDrawer = (props: Props) => {
                 component={NavLink}
                 to={"/TopicInfoMstPage"}
                 sx={{ '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
+                onClick={() => setOpened(!isOpened)}
                 end
             >
               <ListItemIcon>
