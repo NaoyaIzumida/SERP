@@ -100,7 +100,7 @@ const UploadPage: React.FC = () => {
   // 初回ロード時にデータを取得
   useEffect(() => {
     fetchData();
-  }, useState(true));
+  }, []);
 
   // Snackbarを閉じる処理
   const handleSnackbarClose = () => {
@@ -243,7 +243,7 @@ const parseFileName = (fileName: string) => {
       const { fiscalDate, fileNm, fileDiv } = parseFileName(file.name);
       await uploadFile(file, fiscalDate, fileNm, fileDiv);
     }
-  }, []);
+  }, [selectedDate]);
     
   // Dropzoneの設定
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
