@@ -517,9 +517,9 @@ def _filedownload(yyyymm : str, version : str):
     # =====================
     # サマリー・仕掛MM月シート
     # =====================
+    beginniingOfYear = _get_last_year_november(yyyymm)  # 前年11月（期首月）
+    currentyyyymm = yyyymm  # 当月
 
-    # 前年11月（期首月）
-    beginniingOfYear = _get_last_year_november(yyyymm)
     while yyyymm >=  beginniingOfYear:
       ws = wb['template']
       wsCopy = wb.copy_worksheet(ws)
@@ -681,10 +681,14 @@ def _filedownload(yyyymm : str, version : str):
     # templeteシートを削除
     del wb['template']
 
+    # サマリー
+    result_fg = _loadmerge_fg(currentyyyymm, version)
+    result_wip = _loadmerge_wip(currentyyyymm, version)
+
     # =====================
-    # fgシート
+    # 完成PJ台帳シート
     # =====================
-    ws = wb['fg']
+    ws = wb['完成PJ台帳']
     row = 3 # 完成PJ 開始行
     fg_start_row = row
     for item in result_fg:
@@ -713,9 +717,9 @@ def _filedownload(yyyymm : str, version : str):
     ws.cell(row, 13, '=IF(K' + str(fg_start_row + 16) + '=0, 0%,L' + str(fg_start_row + 16) + '/K' + str(fg_start_row + 16) + ')')  # 粗利率
 
     # =====================
-    # wipシート
+    # 仕掛J台帳シート
     # =====================
-    ws = wb['wip']
+    ws = wb['仕掛PJ台帳']
     row = 3 # 仕掛PJ 開始行
     wip_start_row = row
     for item in result_wip:
