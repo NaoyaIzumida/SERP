@@ -517,10 +517,10 @@ def _filedownload(yyyymm : str, version : str):
     # =====================
     # サマリー・仕掛MM月シート
     # =====================
-    beginniingOfYear = _get_last_year_november(yyyymm)  # 前年11月（期首月）
+    beginningOfYear = _get_last_year_november(yyyymm)  # 前年11月（期首月）
     currentyyyymm = yyyymm  # 当月
 
-    while yyyymm >=  beginniingOfYear:
+    while yyyymm >=  beginningOfYear:
       ws = wb['template']
       wsCopy = wb.copy_worksheet(ws)
       ws = wsCopy
