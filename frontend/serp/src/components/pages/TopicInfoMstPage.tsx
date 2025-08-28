@@ -1,7 +1,7 @@
 import React, { SyntheticEvent} from "react";
 import { useState } from 'react';
 import apiClient from '../../api/api'; // API関数をインポート
-import { Alert, Box, Button, Checkbox, FormControlLabel, Snackbar} from "@mui/material";
+import { Alert, Box, Button, Checkbox, FormControlLabel, Grid, Link, Snackbar, Typography} from "@mui/material";
 import SearchIcon from '@mui/icons-material/Search';
 import UpdateRoundedIcon from '@mui/icons-material/UpdateRounded';
 
@@ -236,6 +236,19 @@ const TopicInfoMstPage: React.FC = () => {
   			onSelectionModelChange={setSelectedRowIds}
 				/>
 			)}
+
+			{/* CopyrightArea */}
+			<Grid item lg={12} >
+          <Typography variant="body2" color="text.secondary" align="center">
+            {'Copyright © '}
+            <Link color="inherit" href="http://www.sci-it.co.jp/">
+              SCI
+            </Link>
+            {' '}
+            {new Date().getFullYear()}
+            {'.'}
+          </Typography>
+			</Grid>
 		</Box>
 				
 			{/* メッセージ表示 */}
