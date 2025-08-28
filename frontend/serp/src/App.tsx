@@ -11,31 +11,34 @@ import { MyAppBar } from "./components/MyAppBar";
 import { MyDrawer } from "./components/MyDrawer";
 import "./App.css";
 import { Main } from "./components/Main";
+import { SnackbarProvider } from "./components/parts/SnackbarProvider";
 
 const App: React.FC = () => {
   const [isOpened, setIsOpened] = React.useState(false);
 
   return (
     <BrowserRouter>
-      <menuContext.Provider value={{ isOpened, setOpened: setIsOpened }}>
-        <Box sx={{ display: "flex" }}>
-          <CssBaseline />
-          {/* AppBar */}
-          <MyAppBar />
-          {/* Drawer */}
-          <MyDrawer open={isOpened} />
-          {/* Main */}
-          <Main open={isOpened}>
-            <Toolbar />
-          </Main>
-        </Box>
-      </menuContext.Provider>
-      <Routes>
-        <Route path="/" element={<UploadPage />} />
-        <Route path="TopicInfoMstPage" element={<TopicInfoMstPage />} />
-        <Route path="UploadPage" element={<UploadPage />} />
-        <Route path="MergePage" element={<MergePage />} />
-      </Routes>
+      <SnackbarProvider>
+        <menuContext.Provider value={{ isOpened, setOpened: setIsOpened }}>
+          <Box sx={{ display: "flex" }}>
+            <CssBaseline />
+            {/* AppBar */}
+            <MyAppBar />
+            {/* Drawer */}
+            <MyDrawer open={isOpened} />
+            {/* Main */}
+            <Main open={isOpened}>
+              <Toolbar />
+            </Main>
+          </Box>
+        </menuContext.Provider>
+        <Routes>
+          <Route path="/" element={<UploadPage />} />
+          <Route path="TopicInfoMstPage" element={<TopicInfoMstPage />} />
+          <Route path="UploadPage" element={<UploadPage />} />
+          <Route path="MergePage" element={<MergePage />} />
+        </Routes>
+      </SnackbarProvider>
     </BrowserRouter>
   );
 }

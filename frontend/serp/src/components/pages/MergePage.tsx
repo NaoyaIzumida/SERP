@@ -15,8 +15,6 @@ import Toolbar from '@mui/material/Toolbar';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import Alert  from '@mui/material/Alert';
-import Snackbar from '@mui/material/Snackbar';
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
 import SearchIcon from '@mui/icons-material/Search';
@@ -30,6 +28,7 @@ import apiClient from '../../api/api'; // API関数をインポート
 
 // Parts(子Component)のImport
 import MergeDataGrid from '../parts/MergeDataGrid';
+import { SnackbarSeverity, useSnackbar } from '../parts/SnackbarProvider';
 
 // APIから取得するjsonの型定義（Switch Offの場合）
 interface FileListItem {
@@ -73,9 +72,7 @@ const MergePage: React.FC = () => {
   const [favorites, setFavorites] = useState<string[]>([]);                           // お気に入りの manage_id を保持
   const [gridData, setGridData] = useState<GridDataItem[]>([]);                       // GridDataItem に表示するデータ
   const [columns, setColumns] = useState<any[]>([]);                                  // DataGrid の列
-  const [openSnackbar, setOpenSnackbar] = useState(false);                            // Snackbarの開閉状態
-  const [snackbarSeverity, setSnackbarSeverity] = useState<'error' | 'warning' | 'success' | 'info'>('error'); // Snackbarのタイプ
-  const [errorMessage, setMessage] = useState('');                                    // メッセージ
+  const { showSnackbar } = useSnackbar();
 
   // Switchの状態が変更されたときの処理
   const handleSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,24 +105,17 @@ const MergePage: React.FC = () => {
       }
 
       if (response.data.status == 1) {
-        setMessage('一致するファイル一覧がありません。');
-        setSnackbarSeverity('warning'); // 警告タイプに設定
-        setOpenSnackbar(true);
-
+        showSnackbar('一致するファイル一覧がありません。',SnackbarSeverity.WARNING);
         setDataItem([]);                // 削除成功後にデータグリッドをクリアする
         setGridData([]);                // DataGrid を初期化
         setColumns([]);
       } else {
-        setMessage('データを取得しました。');
-        setSnackbarSeverity('success'); // 成功タイプに設定
-        setOpenSnackbar(true);
+        showSnackbar('データを取得しました。',SnackbarSeverity.SUCCESS);
         setDataItem(response.data.result);
       }
 
     } catch (error) {
-      setMessage('データの取得に失敗しました。');
-      setSnackbarSeverity('error'); // 警告タイプに設定
-      setOpenSnackbar(true);
+      showSnackbar('データの取得に失敗しました。',SnackbarSeverity.ERROR);
     } finally {
       setLoading(false);
     }
@@ -157,14 +147,10 @@ const MergePage: React.FC = () => {
       const fileName = `${fiscalDate}_${version}.xlsx`; // ダウンロードファイル名
       saveAs(response.data, fileName); // ファイルを保存
 
-      setMessage('ファイルをダウンロードしました。');
-      setSnackbarSeverity('success'); // 警告タイプに設定
-      setOpenSnackbar(true);
+      showSnackbar('ファイルをダウンロードしました。',SnackbarSeverity.SUCCESS);
     } catch (error) {
       console.log('error:', error);
-      setMessage('ダウンロードに失敗しました。');
-      setSnackbarSeverity('error'); // 警告タイプに設定
-      setOpenSnackbar(true);
+      showSnackbar('ダウンロードに失敗しました。',SnackbarSeverity.ERROR);
     }
   };
 
@@ -210,13 +196,9 @@ const MergePage: React.FC = () => {
         setColumns(generatedColumns);   // 列定義を更新
         setGridData(gridData);          // DataGridに表示するためのデータを更新
       }
-      setMessage('データを取得しました。');
-      setSnackbarSeverity('success');   // 成功タイプに設定
-      setOpenSnackbar(true);
+      showSnackbar('データを取得しました。',SnackbarSeverity.SUCCESS);
     } catch (error) {
-      setMessage('データの取得に失敗しました。');
-      setSnackbarSeverity('error');     // 警告タイプに設定
-      setOpenSnackbar(true);
+      showSnackbar('データの取得に失敗しました。',SnackbarSeverity.ERROR);
     }
   };
 
@@ -228,25 +210,14 @@ const MergePage: React.FC = () => {
       });
       console.log('response.data.status:', response.data.status);
       if (response.data.status == 0) {
-        setMessage('マージ処理を実行しました。');
-        setSnackbarSeverity('success'); // 成功タイプに設定
-        setOpenSnackbar(true);
+        showSnackbar('マージ処理を実行しました。',SnackbarSeverity.SUCCESS);
         fetchData();
       } else {
-        setMessage('マージ処理に失敗しました。');
-        setSnackbarSeverity('error'); // 警告タイプに設定
-        setOpenSnackbar(true);
+        showSnackbar('マージ処理に失敗しました。',SnackbarSeverity.ERROR);
       }
     } catch (error) {
-      setMessage('マージ処理に失敗しました。');
-      setSnackbarSeverity('error'); // 警告タイプに設定
-      setOpenSnackbar(true);
+      showSnackbar('マージ処理に失敗しました。',SnackbarSeverity.ERROR);
     }
-  };
-
-  // Snackbarを閉じる処理
-  const handleSnackbarClose = () => {
-    setOpenSnackbar(false);
   };
 
   return (
@@ -422,18 +393,6 @@ const MergePage: React.FC = () => {
           </Typography>
         </Grid>
       </Grid>
-
-      {/* Snackbarでエラーメッセージを表示 */}
-      <Snackbar
-        open={openSnackbar}
-        autoHideDuration={5000}  // 5秒後に自動で閉じる
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}  // 右下に配置
-      >
-        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity}>
-          {errorMessage}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };

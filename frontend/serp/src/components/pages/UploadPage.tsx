@@ -13,7 +13,6 @@ import Toolbar from '@mui/material/Toolbar';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import { useDropzone } from 'react-dropzone';
-import Snackbar from '@mui/material/Snackbar';
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
 import SearchIcon from '@mui/icons-material/Search';
@@ -26,6 +25,7 @@ import apiClient from '../../api/api'; // API関数をインポート
 
 // Parts(子Component)のImport
 import UploadDataGrid from '../parts/UploadDataGrid';
+import { SnackbarSeverity, useSnackbar } from '../parts/SnackbarProvider';
 
 // (ファイル情報)APIから取得するデータの型
 interface FileListItem {
@@ -53,9 +53,7 @@ const UploadPage: React.FC = () => {
   const [loading, setLoading] = useState(false);                              // API呼び出し中かどうかのフラグ
   const [gridData, setGridData] = useState<GridDataItem[]>([]);               // GridDataItem に表示するデータ
   const [columns, setColumns] = useState<any[]>([]);                          // DataGrid の列
-  const [openSnackbar, setOpenSnackbar] = useState(false);                    // Snackbarの開閉状態
-  const [snackbarSeverity, setSnackbarSeverity] = useState<'error' | 'warning' | 'success' | 'info'>('error'); // Snackbarのタイプ
-  const [errorMessage, setMessage] = useState('');                            // メッセージ
+  const { showSnackbar } = useSnackbar();
 
   // 検索ボタン押下時に呼び出す処理
   const handleSearchClick = () => {
@@ -74,24 +72,16 @@ const UploadPage: React.FC = () => {
     try {
       const response = await apiClient.get<ApiResponse>(`/filelist/${formattedDate}`);
       if (response.data.status == 1) {
-        setMessage('一致するデータがありません。');
-        setSnackbarSeverity('warning'); // 警告タイプに設定
-        setOpenSnackbar(true);
-
+        showSnackbar('一致するデータがありません。',SnackbarSeverity.WARNING);
         setDataItem([]);                // 削除成功後にデータグリッドをクリアする
         setGridData([]);                // DataGrid を初期化
         setColumns([]);
       } else {
-        setMessage('データを取得しました。');
-        setSnackbarSeverity('success'); // 成功タイプに設定
-        setOpenSnackbar(true);
+        showSnackbar('データを取得しました。',SnackbarSeverity.SUCCESS);
         setDataItem(response.data.result);
       }
-
     } catch (error) {
-      setMessage('データの取得に失敗しました。');
-      setSnackbarSeverity('error'); // 警告タイプに設定
-      setOpenSnackbar(true);
+      showSnackbar('データの取得に失敗しました。',SnackbarSeverity.ERROR);
     } finally {
       setLoading(false);
     }
@@ -100,12 +90,7 @@ const UploadPage: React.FC = () => {
   // 初回ロード時にデータを取得
   useEffect(() => {
     fetchData();
-  }, useState(true));
-
-  // Snackbarを閉じる処理
-  const handleSnackbarClose = () => {
-    setOpenSnackbar(false);
-  };
+  }, []);
 
   // 行が選択されたときに呼ばれる関数
   const handleRowSelect = async (selectedData: FileListItem) => {
@@ -132,13 +117,9 @@ const UploadPage: React.FC = () => {
         setColumns(generatedColumns);   // 列定義を更新
         setGridData(gridData);          // DataGridに表示するためのデータを更新
       }
-      setMessage('データを取得しました。');
-      setSnackbarSeverity('success');   // 成功タイプに設定
-      setOpenSnackbar(true);
+      showSnackbar('データを取得しました。',SnackbarSeverity.SUCCESS);
     } catch (error) {
-      setMessage('データの取得に失敗しました。');
-      setSnackbarSeverity('error');     // 警告タイプに設定
-      setOpenSnackbar(true);
+      showSnackbar('データの取得に失敗しました。',SnackbarSeverity.ERROR);
     }
   };
 
@@ -148,14 +129,9 @@ const UploadPage: React.FC = () => {
     try {
       const response = await apiClient.delete<ApiResponse>(`/filedelete/${manage_id}`);
       if (response.data.status == 1) {
-        setMessage('データの削除に失敗しました。');
-        setSnackbarSeverity('warning'); // 警告タイプに設定
-        setOpenSnackbar(true);
+        showSnackbar('データの削除に失敗しました。',SnackbarSeverity.WARNING);
       } else {
-        setMessage('データを削除しました。');
-        setSnackbarSeverity('success'); // 成功タイプに設定
-        setOpenSnackbar(true);
-
+        showSnackbar('データを削除しました。',SnackbarSeverity.SUCCESS);
         setDataItem([]);                // 削除成功後にデータグリッドをクリアする
         setGridData([]);                // DataGrid を初期化
         setColumns([]);
@@ -163,9 +139,7 @@ const UploadPage: React.FC = () => {
       }
 
     } catch (error) {
-      setMessage('データの削除に失敗しました。');
-      setSnackbarSeverity('error'); // 警告タイプに設定
-      setOpenSnackbar(true);
+      showSnackbar('データの削除に失敗しました。',SnackbarSeverity.ERROR);
     } finally {
       setLoading(false);
     }
@@ -188,19 +162,13 @@ const uploadFile = async (file: File, fiscalDate: string, fileNm: string, fileDi
 
     // レスポンスをチェックして必要に応じてエラーメッセージや成功メッセージを表示
     if (response.data.status === 0) {
-      setMessage('アップロードに成功しました。');
-      setSnackbarSeverity('success'); // 成功タイプに設定
-      setOpenSnackbar(true);
+      showSnackbar('アップロードに成功しました。',SnackbarSeverity.SUCCESS);
       fetchData();
     } else {
-      setMessage('アップロードに失敗しました。');
-      setSnackbarSeverity('warning'); // 警告タイプに設定
-      setOpenSnackbar(true);
+      showSnackbar('アップロードに失敗しました。',SnackbarSeverity.WARNING);
     }
   } catch (error) {
-    setMessage('アップロードError');
-    setSnackbarSeverity('error'); // 警告タイプに設定
-    setOpenSnackbar(true);
+    showSnackbar('アップロードError',SnackbarSeverity.ERROR);
   }
 };
 
@@ -404,18 +372,6 @@ const parseFileName = (fileName: string) => {
           </Typography>
         </Grid>
       </Grid>
-
-      {/* Snackbarでエラーメッセージを表示 */}
-      <Snackbar
-        open={openSnackbar}
-        autoHideDuration={5000}  // 5秒後に自動で閉じる
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}  // 右下に配置
-      >
-        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity}>
-          {errorMessage}
-        </Alert>
-      </Snackbar>
     </Box>
   );
 };
