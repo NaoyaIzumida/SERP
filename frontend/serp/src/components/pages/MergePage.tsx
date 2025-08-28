@@ -13,7 +13,6 @@ import MergeIcon from '@mui/icons-material/Merge';
 import Paper from '@mui/material/Paper';
 import Toolbar from '@mui/material/Toolbar';
 import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
@@ -23,7 +22,6 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import Switch from '@mui/material/Switch';
 import dayjs, { Dayjs } from 'dayjs';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import Link from '@mui/material/Link';
 import apiClient from '../../api/api'; // API関数をインポート
 
 // Parts(子Component)のImport
@@ -379,18 +377,6 @@ const MergePage: React.FC = () => {
               )}
             </Box>
           </Paper>
-        </Grid>
-        {/* CopyrightArea */}
-        <Grid item lg={12} >
-          <Typography variant="body2" color="text.secondary" align="center">
-            {'Copyright © '}
-            <Link color="inherit" href="http://www.sci-it.co.jp/">
-              SCI
-            </Link>
-            {' '}
-            {new Date().getFullYear()}
-            {'.'}
-          </Typography>
         </Grid>
       </Grid>
     </Box>

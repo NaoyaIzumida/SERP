@@ -20,7 +20,6 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs, { Dayjs } from 'dayjs';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import Link from '@mui/material/Link';
 import apiClient from '../../api/api'; // API関数をインポート
 
 // Parts(子Component)のImport
@@ -358,18 +357,6 @@ const parseFileName = (fileName: string) => {
               )}
             </Box>
           </Paper>
-        </Grid>
-        {/* CopyrightArea */}
-        <Grid item lg={12} >
-          <Typography variant="body2" color="text.secondary" align="center">
-            {'Copyright © '}
-            <Link color="inherit" href="http://www.sci-it.co.jp/">
-              SCI
-            </Link>
-            {' '}
-            {new Date().getFullYear()}
-            {'.'}
-          </Typography>
         </Grid>
       </Grid>
     </Box>
