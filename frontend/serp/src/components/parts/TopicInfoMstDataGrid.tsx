@@ -16,11 +16,20 @@ const TopicInfoMstDataGrid: React.FC<TopicInfoMstDataGridProps> = ({
 	selectedRowIds,
 	onSelectionModelChange,
 }) => {
-	const columnsWithAutoWidth: GridColDef[] = columns.map((col) => ({
-		...col,
-		flex: 1,
-		align: typeof rows[0]?.[col.field] === 'number' ? 'right' : 'left',
-	}));
+
+	const columnsWithAutoWidth: GridColDef[] = columns.map((col) => {
+		const hasFixedWidth = col.width != null;
+	
+		return {
+			...col,
+			flex: hasFixedWidth ? undefined : 1,
+			align: typeof rows[0]?.[col.field] === 'number' ? 'right' : 'left',       // 数値列の場合は右詰め
+    	valueFormatter: (params: any) => {
+      	const value = params.value;
+      	return value;
+    	},
+		};
+	});
 
 	const rowsWithUniqueId = rows.map((row, index) => ({
 		id: row.id ?? index,
@@ -28,7 +37,7 @@ const TopicInfoMstDataGrid: React.FC<TopicInfoMstDataGridProps> = ({
 	}));
 
 	return (
-		<div style={{ height: 640, width: '100%' }}>
+		<div style={{ height: 700, width: '100%' }}>
 			<DataGrid
 				rows={rowsWithUniqueId}
 				columns={columnsWithAutoWidth}
@@ -39,7 +48,7 @@ const TopicInfoMstDataGrid: React.FC<TopicInfoMstDataGridProps> = ({
 				onRowSelectionModelChange={(ids) => onSelectionModelChange(ids)}
 				pagination
 				initialState={{
-					pagination: { paginationModel: { pageSize: 10 } },
+					pagination: { paginationModel: { pageSize: 30 } },
 				}}
 				autoHeight={false}
 				getRowId={(row) => row.id}

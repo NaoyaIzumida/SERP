@@ -1,6 +1,6 @@
 import React, { SyntheticEvent, useState, useEffect} from "react";
 import apiClient from '../../api/api'; // API関数をインポート
-import { Box, Button, Checkbox, FormControlLabel} from "@mui/material";
+import { Box, Button, Checkbox, FormControlLabel, Grid, Link, Typography} from "@mui/material";
 import SearchIcon from '@mui/icons-material/Search';
 import UpdateRoundedIcon from '@mui/icons-material/UpdateRounded';
 
@@ -18,7 +18,7 @@ interface TopicInfoMstList {
 	order_rowno: string;
 	project_nm: string;
 	group_id: string;
-	disp_seq: number;
+	disp_seq: string;
 }
 
 // APIから取得するデータの型定義
@@ -39,32 +39,38 @@ const TopicInfoMstPage: React.FC = () => {
 		{
 			field: 'order_detail',
 			headerName: '受注明細',
-			type : 'string', 
+			type : 'string',
+			width: 200, 
 			editable: false,
 		},
 		{
 			field: 'order_rowno',
 			headerName: '受注行番号',
 			type : 'string',
+			width:100,
 			editable: false,
 		},
 		{
 			field: 'project_nm',
 			headerName: '契約工事略名',
 			type : 'string',
+			width: 800,
 			editable: false,
 		},
 		{
 			field: 'group_id',
 			headerName: 'グループID',
+			type: 'string',
 			editable: true,
+			width: 150,
 			renderEditCell: (params: GridRenderEditCellParams) => <FullWidthInputDisabledCell {...params} maxLength={2} />,
 		},
 		{
 			field: 'disp_seq',
 			headerName: '表示順',
-			type: 'number',
+			type: 'string',
 			editable: true,
+			width: 150,
 			renderEditCell: (params: GridRenderEditCellParams) => <MaxNumberEditCell {...params} maxNumber={2147483647} />, // 入力の最大値をpostgreDBinteger型に設定
 		},
 	];
@@ -152,7 +158,7 @@ const TopicInfoMstPage: React.FC = () => {
 					order_detail: item.order_detail,
 					order_rowno: item.order_rowno,
 					group_id: item.group_id,
-					disp_seq: item.disp_seq
+					disp_seq: item.disp_seq === '' ? null : item.disp_seq,
 					})
 				)
 			});
@@ -212,7 +218,19 @@ const TopicInfoMstPage: React.FC = () => {
 				/>
 			)}
 			</Box>
-    </Box>
+			{/* CopyrightArea */}
+			<Grid item lg={12} >
+          <Typography variant="body2" color="text.secondary" align="center">
+            {'Copyright © '}
+            <Link color="inherit" href="http://www.sci-it.co.jp/">
+              SCI
+            </Link>
+            {' '}
+            {new Date().getFullYear()}
+            {'.'}
+          </Typography>
+			</Grid>
+		</Box>
 	);
 };
 
