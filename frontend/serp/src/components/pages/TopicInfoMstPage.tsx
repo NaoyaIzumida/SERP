@@ -1,7 +1,6 @@
-import React, { SyntheticEvent} from "react";
-import { useState } from 'react';
+import React, { SyntheticEvent, useState, useEffect} from "react";
 import apiClient from '../../api/api'; // API関数をインポート
-import { Alert, Box, Button, Checkbox, FormControlLabel, Snackbar} from "@mui/material";
+import { Box, Button, Checkbox, FormControlLabel} from "@mui/material";
 import SearchIcon from '@mui/icons-material/Search';
 import UpdateRoundedIcon from '@mui/icons-material/UpdateRounded';
 
@@ -10,6 +9,7 @@ import TopicInfoMstDataGrid from '../parts/TopicInfoMstDataGrid';
 import { GridRenderEditCellParams } from '@mui/x-data-grid';
 import FullWidthInputDisabledCell from "../parts/FullWidthInputDisabledCell";
 import MaxNumberEditCell from "../parts/MaxNumberEditCell";
+import { useSnackbar, SnackbarSeverity } from '../parts/SnackbarProvider';
 
 // 案件情報マスタデータ
 interface TopicInfoMstList {
@@ -30,9 +30,7 @@ interface ApiResponse {
 const TopicInfoMstPage: React.FC = () => {
 	const [isGroupIdFlg, setIsGroupIdFlg] = useState(true);
 	const [isRequesting, setIsRequesting] = useState(false);
-	const [errorMessage, setMessage] = useState('');
-	const [snackbarSeverity, setSnackbarSeverity] = useState<'error' | 'warning' | 'success' | 'info'>('error');
-	const [openSnackbar, setOpenSnackbar] = useState(false);
+	const { showSnackbar } = useSnackbar();
 	const [dataItem, setDataItem] = useState<TopicInfoMstList[]>([]);
 	const [selectedRowIds, setSelectedRowIds] = useState<(number | string)[]>([]);
 	
@@ -99,21 +97,15 @@ const TopicInfoMstPage: React.FC = () => {
 			let response = await apiClient.get<ApiResponse>(`/topicinfolist/${isGroupIdFlg}`);
 
 		  if (response.data.status == 1) {
-        setMessage('案件情報がありません。');
-        setSnackbarSeverity('warning');
-        setOpenSnackbar(true);
+				showSnackbar('案件情報がありません。', SnackbarSeverity.WARNING);
         setDataItem([]);
       } else {
-        setMessage('データを取得しました。');
-        setSnackbarSeverity('success');
-        setOpenSnackbar(true);
+				showSnackbar('データを取得しました。', SnackbarSeverity.SUCCESS);
 				setDataItem(response.data.result);
       }
 		} catch (error) {
-      setMessage('データの取得に失敗しました。');
-      setSnackbarSeverity('error');
-      setOpenSnackbar(true);
 			setDataItem([]);
+			showSnackbar('案件情報の取得に失敗しました。', SnackbarSeverity.ERROR);
     } finally {
       setIsRequesting(false);
     }
@@ -166,34 +158,23 @@ const TopicInfoMstPage: React.FC = () => {
 			});
 			console.log('response.data.status:', response.data.status);
 			if (response.data.status == 0) {
-				setMessage('更新処理を実行しました。');
-				setSnackbarSeverity('success'); // 成功タイプに設定
-				setOpenSnackbar(true);
+				showSnackbar('更新処理を実行しました。', SnackbarSeverity.SUCCESS);
 				fetchData();
 			} else {
-				setMessage('更新処理に失敗しました。');
-				setSnackbarSeverity('error'); // 警告タイプに設定
-				setOpenSnackbar(true);
+				showSnackbar('更新処理に失敗しました。', SnackbarSeverity.ERROR);
 			}
 		} catch (error) {
-			setMessage('更新処理に失敗しました。');
-			setSnackbarSeverity('error'); // 警告タイプに設定
-			setOpenSnackbar(true);
+			showSnackbar('更新処理に失敗しました。', SnackbarSeverity.ERROR);
 		}
 		finally{
 			setIsRequesting(false);
 		}
   };
 
-		// Snackbarを閉じる処理
-		const handleSnackbarClose = () => {
-			setOpenSnackbar(false);
-		};
-
 		// Initialize
-		useState(() => {
+		useEffect(() => {
 			fetchData();
-		});
+		},[]);
 
 	return (
     <Box sx={{ height: 800, width: '100%' }}>
@@ -230,19 +211,7 @@ const TopicInfoMstPage: React.FC = () => {
   			onSelectionModelChange={setSelectedRowIds}
 				/>
 			)}
-		</Box>
-				
-			{/* メッセージ表示 */}
-			<Snackbar
-        open={openSnackbar}
-        autoHideDuration={5000}  // 5秒後に自動で閉じる
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}  // 右下に配置
-      >
-      	<Alert onClose={handleSnackbarClose} severity={snackbarSeverity}>
-        	{errorMessage}
-      	</Alert>
-      </Snackbar>
+			</Box>
     </Box>
 	);
 };
