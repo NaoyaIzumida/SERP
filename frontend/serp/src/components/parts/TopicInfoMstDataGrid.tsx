@@ -23,6 +23,11 @@ const TopicInfoMstDataGrid: React.FC<TopicInfoMstDataGridProps> = ({
 		return {
 			...col,
 			flex: hasFixedWidth ? undefined : 1,
+			align: typeof rows[0]?.[col.field] === 'number' ? 'right' : 'left',       // 数値列の場合は右詰め
+    	valueFormatter: (params: any) => {
+      	const value = params.value;
+      	return value;
+    	},
 		};
 	});
 
