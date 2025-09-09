@@ -1,4 +1,4 @@
-import { Drawer} from "@mui/material";
+import { Collapse, Drawer } from "@mui/material";
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -11,23 +11,27 @@ import MergeOutlinedIcon from '@mui/icons-material/MergeOutlined';
 import TopicInfoIcon from '@mui/icons-material/Topic';
 import { NavLink } from "react-router-dom";
 import { lightBlue } from "@mui/material/colors";
-import {useContext} from "react";
-import {menuContext} from "../contexts/AppState.ts";
+import { useContext, useState } from "react";
+import { menuContext } from "../contexts/AppState.ts";
+import { ExpandLess, ExpandMore, StarBorder } from "@mui/icons-material";
+import ManageSearchIcon from '@mui/icons-material/ManageSearch';
+import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 
 type Props = {
   open: boolean;
 };
 
 export const MyDrawer = (props: Props) => {
-    // AppState.ts の menuContext を引数に与える
-    const context = useContext(menuContext);
-    if (!context) {
-        throw new Error("MenuComponent must be used within a MenuProvider");
-    }
+  // AppState.ts の menuContext を引数に与える
+  const context = useContext(menuContext);
+  if (!context) {
+    throw new Error("MenuComponent must be used within a MenuProvider");
+  }
 
-    const { isOpened, setOpened } = context;
-
-    return (
+  const { isOpened, setOpened } = context;
+  const [isMstToggled, setMstToggle] = useState(true);
+  const [isMonthlyToggled, setMonthlyToggle] = useState(true);
+  return (
     <>
       <Drawer
         sx={{
@@ -47,45 +51,83 @@ export const MyDrawer = (props: Props) => {
             <ListSubheader component="div" inset>
               Select Menu
             </ListSubheader>
+
+            {/* 月次メニュー */}
             <ListItemButton
-                component={NavLink}
-                to={"/TopicInfoMstPage"}
-                sx={{ '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
-                onClick={() => setOpened(!isOpened)}
-                end
+              onClick={() => setMonthlyToggle(!isMonthlyToggled)}
             >
               <ListItemIcon>
-                {/* 案件情報マスタメンテナンス */}
-                <TopicInfoIcon />
+                <ManageSearchIcon />
               </ListItemIcon>
-              <ListItemText primary={"TopicInfoMst"} />
+              <ListItemText primary={"月次メニュー"} />
+              {isMonthlyToggled ? <ExpandLess /> : <ExpandMore />}
             </ListItemButton>
-            <ListItemButton
-                component={NavLink}
-                to={"/UploadPage"}
-                sx={{ '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
-                onClick={() => setOpened(!isOpened)}
-                end
-            >
-              <ListItemIcon>
-                {/* アップロード */}
-                <FileUploadOutlinedIcon />
-              </ListItemIcon>
-              <ListItemText primary={"Upload"} />
-            </ListItemButton>
-            <ListItemButton
-                component={NavLink}
-                to={"/MergePage"}
-                sx={{ '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
-                onClick={() => setOpened(!isOpened)}
-                end
-            >
-              <ListItemIcon>
-                {/* マージ */}
-                <MergeOutlinedIcon />
-              </ListItemIcon>
-              <ListItemText primary="Merge" />
-            </ListItemButton>
+
+            {/* 月次メニュー - リスト */}
+            <Collapse in={isMonthlyToggled} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+
+                {/* 月次メニュー > マスタ */}
+                <ListItemButton
+                  onClick={() => setMstToggle(!isMstToggled)}
+                  sx={{ pl: 3, '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
+                >
+                  <ListItemIcon>
+                    <ManageAccountsIcon />
+                  </ListItemIcon>
+                  <ListItemText primary={"マスタ"} />
+                  {isMstToggled ? <ExpandLess /> : <ExpandMore />}
+                </ListItemButton>
+
+                {/* 月次メニュー > マスタ - リスト */}
+                <Collapse in={isMstToggled} timeout="auto" unmountOnExit>
+                  <List component="div" disablePadding>
+                    
+                    { /* 月次メニュー > マスタ > 案件情報 */}
+                    <ListItemButton
+                      component={NavLink}
+                      to={"/TopicInfoMstPage"}
+                      sx={{ pl: 4, '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
+                      onClick={() => setOpened(!isOpened)}
+                      end
+                    >
+                      <ListItemIcon>
+                        <TopicInfoIcon />
+                      </ListItemIcon>
+                      <ListItemText primary="案件情報" />
+                    </ListItemButton>
+                  </List>
+                </Collapse>
+
+                { /* 月次メニュー > UPLOAD */}
+                <ListItemButton
+                  component={NavLink}
+                  to={"/UploadPage"}
+                  sx={{ pl: 4, '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
+                  onClick={() => setOpened(!isOpened)}
+                  end
+                >
+                  <ListItemIcon>
+                    <FileUploadOutlinedIcon />
+                  </ListItemIcon>
+                  <ListItemText primary={"UPLOAD"} />
+                </ListItemButton>
+
+                { /* 月次メニュー > MERGE */}
+                <ListItemButton
+                  component={NavLink}
+                  to={"/MergePage"}
+                  sx={{ pl: 4, '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
+                  onClick={() => setOpened(!isOpened)}
+                  end
+                >
+                  <ListItemIcon>
+                    <MergeOutlinedIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="MERGE" />
+                </ListItemButton>
+              </List>
+            </Collapse>
           </List>
         </Box>
       </Drawer>
