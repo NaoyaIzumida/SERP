@@ -14,7 +14,7 @@ import { lightBlue } from "@mui/material/colors";
 import { useContext, useState } from "react";
 import { menuContext } from "../contexts/AppState.ts";
 import { ExpandLess, ExpandMore, StarBorder } from "@mui/icons-material";
-import ManageSearchIcon from '@mui/icons-material/ManageSearch';
+import MenuIcon from '@mui/icons-material/Menu';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 
 type Props = {
@@ -57,7 +57,7 @@ export const MyDrawer = (props: Props) => {
               onClick={() => setMonthlyToggle(!isMonthlyToggled)}
             >
               <ListItemIcon>
-                <ManageSearchIcon />
+                <MenuIcon />
               </ListItemIcon>
               <ListItemText primary={"月次メニュー"} />
               {isMonthlyToggled ? <ExpandLess /> : <ExpandMore />}
