@@ -11,10 +11,10 @@ insert into m_topic_info(order_detail, order_rowno, project_nm, customer, group_
 ;
 
 delete from t_wip_info;
-insert into t_wip_info(fiscal_date, order_detail, order_rowno, cost_labor, cost_subcontract, cost, modified_date) values 
- ('202408', 'ZAB202300064', '1', 200366, 0, 0, current_timestamp)
-,('202408', 'ZAB202300095', '1', 64330, 0, 0, current_timestamp)
-,('202408', 'ZAB202300099', '1', 119248, 0, 0, current_timestamp)
+insert into t_wip_info(fiscal_date, order_detail, order_rowno, cost_labor, cost_subcontract, cost, cost_other, modified_date) values 
+ ('202408', 'ZAB202300064', '1', 200366, 0, 0, 0, current_timestamp)
+,('202408', 'ZAB202300095', '1', 64330, 0, 0, 0, current_timestamp)
+,('202408', 'ZAB202300099', '1', 119248, 0, 0, 0, current_timestamp)
 ;
 
 delete from m_file_info;

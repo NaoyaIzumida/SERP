@@ -142,6 +142,7 @@ create table t_wip_info (
   , cost_labor integer
   , cost_subcontract integer
   , cost integer
+  , cost_other integer
   , modified_date timestamp with time zone
   , constraint t_wip_info_pk primary key (fiscal_date, order_detail, order_rowno)
 ) ;
@@ -153,6 +154,7 @@ comment on column t_wip_info.order_rowno is '受注行番号';
 comment on column t_wip_info.cost_labor is '労務費';
 comment on column t_wip_info.cost_subcontract is '外注費';
 comment on column t_wip_info.cost is '経費';
+comment on column t_wip_info.cost_other is 'その他';
 comment on column t_wip_info.modified_date is '更新日時';
 
 -- マージ対象
@@ -187,6 +189,7 @@ create table t_merge_result (
   , cost_labor integer
   , cost_subcontract integer
   , cost integer
+  , cost_other integer
   , change_value integer
   , product_div character varying(2)
   , modified_date timestamp with time zone
@@ -203,6 +206,7 @@ comment on column t_merge_result.wip_id is '仕掛管理ID';
 comment on column t_merge_result.cost_labor is '労務費';
 comment on column t_merge_result.cost_subcontract is '外注費';
 comment on column t_merge_result.cost is '経費';
+comment on column t_merge_result.cost_other is 'その他';
 comment on column t_merge_result.change_value is '振替額';
 comment on column t_merge_result.product_div is '完成仕掛区分';
 comment on column t_merge_result.modified_date is '更新日時';

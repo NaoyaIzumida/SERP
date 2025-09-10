@@ -10,6 +10,7 @@ import pandas as pd
 from pykakasi import kakasi
 import re
 import unicodedata
+import traceback
 
 app = Flask(__name__)
 app.json.sort_keys = False
@@ -476,6 +477,7 @@ def _filemergedetail(yyyymm: str, version: str):
     "    , coalesce(cost_labor, 0)       as 労務費 "\
     "    , coalesce(cost_subcontract, 0) as 外注費 "\
     "    , coalesce(cost, 0)             as 旅費交通費 "\
+    "    , coalesce(cost_other, 0)       as その他 "\
     "    , coalesce(change_value, 0)     as 翌月繰越    "\
     "from "\
     "    t_merge_result t "\
@@ -494,103 +496,112 @@ def _filemergedetail(yyyymm: str, version: str):
 
 # マージ要求
 def _filemerge(manage_ids:str, fiscal_date:str):
-    select_version_sql = "select version from t_merge_target where fiscal_date = %s order by version desc" 
-    insert_target_sql = 'insert into t_merge_target (fiscal_date, version, fg_id, wip_id, modified_date) values (%s, %s, %s, %s, current_timestamp)'
+    try:
+        select_version_sql = "select version from t_merge_target where fiscal_date = %s order by version desc"
+        insert_target_sql = 'insert into t_merge_target (fiscal_date, version, fg_id, wip_id, modified_date) values (%s, %s, %s, %s, current_timestamp)'
 
-    merge_sql = \
-    "insert into t_merge_result "\
-    "with wip as ( "\
-    "    select "\
-    "        order_detail "\
-    "        , order_rowno "\
-    "        , sum(cost_labor) + sum(cost_subcontract) + sum(cost) as total_cost_wip "\
-    "        , sum(cost_labor) as cost_labor_wip "\
-    "        , sum(cost_subcontract) as cost_subcontract_wip "\
-    "        , sum(cost) as cost_wip "\
-    "    from "\
-    "        t_wip_info "\
-    "    where "\
-    "        fiscal_date = %s "\
-    "    group by "\
-    "        order_detail, order_rowno "\
-    ") "\
-    "select "\
-    "    fiscal_date "\
-    "    , %s as version "\
-    "    , t_fg_project_info.order_detail "\
-    "    , t_fg_project_info.order_rowno "\
-    "    , t_fg_project_info.manage_id as g_id "\
-    "    , null as wip_id "\
-    "    , cost_labor - coalesce(cost_labor_wip, 0) as cost_labor "\
-    "    , cost_subcontract - coalesce(cost_subcontract_wip, 0) as cost_subcontract "\
-    "    , cost - coalesce(cost_wip, 0) as cost "\
-    "    , null as change_value "\
-    "    , '1' as product_div "\
-    "    , current_timestamp as modified_date "\
-    "from "\
-    "    t_fg_project_info "\
-    "    left join wip "\
-    "        on t_fg_project_info.order_detail = wip.order_detail "\
-    "       and t_fg_project_info.order_rowno = wip.order_rowno "\
-    "    inner join m_file_info "\
-    "        on t_fg_project_info.manage_id = m_file_info.manage_id "\
-    "where "\
-    "    t_fg_project_info.manage_id in %s "\
-    "union all "\
-    "select "\
-    "    fiscal_date "\
-    "    , %s as version "\
-    "    , t_wip_project_info.order_detail "\
-    "    , t_wip_project_info.order_rowno "\
-    "    , null as fg_id "\
-    "    , t_wip_project_info.manage_id as wip_id "\
-    "    , cost_labor - coalesce(cost_labor_wip, 0) as cost_labor "\
-    "    , cost_subcontract - coalesce(cost_subcontract_wip, 0) as cost_subcontract "\
-    "    , cost - coalesce(cost_wip, 0) as cost "\
-    "    , cost_labor + cost_subcontract + cost as change_value "\
-    "    , '2' as product_div "\
-    "    , current_timestamp as modified_date "\
-    "from "\
-    "    t_wip_project_info "\
-    "    left join wip "\
-    "        on t_wip_project_info.order_detail = wip.order_detail "\
-    "       and t_wip_project_info.order_rowno = wip.order_rowno "\
-    "    inner join m_file_info "\
-    "        on t_wip_project_info.manage_id = m_file_info.manage_id "\
-    "where "\
-    "    t_wip_project_info.manage_id in %s "
+        merge_sql = \
+        "insert into t_merge_result "\
+        "with wip as ( "\
+        "    select "\
+        "        order_detail "\
+        "        , order_rowno "\
+        "        , sum(cost_labor) + sum(cost_subcontract) + sum(cost) + sum(cost_other) as total_cost_wip "\
+        "        , sum(cost_labor) as cost_labor_wip "\
+        "        , sum(cost_subcontract) as cost_subcontract_wip "\
+        "        , sum(cost) as cost_wip "\
+        "        , sum(cost_other) as cost_other_wip "\
+        "    from "\
+        "        t_wip_info "\
+        "    where "\
+        "        fiscal_date = %s "\
+        "    group by "\
+        "        order_detail, order_rowno "\
+        ") "\
+        "select "\
+        "    fiscal_date "\
+        "    , %s as version "\
+        "    , t_fg_project_info.order_detail "\
+        "    , t_fg_project_info.order_rowno "\
+        "    , t_fg_project_info.manage_id as fg_id "\
+        "    , null as wip_id "\
+        "    , cost_labor - coalesce(cost_labor_wip, 0) as cost_labor "\
+        "    , cost_subcontract - coalesce(cost_subcontract_wip, 0) as cost_subcontract "\
+        "    , cost - coalesce(cost_wip, 0) as cost "\
+        "    , cost_material - coalesce(cost_other_wip, 0) as cost_other "\
+        "    , null as change_value "\
+        "    , '1' as product_div "\
+        "    , current_timestamp as modified_date "\
+        "from "\
+        "    t_fg_project_info "\
+        "    left join wip "\
+        "        on t_fg_project_info.order_detail = wip.order_detail "\
+        "       and t_fg_project_info.order_rowno = wip.order_rowno "\
+        "    inner join m_file_info "\
+        "        on t_fg_project_info.manage_id = m_file_info.manage_id "\
+        "where "\
+        "    t_fg_project_info.manage_id in %s "\
+        "union all "\
+        "select "\
+        "    fiscal_date "\
+        "    , %s as version "\
+        "    , t_wip_project_info.order_detail "\
+        "    , t_wip_project_info.order_rowno "\
+        "    , null as fg_id "\
+        "    , t_wip_project_info.manage_id as wip_id "\
+        "    , cost_labor - coalesce(cost_labor_wip, 0) as cost_labor "\
+        "    , cost_subcontract - coalesce(cost_subcontract_wip, 0) as cost_subcontract "\
+        "    , cost - coalesce(cost_wip, 0) as cost "\
+        "    , cost_material - coalesce(cost_other_wip, 0) as cost_other "\
+        "    , cost_labor + cost_subcontract + cost + cost_material as change_value "\
+        "    , '2' as product_div "\
+        "    , current_timestamp as modified_date "\
+        "from "\
+        "    t_wip_project_info "\
+        "    left join wip "\
+        "        on t_wip_project_info.order_detail = wip.order_detail "\
+        "       and t_wip_project_info.order_rowno = wip.order_rowno "\
+        "    inner join m_file_info "\
+        "        on t_wip_project_info.manage_id = m_file_info.manage_id "\
+        "where "\
+        "    t_wip_project_info.manage_id in %s "
 
-    with get_connection() as conn:
-        # バージョン採番
-        version = '0'
-        with conn.cursor() as cur:
-            cur.execute(select_version_sql, (fiscal_date,))
-            res = cur.fetchone()
-            if res is None:
-                version = '0'
-            else:
-                version = str(int(res[0]) + 1)
+        with get_connection() as conn:
+            # バージョン採番
+            version = '0'
+            with conn.cursor() as cur:
+                cur.execute(select_version_sql, (fiscal_date,))
+                res = cur.fetchone()
+                if res is None:
+                    version = '0'
+                else:
+                    version = str(int(res[0]) + 1)
 
-        # マージ処理
-        with conn.cursor() as cur:
-            cur.execute(merge_sql, (_getPrevMonth(fiscal_date), version, tuple(manage_ids), version, tuple(manage_ids),))
+            # マージ処理
+            with conn.cursor() as cur:
+                cur.execute(merge_sql, (_getPrevMonth(fiscal_date), version, tuple(manage_ids), version, tuple(manage_ids),))
 
-            # 管理ID初期化
-            fg = '';
-            wip = '';
+                # 管理ID初期化
+                fg = '';
+                wip = '';
 
-            # マージ対象ファイルIDを保存
-            for manage_id in manage_ids:
-                file_div = str(_getfilediv(conn, manage_id))
-                match file_div:
-                    case 'F':
-                        fg = manage_id
-                    case 'W':
-                        wip = manage_id
-                        # 勘定年月分の仕掛情報テーブルを洗替え
-                        cur.execute("delete from t_wip_info where fiscal_date = %s", (fiscal_date,))
-                        cur.execute("insert into t_wip_info (fiscal_date, order_detail, order_rowno, cost_labor, cost_subcontract, cost, modified_date) select %s as fiscal_date, order_detail, order_rowno, cost_labor, cost_subcontract, cost, current_timestamp from t_wip_project_info where manage_id = %s", (fiscal_date, manage_id,))
-            cur.execute(insert_target_sql, (fiscal_date, version, fg, wip,))
+                # マージ対象ファイルIDを保存
+                for manage_id in manage_ids:
+                    file_div = str(_getfilediv(conn, manage_id))
+                    match file_div:
+                        case 'F':
+                            fg = manage_id
+                        case 'W':
+                            wip = manage_id
+                            # 勘定年月分の仕掛情報テーブルを洗替え
+                            cur.execute("delete from t_wip_info where fiscal_date = %s", (fiscal_date,))
+                            cur.execute("insert into t_wip_info (fiscal_date, order_detail, order_rowno, cost_labor, cost_subcontract, cost, cost_other, modified_date) select %s as fiscal_date, order_detail, order_rowno, cost_labor, cost_subcontract, cost, cost_material, current_timestamp from t_wip_project_info where manage_id = %s", (fiscal_date, manage_id,))
+                cur.execute(insert_target_sql, (fiscal_date, version, fg, wip,))
+    except Exception as e:
+        print("=== ERROR OCCURRED ===")
+        print("エラー内容:", e)
+        traceback.print_exc()
+        raise
 
 def _filedownload(yyyymm : str, version : str):
     target_file = yyyymm + '.xlsx'
@@ -641,16 +652,16 @@ def _filedownload(yyyymm : str, version : str):
                 noIndirect = 1;
                 continue
             if item['product_div'] == '2':
-                ws.cell(row, 2, "○")  # 繰越(仕掛)
+                ws.cell(row, 2, "○")                    # 繰越(仕掛)
             else:
-                ws.cell(row, 2, "")  # 繰越(完成)
-            ws.cell(row, 3, item['project_nm'])   # 件名
-            ws.cell(row, 4, item['total_cost_wip'])   # 前月繰越残
-            ws.cell(row, 5, item['sales'])   # 当月売上
-            ws.cell(row, 6, item['cost_labor'])   # 労務費
+                ws.cell(row, 2, "")                     # 繰越(完成)
+            ws.cell(row, 3, item['project_nm'])         # 件名
+            ws.cell(row, 4, item['total_cost_wip'])     # 前月繰越残
+            ws.cell(row, 5, item['sales'])              # 当月売上
+            ws.cell(row, 6, item['cost_labor'])         # 労務費
             ws.cell(row, 7, item['cost_subcontract'])   # 外注費
-            ws.cell(row, 8, item['cost'])   # 旅費交通費
-            ws.cell(row, 9, "")   # その他
+            ws.cell(row, 8, item['cost'])               # 旅費交通費
+            ws.cell(row, 9, item['cost_other'])         # その他
             ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')  # 小計
             ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')')  # 振替額
             ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')  # 翌月繰越
@@ -974,6 +985,7 @@ def _loatmerge_perv_wip(yyyymm:str):
         "    , cost_labor "\
         "    , cost_subcontract "\
         "    , cost  "\
+        "    , cost_other "\
         "from "\
         "    t_wip_info  "\
         "    left join m_topic_info  "\
