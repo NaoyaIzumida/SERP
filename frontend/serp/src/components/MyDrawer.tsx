@@ -13,7 +13,7 @@ import { NavLink } from "react-router-dom";
 import { lightBlue } from "@mui/material/colors";
 import { useContext, useState } from "react";
 import { menuContext } from "../contexts/AppState.ts";
-import { ExpandLess, ExpandMore, StarBorder } from "@mui/icons-material";
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import MenuIcon from '@mui/icons-material/Menu';
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 
@@ -103,7 +103,7 @@ export const MyDrawer = (props: Props) => {
                 <ListItemButton
                   component={NavLink}
                   to={"/UploadPage"}
-                  sx={{ pl: 4, '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
+                  sx={{ pl: 3, '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
                   onClick={() => setOpened(!isOpened)}
                   end
                 >
@@ -117,7 +117,7 @@ export const MyDrawer = (props: Props) => {
                 <ListItemButton
                   component={NavLink}
                   to={"/MergePage"}
-                  sx={{ pl: 4, '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
+                  sx={{ pl: 3, '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
                   onClick={() => setOpened(!isOpened)}
                   end
                 >
