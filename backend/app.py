@@ -7,6 +7,9 @@ import os
 import shutil
 import openpyxl
 import pandas as pd
+from pykakasi import kakasi
+import re
+import unicodedata
 
 app = Flask(__name__)
 app.json.sort_keys = False
@@ -14,10 +17,10 @@ app.json.sort_keys = False
 #CORS
 @app.after_request
 def after_request(response):
-  response.headers.add('Access-Control-Allow-Origin', '*')
-  response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-  response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-  return response
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
 
 # SERP DB - PostgreSQL接続
 def get_connection():
@@ -55,26 +58,26 @@ def fileupload():
 # API No.2 ファイル一覧
 @app.route("/serp/api/filelist/<yyyymm>", methods=["GET"])
 def filelist(yyyymm : str) :
-  try:
-    result = _filelist(yyyymm)
-    if result == []:
-        return jsonify({"status":1, "result":result})
-    else:
-        return jsonify({"status":0, "result":result})
-  except:
-    return jsonify({"status":-1})
+    try:
+        result = _filelist(yyyymm)
+        if result == []:
+            return jsonify({"status":1, "result":result})
+        else:
+            return jsonify({"status":0, "result":result})
+    except:
+        return jsonify({"status":-1})
 
 # API No.3 マージ結果のファイル一覧
 @app.route("/serp/api/filemergelist/<yyyymm>", methods=["GET"])
 def filemergelist(yyyymm: str):
-  try:
-    result = _filemergelist(yyyymm)
-    if result == []:
-        return jsonify({"status":1, "result":result})
-    else:
-        return jsonify({"status":0, "result":result})
-  except:
-    return jsonify({"status":-1})
+    try:
+        result = _filemergelist(yyyymm)
+        if result == []:
+            return jsonify({"status":1, "result":result})
+        else:
+            return jsonify({"status":0, "result":result})
+    except:
+        return jsonify({"status":-1})
 
 # API No.4 データ取得
 @app.route("/serp/api/filedetail/<manage_id>", methods=["GET"])
@@ -106,7 +109,6 @@ def filemerge():
     try:
         if request.headers['Content-Type'] != 'application/json':
             return jsonify({"status": -1, "result":"Content-Type:application/jsonを指定してください"})
-        
         # リクエストからJSON形式でデータを取得
         # 書式エラー時は例外が発生する
 
@@ -117,7 +119,7 @@ def filemerge():
 
         if manage_ids == []:
             return jsonify({"status": -1, "result": "管理IDを指定してください"})
-        
+
         if len(manage_ids) != len(list(set(manage_ids))):
             return jsonify({"status": -1, "result": "管理IDの指定が重複しています"})
 
@@ -150,8 +152,8 @@ def filedownload(yyyymm: str, version: str):
     filepath = "./" + _filedownload(yyyymm, version)
     filename = os.path.basename(filepath)
     return send_file(filepath, as_attachment=True,
-                     download_name=filename,
-                     mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                        download_name=filename,
+                        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     return jsonify({"status": 0})
 
 # API No.10 案件情報マスタデータ取得
@@ -240,7 +242,7 @@ def _fileupload(file : any):
                     # 完成PJ台帳 登録
                     _insertFgFileInfo(conn, manege_id, index, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost, sales)
                     # 案件情報マスタ 登録
-                    _insertTopicInfo(conn, order_detail, order_rowno, project_nm)
+                    _insertTopicInfo(conn, order_detail, order_rowno, project_nm, customer)
 
             case "W":   # 仕掛プロジェクト
 
@@ -263,8 +265,8 @@ def _fileupload(file : any):
                     # 仕掛PJ台帳 登録
                     _insertWipFileInfo(conn, manege_id, index, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost)
                     # 案件情報マスタ 登録
-                    _insertTopicInfo(conn, order_detail, order_rowno, project_nm)
- 
+                    _insertTopicInfo(conn, order_detail, order_rowno, project_nm, customer)
+
     return 0
 
 # 新規管理ID採番
@@ -291,16 +293,98 @@ def _getNextVersion(conn : any, fiscal_date : str, file_div : str):
 def _insertFileInfo(conn : any, fiscal_date : str, file_div : str, file_name : str):
     manage_id = _getNextManageID(conn)
     version = _getNextVersion(conn, fiscal_date, file_div)
- 
+
     with conn.cursor() as cur:
         cur.execute("insert into m_file_info (manage_id, fiscal_date, version, file_div, file_nm, modified_date) values (%s, %s, %s, %s, %s, current_timestamp)", (manage_id, fiscal_date, version, file_div, file_name))
-   
+
     return manage_id
 
+# 全角英数字を半角に変換
+def _to_half_width(text: str) -> str:
+    return ''.join(unicodedata.normalize("NFKC", ch) for ch in text)
+
+# 辞書補正（特殊ケース）
+SPECIAL_MAP = {
+    "ｴｽｼｰｱｲ": "SC",
+    "エスシーアイ": "SC",
+    # 他にも必要な特殊社名をここに追加
+}
+
+# 得意先名から英字2桁＋000を採番
+def _generate_group_id_from_customer(customer: str) -> str:
+    # 1. 全角→半角統一（英数字・カタカナ・記号）
+    customer = unicodedata.normalize("NFKC", customer)
+
+    # 2. 会社種別を除去
+    customer = re.sub(r'^(【社内処理】株式会社|株式会社|有限会社|合同会社|合名会社|合資会社)', '', customer)
+
+    # 3. 辞書補正
+    if customer in SPECIAL_MAP:
+        base = SPECIAL_MAP[customer]
+    else:
+        # 4. pykakasi でローマ字変換
+        kks = kakasi()
+        kks.setMode("J", "a")  # 漢字 → ascii
+        kks.setMode("H", "a")  # ひらがな → ascii
+        kks.setMode("K", "a")  # カタカナ → ascii
+        kks.setMode("r", "Hepburn")  # ローマ字方式
+        converter = kks.getConverter()
+        romaji = converter.do(customer)
+
+        # 5. 英字抽出
+        letters = re.findall(r'[A-Za-z]', romaji.upper())
+
+        # 6. 先頭2文字取得（不足時は補完）
+        if len(letters) >= 2:
+            base = letters[0] + letters[1]
+        elif len(letters) == 1:
+            base = letters[0] + "X"
+        else:
+            base = "XX"
+
+    # 7. "000" を末尾につける
+    return base + "000"
+
 # 案件情報マスタ登録
-def _insertTopicInfo(conn : any, order_detail : str, order_rowno : str, project_nm : str):
+def _insertTopicInfo(conn : any, order_detail : str, order_rowno : str, project_nm : str, customer : str):
     with conn.cursor() as cur:
-        cur.execute("insert into m_topic_info (order_detail, order_rowno, project_nm, disp_seq, modified_date) select %s, %s, %s, 1, current_timestamp where not exists(SELECT order_detail FROM m_topic_info WHERE order_detail = %s and order_rowno = %s)", (order_detail, order_rowno, project_nm, order_detail, order_rowno))
+        # 受注明細・受注行番号による存在チェック
+        cur.execute("""
+            select 1 from m_topic_info
+            where order_detail = %s and order_rowno = %s
+        """, (order_detail, order_rowno))
+        if cur.fetchone():
+            return  # 既に存在するので何もしない
+
+        # customer から既存の group_id を取得
+        cur.execute("""
+            select group_id
+            from m_topic_info
+            where customer = %s
+            order by group_id
+            limit 1
+        """, (customer,))
+        row = cur.fetchone()
+
+        if row:
+            group_id = row[0]
+        else:
+            group_id = _generate_group_id_from_customer(customer)
+
+        # disp_seq を算出
+        cur.execute("""
+            select coalesce(max(disp_seq), 0) + 1
+            from m_topic_info
+            where group_id = %s
+        """, (group_id,))
+        disp_seq = cur.fetchone()[0]
+
+        # INSERT
+        cur.execute("""
+            insert into m_topic_info
+                (order_detail, order_rowno, project_nm, customer, group_id, disp_seq, modified_date)
+            values (%s, %s, %s, %s, %s, %s, current_timestamp)
+        """, (order_detail, order_rowno, project_nm, customer, group_id, disp_seq))
 
 # 完成PJ台帳登録
 def _insertFgFileInfo(conn : any, manage_id : str, row_no : str, div_cd : str, order_detail : str, order_rowno : str, project_nm : str, customer : str, cost_material : str, cost_labor : str, cost_subcontract : str, cost : str, sales : str):
@@ -363,7 +447,7 @@ def _filedelete(manage_id: str):
             file_div = _getfilediv(conn, manage_id)
             if file_div == []:
                 return file_div
-            cur.execute(query.get(file_div), (manage_id,))        
+            cur.execute(query.get(file_div), (manage_id,))
             cur.execute('delete from m_file_info where manage_id = %s', (manage_id,))
         conn.commit()
 
@@ -490,11 +574,11 @@ def _filemerge(manage_ids:str, fiscal_date:str):
         # マージ処理
         with conn.cursor() as cur:
             cur.execute(merge_sql, (_getPrevMonth(fiscal_date), version, tuple(manage_ids), version, tuple(manage_ids),))
-            
+
             # 管理ID初期化
             fg = '';
             wip = '';
-            
+
             # マージ対象ファイルIDを保存
             for manage_id in manage_ids:
                 file_div = str(_getfilediv(conn, manage_id))
@@ -521,162 +605,162 @@ def _filedownload(yyyymm : str, version : str):
     currentyyyymm = yyyymm  # 当月
 
     while yyyymm >=  beginningOfYear:
-      ws = wb['template']
-      wsCopy = wb.copy_worksheet(ws)
-      ws = wsCopy
-      ws.title = "サマリー・仕掛り" + yyyymm[4:6] + "月"
+        ws = wb['template']
+        wsCopy = wb.copy_worksheet(ws)
+        ws = wsCopy
+        ws.title = "サマリー・仕掛り" + yyyymm[4:6] + "月"
 
-      # ヘッダ行
-      ws.cell(1, 2, yyyymm[0:4] + "年" + yyyymm[4:6] + "月　仕掛 原価一覧")
+        # ヘッダ行
+        ws.cell(1, 2, yyyymm[0:4] + "年" + yyyymm[4:6] + "月　仕掛 原価一覧")
 
-      # サマリー
-      result = _loadmerge(yyyymm, version)
-      result_fg = _loadmerge_fg(yyyymm, version)
-      result_wip = _loadmerge_wip(yyyymm, version)
-      result_prev_wip = _loatmerge_perv_wip(yyyymm)
-    
-      summary_base = ws[3]
-      ws.unmerge_cells('H8:I8')
-      ws.insert_rows(4, len(result) - 2)
-      for r in range(len(result) - 2):
-          i = 1
-          for cell in summary_base:
-              ws.cell(row = r + 4, column = i)._style = copy(cell._style)
-              i += 1
-      for r in range(len(result) + 3):
-          ws.row_dimensions[r + 4].height = copy(ws.row_dimensions[3].height)
-      ws.merge_cells('H' + str(len(result) +6) + ':I' + str(len(result) +6))
-      ws.cell(len(result) + 6, 8, '=H' + str(len(result) + 5) + '+I' + str(len(result) + 5))
-      
-      row = 3 # 仕掛原価一覧 開始行
-      noIndirect = 0;
-      for item in result:
-          # 課題No3暫定対応
-          if item['order_detail'] == 'ZAB202400001':
-              indirect = copy(item)
-              noIndirect = 1;
-              continue
-          if item['product_div'] == '2':
-              ws.cell(row, 2, "○")  # 繰越(仕掛)
-          else:
-              ws.cell(row, 2, "")  # 繰越(完成)
-          ws.cell(row, 3, item['project_nm'])   # 件名
-          ws.cell(row, 4, item['total_cost_wip'])   # 前月繰越残
-          ws.cell(row, 5, item['sales'])   # 当月売上
-          ws.cell(row, 6, item['cost_labor'])   # 労務費
-          ws.cell(row, 7, item['cost_subcontract'])   # 外注費
-          ws.cell(row, 8, item['cost'])   # 旅費交通費
-          ws.cell(row, 9, "")   # その他
-          ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')  # 小計
-          ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')')  # 振替額
-          ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')  # 翌月繰越
-          row += 1
-      ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')  # 小計
-      ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')')  # 振替額
-      ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')  # 翌月繰越
+        # サマリー
+        result = _loadmerge(yyyymm, version)
+        result_fg = _loadmerge_fg(yyyymm, version)
+        result_wip = _loadmerge_wip(yyyymm, version)
+        result_prev_wip = _loatmerge_perv_wip(yyyymm)
 
-      # 計算式を更新（間接プロジェクト）
-      row += 1
+        summary_base = ws[3]
+        ws.unmerge_cells('H8:I8')
+        ws.insert_rows(4, len(result) - 2)
+        for r in range(len(result) - 2):
+            i = 1
+            for cell in summary_base:
+                ws.cell(row = r + 4, column = i)._style = copy(cell._style)
+                i += 1
+        for r in range(len(result) + 3):
+            ws.row_dimensions[r + 4].height = copy(ws.row_dimensions[3].height)
+        ws.merge_cells('H' + str(len(result) +6) + ':I' + str(len(result) +6))
+        ws.cell(len(result) + 6, 8, '=H' + str(len(result) + 5) + '+I' + str(len(result) + 5))
 
-      # 間接プロジェクトがある場合のみ
-      if noIndirect == 1:
-          ws.cell(row, 6, indirect['cost_labor'])   # 労務費
-          ws.cell(row, 7, indirect['cost_subcontract'])   # 外注費
-          ws.cell(row, 8, 0)   # 旅費交通費
-          ws.cell(row, 9, indirect['cost'])   # その他
-          ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')  # 小計
-          ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')')  # 振替額
-          ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')  # 翌月繰越
-          row += 1  # 空行
-    
-      row += 1  # 合計 開始行
+        row = 3 # 仕掛原価一覧 開始行
+        noIndirect = 0;
+        for item in result:
+            # 課題No3暫定対応
+            if item['order_detail'] == 'ZAB202400001':
+                indirect = copy(item)
+                noIndirect = 1;
+                continue
+            if item['product_div'] == '2':
+                ws.cell(row, 2, "○")  # 繰越(仕掛)
+            else:
+                ws.cell(row, 2, "")  # 繰越(完成)
+            ws.cell(row, 3, item['project_nm'])   # 件名
+            ws.cell(row, 4, item['total_cost_wip'])   # 前月繰越残
+            ws.cell(row, 5, item['sales'])   # 当月売上
+            ws.cell(row, 6, item['cost_labor'])   # 労務費
+            ws.cell(row, 7, item['cost_subcontract'])   # 外注費
+            ws.cell(row, 8, item['cost'])   # 旅費交通費
+            ws.cell(row, 9, "")   # その他
+            ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')  # 小計
+            ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')')  # 振替額
+            ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')  # 翌月繰越
+            row += 1
+        ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')  # 小計
+        ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')')  # 振替額
+        ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')  # 翌月繰越
 
-      ws.cell(row, 4, '=SUM(D2:D' + str(row-2) + ')')   
-      ws.cell(row, 5, '=SUM(E2:E' + str(row-2) + ')')   
-      ws.cell(row, 6, '=SUM(F2:F' + str(row-2) + ')')   
-      ws.cell(row, 7, '=SUM(G2:G' + str(row-2) + ')')  
-      ws.cell(row, 8, '=SUM(H2:H' + str(row-2) + ')')  
-      ws.cell(row, 9, '=SUM(I2:I' + str(row-2) + ')')  
-      ws.cell(row, 10, '=SUM(J2:J' + str(row-2) + ')')  
-      ws.cell(row, 11, '=SUM(K2:K' + str(row-2) + ')')  
-      ws.cell(row, 12, '=SUM(L2:L' + str(row-2) + ')')  
+        # 計算式を更新（間接プロジェクト）
+        row += 1
 
-      row += 7  # 完成PJ 開始行
+        # 間接プロジェクトがある場合のみ
+        if noIndirect == 1:
+            ws.cell(row, 6, indirect['cost_labor'])   # 労務費
+            ws.cell(row, 7, indirect['cost_subcontract'])   # 外注費
+            ws.cell(row, 8, 0)   # 旅費交通費
+            ws.cell(row, 9, indirect['cost'])   # その他
+            ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')  # 小計
+            ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')')  # 振替額
+            ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')  # 翌月繰越
+            row += 1  # 空行
 
-      # 完成PJ
-      fg_start_row = row
-      for item in result_fg:
-          ws.cell(row, 3, item['project_nm'])   # 件名
-          ws.cell(row, 4, item['cost_labor'])   # 労務費
-          ws.cell(row, 5, item['cost_subcontract'])   # 外注費
-          ws.cell(row, 6, item['cost'])   # 旅費交通費
-          ws.cell(row, 7, item['total_cost'])   # 合計
-          ws.cell(row, 8, item['sales'])   # 売上
-          row += 1   
-      row = fg_start_row + 16 # 完成PJサマリ 開始行
-      ws.cell(row, 7, '=SUM(G' + str(fg_start_row) + ':G' + str(fg_start_row + 15) + ')')  # 小計
-      ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + 15) + ')')  # 小計
+        row += 1  # 合計 開始行
 
-      row += 4  # 仕掛PJ 開始行
+        ws.cell(row, 4, '=SUM(D2:D' + str(row-2) + ')')
+        ws.cell(row, 5, '=SUM(E2:E' + str(row-2) + ')')
+        ws.cell(row, 6, '=SUM(F2:F' + str(row-2) + ')')
+        ws.cell(row, 7, '=SUM(G2:G' + str(row-2) + ')')
+        ws.cell(row, 8, '=SUM(H2:H' + str(row-2) + ')')
+        ws.cell(row, 9, '=SUM(I2:I' + str(row-2) + ')')
+        ws.cell(row, 10, '=SUM(J2:J' + str(row-2) + ')')
+        ws.cell(row, 11, '=SUM(K2:K' + str(row-2) + ')')
+        ws.cell(row, 12, '=SUM(L2:L' + str(row-2) + ')')
 
-      # 仕掛PJ
-      wip_start_row = row
-      for item in result_wip:
-          ws.cell(row, 3, item['project_nm'])   # 件名
-          ws.cell(row, 4, item['cost_labor'])   # 労務費
-          ws.cell(row, 5, item['cost_subcontract'])   # 外注費
-          ws.cell(row, 6, item['cost'])   # 旅費交通費
-          ws.cell(row, 7, item['total_cost'])   # 合計
-          row += 1   
-      row = wip_start_row + 8 #仕掛PJサマリ 開始行
-      ws.cell(row, 7, '=SUM(G' + str(wip_start_row) + ':G' + str(wip_start_row + 7) + ')')  # 小計
+        row += 7  # 完成PJ 開始行
 
-      row += 4  # 前月仕掛 開始行
+        # 完成PJ
+        fg_start_row = row
+        for item in result_fg:
+            ws.cell(row, 3, item['project_nm'])   # 件名
+            ws.cell(row, 4, item['cost_labor'])   # 労務費
+            ws.cell(row, 5, item['cost_subcontract'])   # 外注費
+            ws.cell(row, 6, item['cost'])   # 旅費交通費
+            ws.cell(row, 7, item['total_cost'])   # 合計
+            ws.cell(row, 8, item['sales'])   # 売上
+            row += 1   
+        row = fg_start_row + 16 # 完成PJサマリ 開始行
+        ws.cell(row, 7, '=SUM(G' + str(fg_start_row) + ':G' + str(fg_start_row + 15) + ')')  # 小計
+        ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + 15) + ')')  # 小計
 
-      #前月仕掛
-      wip_start_row = row
-      for item in result_prev_wip:
-          ws.cell(row, 3, item['project_nm'])   # 件名
-          ws.cell(row, 4, item['cost_labor'])   # 労務費
-          ws.cell(row, 5, item['cost_subcontract'])   # 外注費
-          ws.cell(row, 6, item['cost'])   # 旅費交通費
-          row += 1   
-      for index in range(10):
-          ws.cell(wip_start_row + index, 8, '=SUM(D' + str(wip_start_row + index) + ':F' + str(wip_start_row + index) + ')')   # 合計
+        row += 4  # 仕掛PJ 開始行
 
-      row = wip_start_row + 10  #前月仕掛サマリ 開始行
-      ws.cell(row, 8, '=SUM(H' + str(wip_start_row) + ':H' + str(wip_start_row + 5) + ')')  # 小計
+        # 仕掛PJ
+        wip_start_row = row
+        for item in result_wip:
+            ws.cell(row, 3, item['project_nm'])   # 件名
+            ws.cell(row, 4, item['cost_labor'])   # 労務費
+            ws.cell(row, 5, item['cost_subcontract'])   # 外注費
+            ws.cell(row, 6, item['cost'])   # 旅費交通費
+            ws.cell(row, 7, item['total_cost'])   # 合計
+            row += 1   
+        row = wip_start_row + 8 #仕掛PJサマリ 開始行
+        ws.cell(row, 7, '=SUM(G' + str(wip_start_row) + ':G' + str(wip_start_row + 7) + ')')  # 小計
 
-      row += 4  #完成PJ+仕掛PJ 開始行
-      
-      # 完成PJ＋仕掛PJ
-      total_start_row = row
-      for item in result:
-          if item['product_div'] == '1':
-              ws.cell(row, 3, item['project_nm'])   # 件名
-              ws.cell(row, 4, item['cost_labor'])   # 労務費
-              ws.cell(row, 5, item['cost_subcontract'])   # 外注費
-              ws.cell(row, 6, item['cost'])   # 旅費交通費
-              row += 1   
-      row = total_start_row + 15  # 完成PJ+仕掛PJ内仕掛　開始行
-      for item in result:
-          if item['product_div'] == '2':
-              ws.cell(row, 3, item['project_nm'])   # 件名
-              ws.cell(row, 4, item['cost_labor'])   # 労務費
-              ws.cell(row, 5, item['cost_subcontract'])   # 外注費
-              ws.cell(row, 6, item['cost'])   # 旅費交通費
-              row += 1   
-      for index in range(23):
-          ws.cell(total_start_row + index, 8, '=SUM(D' + str(total_start_row + index) + ':F' + str(total_start_row + index) + ')')   # 合計
-          
-      row = total_start_row + 23  #完成PJ+仕掛PJサマリ 開始行
-      ws.cell(row, 4, '=SUM(D' + str(total_start_row) + ':D' + str(total_start_row + 22) + ')')  # 小計
-      ws.cell(row, 5, '=SUM(E' + str(total_start_row) + ':E' + str(total_start_row + 22) + ')')  # 小計
-      ws.cell(row, 6, '=SUM(F' + str(total_start_row) + ':F' + str(total_start_row + 22) + ')')  # 小計
-      ws.cell(row, 8, '=SUM(H' + str(total_start_row) + ':H' + str(total_start_row + 22) + ')')  # 小計
+        row += 4  # 前月仕掛 開始行
 
-      # 前月取得
-      yyyymm = _getPrevMonth(yyyymm)
+        #前月仕掛
+        wip_start_row = row
+        for item in result_prev_wip:
+            ws.cell(row, 3, item['project_nm'])   # 件名
+            ws.cell(row, 4, item['cost_labor'])   # 労務費
+            ws.cell(row, 5, item['cost_subcontract'])   # 外注費
+            ws.cell(row, 6, item['cost'])   # 旅費交通費
+            row += 1   
+        for index in range(10):
+            ws.cell(wip_start_row + index, 8, '=SUM(D' + str(wip_start_row + index) + ':F' + str(wip_start_row + index) + ')')   # 合計
+
+        row = wip_start_row + 10  #前月仕掛サマリ 開始行
+        ws.cell(row, 8, '=SUM(H' + str(wip_start_row) + ':H' + str(wip_start_row + 5) + ')')  # 小計
+
+        row += 4  #完成PJ+仕掛PJ 開始行
+
+        # 完成PJ＋仕掛PJ
+        total_start_row = row
+        for item in result:
+            if item['product_div'] == '1':
+                ws.cell(row, 3, item['project_nm'])   # 件名
+                ws.cell(row, 4, item['cost_labor'])   # 労務費
+                ws.cell(row, 5, item['cost_subcontract'])   # 外注費
+                ws.cell(row, 6, item['cost'])   # 旅費交通費
+                row += 1   
+        row = total_start_row + 15  # 完成PJ+仕掛PJ内仕掛　開始行
+        for item in result:
+            if item['product_div'] == '2':
+                ws.cell(row, 3, item['project_nm'])   # 件名
+                ws.cell(row, 4, item['cost_labor'])   # 労務費
+                ws.cell(row, 5, item['cost_subcontract'])   # 外注費
+                ws.cell(row, 6, item['cost'])   # 旅費交通費
+                row += 1   
+        for index in range(23):
+            ws.cell(total_start_row + index, 8, '=SUM(D' + str(total_start_row + index) + ':F' + str(total_start_row + index) + ')')   # 合計
+
+        row = total_start_row + 23  #完成PJ+仕掛PJサマリ 開始行
+        ws.cell(row, 4, '=SUM(D' + str(total_start_row) + ':D' + str(total_start_row + 22) + ')')  # 小計
+        ws.cell(row, 5, '=SUM(E' + str(total_start_row) + ':E' + str(total_start_row + 22) + ')')  # 小計
+        ws.cell(row, 6, '=SUM(F' + str(total_start_row) + ':F' + str(total_start_row + 22) + ')')  # 小計
+        ws.cell(row, 8, '=SUM(H' + str(total_start_row) + ':H' + str(total_start_row + 22) + ')')  # 小計
+
+        # 前月取得
+        yyyymm = _getPrevMonth(yyyymm)
 
     # templeteシートを削除
     del wb['template']
@@ -705,7 +789,7 @@ def _filedownload(yyyymm : str, version : str):
         ws.cell(row, 11, item['sales'])   # 売上高
         ws.cell(row, 12, item['sales'] - item['total_cost'])   # 粗利
         ws.cell(row, 13, '=IF(K' + str(row) + '=0, 0%,L' + str(row) + '/K' + str(row) + ')')  # 粗利率
-        row += 1   
+        row += 1
     row = fg_start_row+ 16  # 完成PJ総計 開始行
     ws.cell(row, 6, '=SUM(F' + str(fg_start_row) + ':F' + str(fg_start_row + 15) + ')')  # 材料費計
     ws.cell(row, 7, '=SUM(G' + str(fg_start_row) + ':G' + str(fg_start_row + 15) + ')')  # 労務費計
@@ -733,7 +817,7 @@ def _filedownload(yyyymm : str, version : str):
         ws.cell(row, 8, item['cost_subcontract'])   # 外注費
         ws.cell(row, 9, item['cost'])   # 経費
         ws.cell(row, 10, item['total_cost'])   # 合計
-        row += 1   
+        row += 1
     row = wip_start_row + 8 # 仕掛PJサマリ 開始行
     ws.cell(row, 6, '=SUM(F' + str(fg_start_row) + ':F' + str(fg_start_row + 7) + ')')  # 材料費計
     ws.cell(row, 7, '=SUM(G' + str(fg_start_row) + ':G' + str(fg_start_row + 7) + ')')  # 労務費計
@@ -820,7 +904,6 @@ def _loadmerge(yyyymm : str, version : str):
             cur.execute(
                 sql, (_getPrevMonth(yyyymm), yyyymm, version, yyyymm, version, ))
             return convertCursorToDict(cur)
-    
 
 # マージ結果（完成）
 def _loadmerge_fg(yyyymm : str, version : str):
@@ -943,7 +1026,7 @@ def _getFiscalDateByManageID(conn : any, manage_id : str):
         if res is None:
             return ''
         return res[0]
-    
+
 # 前月取得
 def _getPrevMonth(yyyymm : str):
     return (datetime.datetime.strptime(yyyymm, '%Y%m') + relativedelta(months=-1)).strftime("%Y%m")
@@ -955,11 +1038,11 @@ def _get_last_year_november(yyyymm: str) -> str:
 
     # 10月以下の場合、前年の11月を生成
     if dt.month <= 10:
-      prev_november = datetime.datetime(dt.year - 1, 11, 1)
+        prev_november = datetime.datetime(dt.year - 1, 11, 1)
     else:
         # 11月、12月の場合、今年の11月を生成
-      # yyyyMM形式の文字列に変換
-      prev_november = datetime.datetime(dt.year, 11, 1)
+        # yyyyMM形式の文字列に変換
+        prev_november = datetime.datetime(dt.year, 11, 1)
     return prev_november.strftime("%Y%m")
 
 # デバッグ用サーバー起動

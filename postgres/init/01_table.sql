@@ -26,7 +26,8 @@ create table m_topic_info (
   order_detail character varying(12)
   , order_rowno character varying(2)
   , project_nm character varying(50)
-  , group_id character varying(2)
+  , customer character varying(25)
+  , group_id character varying(5)
   , disp_seq integer
   , modified_date timestamp with time zone
   , constraint m_topic_info_pk primary key (order_detail, order_rowno)
@@ -36,6 +37,7 @@ comment on table m_topic_info is '案件情報マスタ';
 comment on column m_topic_info.order_detail is '受注明細';
 comment on column m_topic_info.order_rowno is '受注行番号';
 comment on column m_topic_info.project_nm is '契約工事略名';
+comment on column m_topic_info.project_nm is '得意先名';
 comment on column m_topic_info.group_id is 'グループID';
 comment on column m_topic_info.disp_seq is '表示順';
 comment on column m_topic_info.modified_date is '更新日時';
