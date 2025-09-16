@@ -190,14 +190,13 @@ def topicinfoupdate():
                     if not order_detail or not order_rowno:
                         return jsonify({"status": -1, "result": "order_detail と order_rowno は必須です"})
 
-                    sql = """
-                        update public.m_topic_info
-                           set group_id = %s
-                             , disp_seq = %s
-                             , modified_date = current_timestamp
-                         where order_detail = %s
-                           and order_rowno  = %s
-                    """
+                    sql = "update public.m_topic_info "\
+                        "   set group_id = %s "\
+                        "     , disp_seq = %s "\
+                        "     , modified_date = current_timestamp "\
+                        " where order_detail = %s "\
+                        "   and order_rowno  = %s "\
+
                     cur.execute(sql, (group_id, disp_seq, order_detail, order_rowno))
                     updated += cur.rowcount
 
@@ -478,7 +477,7 @@ def _filemergedetail(yyyymm: str, version: str):
     "    , coalesce(cost_subcontract, 0) as 外注費 "\
     "    , coalesce(cost, 0)             as 旅費交通費 "\
     "    , coalesce(cost_other, 0)       as その他 "\
-    "    , coalesce(change_value, 0)     as 翌月繰越    "\
+    "    , coalesce(change_value, 0)     as 翌月繰越 "\
     "from "\
     "    t_merge_result t "\
     "    left join m_topic_info mti "\
@@ -652,36 +651,36 @@ def _filedownload(yyyymm : str, version : str):
                 noIndirect = 1;
                 continue
             if item['product_div'] == '2':
-                ws.cell(row, 2, "○")                    # 繰越(仕掛)
+                ws.cell(row, 2, "○")                                                                                                        # 繰越(仕掛)
             else:
-                ws.cell(row, 2, "")                     # 繰越(完成)
-            ws.cell(row, 3, item['project_nm'])         # 件名
-            ws.cell(row, 4, item['total_cost_wip'])     # 前月繰越残
-            ws.cell(row, 5, item['sales'])              # 当月売上
-            ws.cell(row, 6, item['cost_labor'])         # 労務費
-            ws.cell(row, 7, item['cost_subcontract'])   # 外注費
-            ws.cell(row, 8, item['cost'])               # 旅費交通費
-            ws.cell(row, 9, item['cost_other'])         # その他
-            ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')  # 小計
-            ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')')  # 振替額
-            ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')  # 翌月繰越
+                ws.cell(row, 2, "")                                                                                                         # 繰越(完成)
+            ws.cell(row, 3, item['project_nm'])                                                                                             # 件名
+            ws.cell(row, 4, item['total_cost_wip'])                                                                                         # 前月繰越残
+            ws.cell(row, 5, item['sales'])                                                                                                  # 当月売上
+            ws.cell(row, 6, item['cost_labor'])                                                                                             # 労務費
+            ws.cell(row, 7, item['cost_subcontract'])                                                                                       # 外注費
+            ws.cell(row, 8, item['cost'])                                                                                                   # 旅費交通費
+            ws.cell(row, 9, item['cost_other'])                                                                                             # その他
+            ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')                                    # 小計
+            ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')') # 振替額
+            ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')                       # 翌月繰越
             row += 1
-        ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')  # 小計
-        ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')')  # 振替額
-        ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')  # 翌月繰越
+        ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')                                        # 小計
+        ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')')     # 振替額
+        ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')                           # 翌月繰越
 
         # 計算式を更新（間接プロジェクト）
         row += 1
 
         # 間接プロジェクトがある場合のみ
         if noIndirect == 1:
-            ws.cell(row, 6, indirect['cost_labor'])   # 労務費
-            ws.cell(row, 7, indirect['cost_subcontract'])   # 外注費
-            ws.cell(row, 8, 0)   # 旅費交通費
-            ws.cell(row, 9, indirect['cost'])   # その他
-            ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')  # 小計
-            ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')')  # 振替額
-            ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')  # 翌月繰越
+            ws.cell(row, 6, indirect['cost_labor'])                                                                                         # 労務費
+            ws.cell(row, 7, indirect['cost_subcontract'])                                                                                   # 外注費
+            ws.cell(row, 8, 0)                                                                                                              # 旅費交通費
+            ws.cell(row, 9, indirect['cost'])                                                                                               # その他
+            ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')                                    # 小計
+            ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')') # 振替額
+            ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')                       # 翌月繰越
             row += 1  # 空行
 
         row += 1  # 合計 開始行
@@ -701,74 +700,80 @@ def _filedownload(yyyymm : str, version : str):
         # 完成PJ
         fg_start_row = row
         for item in result_fg:
-            ws.cell(row, 3, item['project_nm'])   # 件名
-            ws.cell(row, 4, item['cost_labor'])   # 労務費
-            ws.cell(row, 5, item['cost_subcontract'])   # 外注費
-            ws.cell(row, 6, item['cost'])   # 旅費交通費
-            ws.cell(row, 7, item['total_cost'])   # 合計
-            ws.cell(row, 8, item['sales'])   # 売上
-            row += 1   
+            ws.cell(row, 3, item['project_nm'])         # 件名
+            ws.cell(row, 4, item['cost_material'])      # 材料費
+            ws.cell(row, 5, item['cost_labor'])         # 労務費
+            ws.cell(row, 6, item['cost_subcontract'])   # 外注費
+            ws.cell(row, 7, item['cost'])               # 旅費交通費
+            ws.cell(row, 8, item['total_cost'])         # 原価計
+            ws.cell(row, 9, item['sales'])              # 売上高
+            row += 1
         row = fg_start_row + 16 # 完成PJサマリ 開始行
-        ws.cell(row, 7, '=SUM(G' + str(fg_start_row) + ':G' + str(fg_start_row + 15) + ')')  # 小計
-        ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + 15) + ')')  # 小計
+        ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + 15) + ')')  # 原価計 合計
+        ws.cell(row, 9, '=SUM(I' + str(fg_start_row) + ':I' + str(fg_start_row + 15) + ')')  # 売上高 合計
 
         row += 4  # 仕掛PJ 開始行
 
         # 仕掛PJ
         wip_start_row = row
         for item in result_wip:
-            ws.cell(row, 3, item['project_nm'])   # 件名
-            ws.cell(row, 4, item['cost_labor'])   # 労務費
-            ws.cell(row, 5, item['cost_subcontract'])   # 外注費
-            ws.cell(row, 6, item['cost'])   # 旅費交通費
-            ws.cell(row, 7, item['total_cost'])   # 合計
-            row += 1   
+            ws.cell(row, 3, item['project_nm'])         # 件名
+            ws.cell(row, 4, item['cost_material'])      # 材料費
+            ws.cell(row, 5, item['cost_labor'])         # 労務費
+            ws.cell(row, 6, item['cost_subcontract'])   # 外注費
+            ws.cell(row, 7, item['cost'])               # 経費
+            ws.cell(row, 8, item['total_cost'])         # 原価計
+            row += 1
         row = wip_start_row + 8 #仕掛PJサマリ 開始行
-        ws.cell(row, 7, '=SUM(G' + str(wip_start_row) + ':G' + str(wip_start_row + 7) + ')')  # 小計
+        ws.cell(row, 8, '=SUM(H' + str(wip_start_row) + ':H' + str(wip_start_row + 7) + ')')  # 原価計 合計
 
         row += 4  # 前月仕掛 開始行
 
         #前月仕掛
         wip_start_row = row
         for item in result_prev_wip:
-            ws.cell(row, 3, item['project_nm'])   # 件名
-            ws.cell(row, 4, item['cost_labor'])   # 労務費
-            ws.cell(row, 5, item['cost_subcontract'])   # 外注費
-            ws.cell(row, 6, item['cost'])   # 旅費交通費
-            row += 1   
+            ws.cell(row, 3, item['project_nm'])         # 件名
+            ws.cell(row, 4, item['cost_other'])         # 材料費
+            ws.cell(row, 5, item['cost_labor'])         # 労務費
+            ws.cell(row, 6, item['cost_subcontract'])   # 外注費
+            ws.cell(row, 7, item['cost'])               # 経費
+            row += 1
         for index in range(10):
-            ws.cell(wip_start_row + index, 8, '=SUM(D' + str(wip_start_row + index) + ':F' + str(wip_start_row + index) + ')')   # 合計
+            ws.cell(wip_start_row + index, 8, '=SUM(D' + str(wip_start_row + index) + ':G' + str(wip_start_row + index) + ')')   # 計
 
         row = wip_start_row + 10  #前月仕掛サマリ 開始行
-        ws.cell(row, 8, '=SUM(H' + str(wip_start_row) + ':H' + str(wip_start_row + 5) + ')')  # 小計
+        ws.cell(row, 8, '=SUM(H' + str(wip_start_row) + ':H' + str(wip_start_row + 9) + ')')  # 計 合計
 
         row += 4  #完成PJ+仕掛PJ 開始行
 
-        # 完成PJ＋仕掛PJ
+        # 完成PJ＋仕掛PJ 当月増加分
         total_start_row = row
         for item in result:
             if item['product_div'] == '1':
-                ws.cell(row, 3, item['project_nm'])   # 件名
-                ws.cell(row, 4, item['cost_labor'])   # 労務費
-                ws.cell(row, 5, item['cost_subcontract'])   # 外注費
-                ws.cell(row, 6, item['cost'])   # 旅費交通費
-                row += 1   
+                ws.cell(row, 3, item['project_nm'])         # 件名
+                ws.cell(row, 4, item['cost_other'])         # 材料費
+                ws.cell(row, 5, item['cost_labor'])         # 労務費
+                ws.cell(row, 6, item['cost_subcontract'])   # 外注費
+                ws.cell(row, 7, item['cost'])               # 経費
+                row += 1
         row = total_start_row + 15  # 完成PJ+仕掛PJ内仕掛　開始行
         for item in result:
             if item['product_div'] == '2':
-                ws.cell(row, 3, item['project_nm'])   # 件名
-                ws.cell(row, 4, item['cost_labor'])   # 労務費
-                ws.cell(row, 5, item['cost_subcontract'])   # 外注費
-                ws.cell(row, 6, item['cost'])   # 旅費交通費
-                row += 1   
+                ws.cell(row, 3, item['project_nm'])         # 件名
+                ws.cell(row, 4, item['cost_other'])         # 材料費
+                ws.cell(row, 5, item['cost_labor'])         # 労務費
+                ws.cell(row, 6, item['cost_subcontract'])   # 外注費
+                ws.cell(row, 7, item['cost'])               # 経費
+                row += 1
         for index in range(23):
-            ws.cell(total_start_row + index, 8, '=SUM(D' + str(total_start_row + index) + ':F' + str(total_start_row + index) + ')')   # 合計
+            ws.cell(total_start_row + index, 8, '=SUM(D' + str(total_start_row + index) + ':G' + str(total_start_row + index) + ')')   # 小計
 
         row = total_start_row + 23  #完成PJ+仕掛PJサマリ 開始行
-        ws.cell(row, 4, '=SUM(D' + str(total_start_row) + ':D' + str(total_start_row + 22) + ')')  # 小計
-        ws.cell(row, 5, '=SUM(E' + str(total_start_row) + ':E' + str(total_start_row + 22) + ')')  # 小計
-        ws.cell(row, 6, '=SUM(F' + str(total_start_row) + ':F' + str(total_start_row + 22) + ')')  # 小計
-        ws.cell(row, 8, '=SUM(H' + str(total_start_row) + ':H' + str(total_start_row + 22) + ')')  # 小計
+        ws.cell(row, 4, '=SUM(D' + str(total_start_row) + ':D' + str(total_start_row + 22) + ')')  # 材料費 合計
+        ws.cell(row, 5, '=SUM(E' + str(total_start_row) + ':E' + str(total_start_row + 22) + ')')  # 労務費 合計
+        ws.cell(row, 6, '=SUM(F' + str(total_start_row) + ':F' + str(total_start_row + 22) + ')')  # 外注費 合計
+        ws.cell(row, 7, '=SUM(G' + str(total_start_row) + ':G' + str(total_start_row + 22) + ')')  # 経費   合計
+        ws.cell(row, 8, '=SUM(H' + str(total_start_row) + ':H' + str(total_start_row + 22) + ')')  # 小計   合計
 
         # 前月取得
         yyyymm = _getPrevMonth(yyyymm)
@@ -787,28 +792,28 @@ def _filedownload(yyyymm : str, version : str):
     row = 3 # 完成PJ 開始行
     fg_start_row = row
     for item in result_fg:
-        ws.cell(row, 1, item['div_cd'])   # 原価部門コード
-        ws.cell(row, 2, item['div_nm'])   # 原価部門名
-        ws.cell(row, 3, item['order_detail'])   # 受注明細+受注行番号+部門コード
-        ws.cell(row, 4, item['project_nm'])   # 件名
-        ws.cell(row, 5, item['customer'])   # 得意先名
-        ws.cell(row, 6, item['cost_material'])   # 材料費
-        ws.cell(row, 7, item['cost_labor'])   # 労務費
-        ws.cell(row, 8, item['cost_subcontract'])   # 外注費
-        ws.cell(row, 9, item['cost'])   # 経費
-        ws.cell(row, 10, item['total_cost'])   # 原価計
-        ws.cell(row, 11, item['sales'])   # 売上高
-        ws.cell(row, 12, item['sales'] - item['total_cost'])   # 粗利
+        ws.cell(row, 1, item['div_cd'])                         # 原価部門コード
+        ws.cell(row, 2, item['div_nm'])                         # 原価部門名
+        ws.cell(row, 3, item['order_detail'])                   # 受注明細+受注行番号+部門コード
+        ws.cell(row, 4, item['project_nm'])                     # 件名
+        ws.cell(row, 5, item['customer'])                       # 得意先名
+        ws.cell(row, 6, item['cost_material'])                  # 材料費
+        ws.cell(row, 7, item['cost_labor'])                     # 労務費
+        ws.cell(row, 8, item['cost_subcontract'])               # 外注費
+        ws.cell(row, 9, item['cost'])                           # 経費
+        ws.cell(row, 10, item['total_cost'])                    # 原価計
+        ws.cell(row, 11, item['sales'])                         # 売上高
+        ws.cell(row, 12, item['sales'] - item['total_cost'])    # 粗利
         ws.cell(row, 13, '=IF(K' + str(row) + '=0, 0%,L' + str(row) + '/K' + str(row) + ')')  # 粗利率
         row += 1
     row = fg_start_row+ 16  # 完成PJ総計 開始行
-    ws.cell(row, 6, '=SUM(F' + str(fg_start_row) + ':F' + str(fg_start_row + 15) + ')')  # 材料費計
-    ws.cell(row, 7, '=SUM(G' + str(fg_start_row) + ':G' + str(fg_start_row + 15) + ')')  # 労務費計
-    ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + 15) + ')')  # 外注計
-    ws.cell(row, 9, '=SUM(I' + str(fg_start_row) + ':I' + str(fg_start_row + 15) + ')')  # 経費計
-    ws.cell(row, 10, '=SUM(J' + str(fg_start_row) + ':J' + str(fg_start_row + 15) + ')')  # 原価計
-    ws.cell(row, 11, '=SUM(K' + str(fg_start_row) + ':K' + str(fg_start_row + 15) + ')')  # 売上高計
-    ws.cell(row, 12, '=+K' + str(fg_start_row + 16) + '-J' + str(fg_start_row + 16))  # 粗利計
+    ws.cell(row, 6, '=SUM(F' + str(fg_start_row) + ':F' + str(fg_start_row + 15) + ')')     # 材料費計
+    ws.cell(row, 7, '=SUM(G' + str(fg_start_row) + ':G' + str(fg_start_row + 15) + ')')     # 労務費計
+    ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + 15) + ')')     # 外注計
+    ws.cell(row, 9, '=SUM(I' + str(fg_start_row) + ':I' + str(fg_start_row + 15) + ')')     # 経費計
+    ws.cell(row, 10, '=SUM(J' + str(fg_start_row) + ':J' + str(fg_start_row + 15) + ')')    # 原価計
+    ws.cell(row, 11, '=SUM(K' + str(fg_start_row) + ':K' + str(fg_start_row + 15) + ')')    # 売上高計
+    ws.cell(row, 12, '=+K' + str(fg_start_row + 16) + '-J' + str(fg_start_row + 16))        # 粗利計
     ws.cell(row, 13, '=IF(K' + str(fg_start_row + 16) + '=0, 0%,L' + str(fg_start_row + 16) + '/K' + str(fg_start_row + 16) + ')')  # 粗利率
 
     # =====================
@@ -818,23 +823,23 @@ def _filedownload(yyyymm : str, version : str):
     row = 3 # 仕掛PJ 開始行
     wip_start_row = row
     for item in result_wip:
-        ws.cell(row, 1, item['div_cd'])   # 原価部門コード
-        ws.cell(row, 2, item['div_nm'])   # 原価部門名
-        ws.cell(row, 3, item['order_detail'])   # 受注明細+受注行番号+部門コード
-        ws.cell(row, 4, item['project_nm'])   # 件名
-        ws.cell(row, 5, item['customer'])   # 得意先名
-        ws.cell(row, 6, item['cost_material'])   # 材料費
-        ws.cell(row, 7, item['cost_labor'])   # 労務費
+        ws.cell(row, 1, item['div_cd'])             # 原価部門コード
+        ws.cell(row, 2, item['div_nm'])             # 原価部門名
+        ws.cell(row, 3, item['order_detail'])       # 受注明細+受注行番号+部門コード
+        ws.cell(row, 4, item['project_nm'])         # 件名
+        ws.cell(row, 5, item['customer'])           # 得意先名
+        ws.cell(row, 6, item['cost_material'])      # 材料費
+        ws.cell(row, 7, item['cost_labor'])         # 労務費
         ws.cell(row, 8, item['cost_subcontract'])   # 外注費
-        ws.cell(row, 9, item['cost'])   # 経費
-        ws.cell(row, 10, item['total_cost'])   # 合計
+        ws.cell(row, 9, item['cost'])               # 経費
+        ws.cell(row, 10, item['total_cost'])        # 合計
         row += 1
     row = wip_start_row + 8 # 仕掛PJサマリ 開始行
-    ws.cell(row, 6, '=SUM(F' + str(fg_start_row) + ':F' + str(fg_start_row + 7) + ')')  # 材料費計
-    ws.cell(row, 7, '=SUM(G' + str(fg_start_row) + ':G' + str(fg_start_row + 7) + ')')  # 労務費計
-    ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + 7) + ')')  # 外注計
-    ws.cell(row, 9, '=SUM(I' + str(fg_start_row) + ':I' + str(fg_start_row + 7) + ')')  # 経費計
-    ws.cell(row, 10, '=SUM(J' + str(fg_start_row) + ':J' + str(fg_start_row + 7) + ')')  # 原価計
+    ws.cell(row, 6, '=SUM(F' + str(fg_start_row) + ':F' + str(fg_start_row + 7) + ')')      # 材料費計
+    ws.cell(row, 7, '=SUM(G' + str(fg_start_row) + ':G' + str(fg_start_row + 7) + ')')      # 労務費計
+    ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + 7) + ')')      # 外注計
+    ws.cell(row, 9, '=SUM(I' + str(fg_start_row) + ':I' + str(fg_start_row + 7) + ')')      # 経費計
+    ws.cell(row, 10, '=SUM(J' + str(fg_start_row) + ':J' + str(fg_start_row + 7) + ')')     # 原価計
 
     wb.save(target_file)
 
@@ -846,10 +851,11 @@ def _loadmerge(yyyymm : str, version : str):
         "    select "\
         "          order_detail "\
         "        , order_rowno "\
-        "        , sum(cost_labor) + sum(cost_subcontract) + sum(cost) as total_cost_wip "\
+        "        , sum(cost_labor) + sum(cost_subcontract) + sum(cost) + sum(cost_other) as total_cost_wip "\
         "        , sum(cost_labor) as cost_labor_wip "\
         "        , sum(cost_subcontract) as cost_subcontract_wip "\
         "        , sum(cost) as cost_wip "\
+        "        , sum(cost_other) as cost_other_wip "\
         "    from "\
         "        t_wip_info "\
         "    where "\
@@ -866,8 +872,9 @@ def _loadmerge(yyyymm : str, version : str):
         "    , t_fg_project_info.cost_labor - coalesce(wip.cost_labor_wip, 0)   as cost_labor "\
         "    , t_fg_project_info.cost_subcontract - coalesce(wip.cost_subcontract_wip, 0) as cost_subcontract "\
         "    , t_fg_project_info.cost - coalesce(wip.cost_wip, 0) as cost "\
-        "    , null                                 as change_value "\
-        "    , '1'                                  as product_div "\
+        "    , t_fg_project_info.cost_material - coalesce(wip.cost_other_wip, 0) as cost_other "\
+        "    , null as change_value "\
+        "    , '1' as product_div "\
         "    , m_topic_info.group_id "\
         "    , m_topic_info.disp_seq "\
         "from "\
@@ -891,8 +898,9 @@ def _loadmerge(yyyymm : str, version : str):
         "    , t_wip_project_info.cost_labor - coalesce(wip.cost_labor_wip, 0)   as cost_labor "\
         "    , t_wip_project_info.cost_subcontract - coalesce(wip.cost_subcontract_wip, 0) as cost_subcontract "\
         "    , t_wip_project_info.cost - coalesce(wip.cost_wip, 0) as cost "\
-        "    , t_wip_project_info.cost_labor + t_wip_project_info.cost_subcontract + t_wip_project_info.cost as change_value "\
-        "    , '2'                                  as product_div "\
+        "    , t_wip_project_info.cost_material - coalesce(wip.cost_other_wip, 0) as cost_other "\
+        "    , t_wip_project_info.cost_labor + t_wip_project_info.cost_subcontract + t_wip_project_info.cost + t_wip_project_info.cost_material as change_value "\
+        "    , '2' as product_div "\
         "    , m_topic_info.group_id "\
         "    , m_topic_info.disp_seq "\
         "from "\
@@ -928,19 +936,19 @@ def _loadmerge_fg(yyyymm : str, version : str):
         "    , t_fg_project_info.cost_labor "\
         "    , t_fg_project_info.cost_subcontract "\
         "    , t_fg_project_info.cost "\
-        "    , t_fg_project_info.cost_labor + t_fg_project_info.cost_subcontract + t_fg_project_info.cost as total_cost  "\
+        "    ,  t_fg_project_info.cost_material + t_fg_project_info.cost_labor + t_fg_project_info.cost_subcontract + t_fg_project_info.cost as total_cost "\
         "    , t_fg_project_info.sales "\
         "from "\
-        "    t_fg_project_info  "\
-        "    left join m_topic_info  "\
-        "        on t_fg_project_info.order_detail = m_topic_info.order_detail  "\
-        "        and t_fg_project_info.order_rowno = m_topic_info.order_rowno  "\
-        "    inner join m_div  "\
-        "        on t_fg_project_info.div_cd = m_div.div_cd  "\
+        "    t_fg_project_info "\
+        "    left join m_topic_info "\
+        "        on t_fg_project_info.order_detail = m_topic_info.order_detail "\
+        "        and t_fg_project_info.order_rowno = m_topic_info.order_rowno "\
+        "    inner join m_div "\
+        "        on t_fg_project_info.div_cd = m_div.div_cd "\
         "where "\
         "    t_fg_project_info.manage_id in (select fg_id from t_merge_target where fiscal_date = %s and version = %s) "\
         "order by "\
-        "    t_fg_project_info.row_no, t_fg_project_info.order_detail  "
+        "    t_fg_project_info.row_no, t_fg_project_info.order_detail "
 
     with get_connection() as conn:
         with conn.cursor() as cur:
@@ -960,18 +968,18 @@ def _loadmerge_wip(yyyymm : str, version : str):
         "    , t_wip_project_info.cost_labor "\
         "    , t_wip_project_info.cost_subcontract "\
         "    , t_wip_project_info.cost "\
-        "    , t_wip_project_info.cost_labor + t_wip_project_info.cost_subcontract + t_wip_project_info.cost as total_cost  "\
+        "    , t_wip_project_info.cost_material + t_wip_project_info.cost_labor + t_wip_project_info.cost_subcontract + t_wip_project_info.cost as total_cost "\
         "from "\
-        "    t_wip_project_info  "\
-        "    left join m_topic_info  "\
-        "        on t_wip_project_info.order_detail = m_topic_info.order_detail  "\
-        "        and t_wip_project_info.order_rowno = m_topic_info.order_rowno  "\
-        "    inner join m_div  "\
-        "        on t_wip_project_info.div_cd = m_div.div_cd  "\
+        "    t_wip_project_info "\
+        "    left join m_topic_info "\
+        "        on t_wip_project_info.order_detail = m_topic_info.order_detail "\
+        "        and t_wip_project_info.order_rowno = m_topic_info.order_rowno "\
+        "    inner join m_div "\
+        "        on t_wip_project_info.div_cd = m_div.div_cd "\
         "where "\
         "    t_wip_project_info.manage_id in (select wip_id from t_merge_target where fiscal_date = %s and version = %s) "\
         "order by "\
-        "    t_wip_project_info.row_no, t_wip_project_info.order_detail  "
+        "    t_wip_project_info.row_no, t_wip_project_info.order_detail "
 
     with get_connection() as conn:
         with conn.cursor() as cur:
@@ -984,14 +992,14 @@ def _loatmerge_perv_wip(yyyymm:str):
         "      project_nm "\
         "    , cost_labor "\
         "    , cost_subcontract "\
-        "    , cost  "\
+        "    , cost "\
         "    , cost_other "\
         "from "\
-        "    t_wip_info  "\
-        "    left join m_topic_info  "\
-        "        on t_wip_info.order_detail = m_topic_info.order_detail  "\
+        "    t_wip_info "\
+        "    left join m_topic_info "\
+        "        on t_wip_info.order_detail = m_topic_info.order_detail "\
         "where "\
-        "    fiscal_date = %s  "\
+        "    fiscal_date = %s "\
         "order by "\
         "    t_wip_info.order_detail "
 
@@ -1010,7 +1018,7 @@ def _topicdetail(group_id_flg: bool):
         "    , group_id "\
         "    , disp_seq "\
         "from "\
-        "    m_topic_info  "\
+        "    m_topic_info "\
         "where "\
         "    (%s = FALSE OR group_id IS NULL) "\
         "order by "\
