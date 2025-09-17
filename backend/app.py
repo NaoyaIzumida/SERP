@@ -629,6 +629,7 @@ def _filedownload(yyyymm : str, version : str):
         result_wip = _loadmerge_wip(yyyymm, version)
         result_prev_wip = _loatmerge_perv_wip(yyyymm)
 
+        # データの取得分行を追加する
         summary_base = ws[3]
         ws.unmerge_cells('H8:I8')
         ws.insert_rows(4, len(result) - 2)
@@ -789,6 +790,17 @@ def _filedownload(yyyymm : str, version : str):
     # 完成PJ台帳シート
     # =====================
     ws = wb['完成PJ台帳']
+
+    # データの取得分行を追加する
+    fg_data_num = len(result_fg) # 完成PJのデータ数
+    summary_base = ws[3]
+    ws.insert_rows(4, fg_data_num - 2)
+    for r in range(len(result_fg)-2):
+        i = 1
+        for cell in summary_base:
+            ws.cell(row = r + 4, column = i)._style = copy(cell._style)
+            i += 1
+
     row = 3 # 完成PJ 開始行
     fg_start_row = row
     for item in result_fg:
@@ -806,20 +818,31 @@ def _filedownload(yyyymm : str, version : str):
         ws.cell(row, 12, item['sales'] - item['total_cost'])    # 粗利
         ws.cell(row, 13, '=IF(K' + str(row) + '=0, 0%,L' + str(row) + '/K' + str(row) + ')')  # 粗利率
         row += 1
-    row = fg_start_row+ 16  # 完成PJ総計 開始行
-    ws.cell(row, 6, '=SUM(F' + str(fg_start_row) + ':F' + str(fg_start_row + 15) + ')')     # 材料費計
-    ws.cell(row, 7, '=SUM(G' + str(fg_start_row) + ':G' + str(fg_start_row + 15) + ')')     # 労務費計
-    ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + 15) + ')')     # 外注計
-    ws.cell(row, 9, '=SUM(I' + str(fg_start_row) + ':I' + str(fg_start_row + 15) + ')')     # 経費計
-    ws.cell(row, 10, '=SUM(J' + str(fg_start_row) + ':J' + str(fg_start_row + 15) + ')')    # 原価計
-    ws.cell(row, 11, '=SUM(K' + str(fg_start_row) + ':K' + str(fg_start_row + 15) + ')')    # 売上高計
-    ws.cell(row, 12, '=+K' + str(fg_start_row + 16) + '-J' + str(fg_start_row + 16))        # 粗利計
-    ws.cell(row, 13, '=IF(K' + str(fg_start_row + 16) + '=0, 0%,L' + str(fg_start_row + 16) + '/K' + str(fg_start_row + 16) + ')')  # 粗利率
+    row = fg_start_row + fg_data_num  # 完成PJ総計 開始行
+    ws.cell(row, 6, '=SUM(F' + str(fg_start_row) + ':F' + str(fg_start_row + fg_data_num - 1) + ')')     # 材料費計
+    ws.cell(row, 7, '=SUM(G' + str(fg_start_row) + ':G' + str(fg_start_row + fg_data_num - 1) + ')')     # 労務費計
+    ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + fg_data_num - 1) + ')')     # 外注計
+    ws.cell(row, 9, '=SUM(I' + str(fg_start_row) + ':I' + str(fg_start_row + fg_data_num - 1) + ')')     # 経費計
+    ws.cell(row, 10, '=SUM(J' + str(fg_start_row) + ':J' + str(fg_start_row + fg_data_num - 1) + ')')    # 原価計
+    ws.cell(row, 11, '=SUM(K' + str(fg_start_row) + ':K' + str(fg_start_row + fg_data_num - 1) + ')')    # 売上高計
+    ws.cell(row, 12, '=+K' + str(fg_start_row + fg_data_num) + '-J' + str(fg_start_row + fg_data_num))        # 粗利計
+    ws.cell(row, 13, '=IF(K' + str(fg_start_row + fg_data_num) + '=0, 0%,L' + str(fg_start_row + fg_data_num) + '/K' + str(fg_start_row + fg_data_num) + ')')  # 粗利率
 
     # =====================
     # 仕掛J台帳シート
     # =====================
     ws = wb['仕掛PJ台帳']
+
+    # データの取得分行を追加する
+    wip_data_num = len(result_wip) # 完成PJのデータ数
+    summary_base = ws[3]
+    ws.insert_rows(4, wip_data_num - 2)
+    for r in range(len(result_wip)-2):
+        i = 1
+        for cell in summary_base:
+            ws.cell(row = r + 4, column = i)._style = copy(cell._style)
+            i += 1
+
     row = 3 # 仕掛PJ 開始行
     wip_start_row = row
     for item in result_wip:
@@ -834,12 +857,12 @@ def _filedownload(yyyymm : str, version : str):
         ws.cell(row, 9, item['cost'])               # 経費
         ws.cell(row, 10, item['total_cost'])        # 合計
         row += 1
-    row = wip_start_row + 8 # 仕掛PJサマリ 開始行
-    ws.cell(row, 6, '=SUM(F' + str(fg_start_row) + ':F' + str(fg_start_row + 7) + ')')      # 材料費計
-    ws.cell(row, 7, '=SUM(G' + str(fg_start_row) + ':G' + str(fg_start_row + 7) + ')')      # 労務費計
-    ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + 7) + ')')      # 外注計
-    ws.cell(row, 9, '=SUM(I' + str(fg_start_row) + ':I' + str(fg_start_row + 7) + ')')      # 経費計
-    ws.cell(row, 10, '=SUM(J' + str(fg_start_row) + ':J' + str(fg_start_row + 7) + ')')     # 原価計
+    row = wip_start_row + wip_data_num # 仕掛PJサマリ 開始行
+    ws.cell(row, 6, '=SUM(F' + str(fg_start_row) + ':F' + str(fg_start_row + wip_data_num - 1) + ')')      # 材料費計
+    ws.cell(row, 7, '=SUM(G' + str(fg_start_row) + ':G' + str(fg_start_row + wip_data_num - 1) + ')')      # 労務費計
+    ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + wip_data_num - 1) + ')')      # 外注計
+    ws.cell(row, 9, '=SUM(I' + str(fg_start_row) + ':I' + str(fg_start_row + wip_data_num - 1) + ')')      # 経費計
+    ws.cell(row, 10, '=SUM(J' + str(fg_start_row) + ':J' + str(fg_start_row + wip_data_num - 1) + ')')     # 原価計
 
     wb.save(target_file)
 
