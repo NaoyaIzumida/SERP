@@ -641,7 +641,7 @@ def _filedownload(yyyymm : str, version : str):
         for item in result:
             group_id = item['group_id']
 
-            # グループIDが切り替わったら空行を追加（関節プロジェクト除く）
+            # グループIDが切り替わったら空行を追加（間接プロジェクト除く）
             if prev_group_id is not None and group_id != prev_group_id and item['order_detail'] != 'ZAB202400001':
                 _insert_rows_with_style(ws, row, 3, False)
                 ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')                                        # 小計
