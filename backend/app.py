@@ -629,15 +629,11 @@ def _filedownload(yyyymm : str, version : str):
         result_wip = _loadmerge_wip(yyyymm, version)
         result_prev_wip = _loatmerge_perv_wip(yyyymm)
 
-        # データの取得分行を追加する
-        summary_base = ws[3]
         ws.unmerge_cells('H8:I8')
-        ws.insert_rows(4, len(result) - 2)
-        for r in range(len(result) - 2):
-            i = 1
-            for cell in summary_base:
-                ws.cell(row = r + 4, column = i)._style = copy(cell._style)
-                i += 1
+
+        # データ件数に応じて行を追加
+        _insert_rows_with_style(ws, 3, len(result), False)
+
         for r in range(len(result) + 3):
             ws.row_dimensions[r + 4].height = copy(ws.row_dimensions[3].height)
         ws.merge_cells('H' + str(len(result) +6) + ':I' + str(len(result) +6))
@@ -698,7 +694,12 @@ def _filedownload(yyyymm : str, version : str):
 
         row += 7  # 完成PJ 開始行
 
-        # 完成PJ
+        # ================================ 完成PJ ================================
+        fg_data_num = len(result_fg) # 完成PJのデータ数
+
+        # データ件数に応じて行を追加
+        _insert_rows_with_style(ws, row, fg_data_num, False)
+
         fg_start_row = row
         for item in result_fg:
             ws.cell(row, 3, item['project_nm'])         # 件名
@@ -709,13 +710,19 @@ def _filedownload(yyyymm : str, version : str):
             ws.cell(row, 8, item['total_cost'])         # 原価計
             ws.cell(row, 9, item['sales'])              # 売上高
             row += 1
-        row = fg_start_row + 16 # 完成PJサマリ 開始行
-        ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + 15) + ')')  # 原価計 合計
-        ws.cell(row, 9, '=SUM(I' + str(fg_start_row) + ':I' + str(fg_start_row + 15) + ')')  # 売上高 合計
+        row = fg_start_row + fg_data_num # 完成PJサマリ 開始行
+        ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + fg_data_num - 1) + ')')  # 原価計 合計
+        ws.cell(row, 9, '=SUM(I' + str(fg_start_row) + ':I' + str(fg_start_row + fg_data_num - 1) + ')')  # 売上高 合計
 
         row += 4  # 仕掛PJ 開始行
 
-        # 仕掛PJ
+        # ================================ 仕掛PJ ================================
+        wip_data_num = len(result_wip) # 仕掛PJのデータ数
+
+        # データ件数に応じて行を追加
+        if wip_data_num > 2:
+          _insert_rows_with_style(ws, row, wip_data_num, False)
+
         wip_start_row = row
         for item in result_wip:
             ws.cell(row, 3, item['project_nm'])         # 件名
@@ -725,12 +732,20 @@ def _filedownload(yyyymm : str, version : str):
             ws.cell(row, 7, item['cost'])               # 経費
             ws.cell(row, 8, item['total_cost'])         # 原価計
             row += 1
-        row = wip_start_row + 8 #仕掛PJサマリ 開始行
-        ws.cell(row, 8, '=SUM(H' + str(wip_start_row) + ':H' + str(wip_start_row + 7) + ')')  # 原価計 合計
+        row = wip_start_row + wip_data_num #仕掛PJサマリ 開始行
+        ws.cell(row, 8, '=SUM(H' + str(wip_start_row) + ':H' + str(wip_start_row + wip_data_num - 1) + ')')  # 原価計 合計
 
         row += 4  # 前月仕掛 開始行
 
-        #前月仕掛
+        # ================================ 前月仕掛 ================================
+        prev_wip_data_num = len(result_prev_wip) # 前月仕掛のデータ数
+
+        # データ件数に応じて行を追加
+        if prev_wip_data_num > 2:
+          _insert_rows_with_style(ws, row, prev_wip_data_num, False)
+        else:
+          row += 2 # 空行分
+
         wip_start_row = row
         for item in result_prev_wip:
             ws.cell(row, 3, item['project_nm'])         # 件名
@@ -739,16 +754,23 @@ def _filedownload(yyyymm : str, version : str):
             ws.cell(row, 6, item['cost_subcontract'])   # 外注費
             ws.cell(row, 7, item['cost'])               # 経費
             row += 1
-        for index in range(10):
+        for index in range(prev_wip_data_num):
             ws.cell(wip_start_row + index, 8, '=SUM(D' + str(wip_start_row + index) + ':G' + str(wip_start_row + index) + ')')   # 計
 
-        row = wip_start_row + 10  #前月仕掛サマリ 開始行
-        ws.cell(row, 8, '=SUM(H' + str(wip_start_row) + ':H' + str(wip_start_row + 9) + ')')  # 計 合計
+        row = wip_start_row + prev_wip_data_num  #前月仕掛サマリ 開始行
+        if prev_wip_data_num > 0:
+          ws.cell(row, 8, '=SUM(H' + str(wip_start_row) + ':H' + str(wip_start_row + prev_wip_data_num - 1) + ')')  # 計 合計
 
         row += 4  #完成PJ+仕掛PJ 開始行
 
-        # 完成PJ＋仕掛PJ 当月増加分
-        total_start_row = row
+        # ================================ 完成PJ＋仕掛PJ 当月増加分 ================================
+        fg_add_data_num = sum(1 for row in result if row['product_div'] == '1') # 当月増加分（完成PJ）のデータ数
+
+        # データ件数に応じて行を追加
+        if fg_add_data_num > 2:
+          _insert_rows_with_style(ws, row, fg_add_data_num, True)
+
+        total_fg_start_row = row
         for item in result:
             if item['product_div'] == '1':
                 ws.cell(row, 3, item['project_nm'])         # 件名
@@ -757,7 +779,15 @@ def _filedownload(yyyymm : str, version : str):
                 ws.cell(row, 6, item['cost_subcontract'])   # 外注費
                 ws.cell(row, 7, item['cost'])               # 経費
                 row += 1
-        row = total_start_row + 15  # 完成PJ+仕掛PJ内仕掛　開始行
+        row = total_fg_start_row + fg_add_data_num  # 完成PJ+仕掛PJ内仕掛　開始行
+
+        wip_add_data_num = sum(1 for row in result if row['product_div'] == '2') # 当月増加分（仕掛PJ）のデータ数
+
+        # データ件数に応じて行を追加
+        if wip_add_data_num > 2:
+          _insert_rows_with_style(ws, row, wip_add_data_num, True)
+
+        total_wip_start_row = row
         for item in result:
             if item['product_div'] == '2':
                 ws.cell(row, 3, item['project_nm'])         # 件名
@@ -766,15 +796,15 @@ def _filedownload(yyyymm : str, version : str):
                 ws.cell(row, 6, item['cost_subcontract'])   # 外注費
                 ws.cell(row, 7, item['cost'])               # 経費
                 row += 1
-        for index in range(23):
-            ws.cell(total_start_row + index, 8, '=SUM(D' + str(total_start_row + index) + ':G' + str(total_start_row + index) + ')')   # 小計
+        for index in range(fg_add_data_num + wip_add_data_num):
+            ws.cell(total_fg_start_row + index, 8, '=SUM(D' + str(total_fg_start_row + index) + ':G' + str(total_fg_start_row + index) + ')')   # 小計
 
-        row = total_start_row + 23  #完成PJ+仕掛PJサマリ 開始行
-        ws.cell(row, 4, '=SUM(D' + str(total_start_row) + ':D' + str(total_start_row + 22) + ')')  # 材料費 合計
-        ws.cell(row, 5, '=SUM(E' + str(total_start_row) + ':E' + str(total_start_row + 22) + ')')  # 労務費 合計
-        ws.cell(row, 6, '=SUM(F' + str(total_start_row) + ':F' + str(total_start_row + 22) + ')')  # 外注費 合計
-        ws.cell(row, 7, '=SUM(G' + str(total_start_row) + ':G' + str(total_start_row + 22) + ')')  # 経費   合計
-        ws.cell(row, 8, '=SUM(H' + str(total_start_row) + ':H' + str(total_start_row + 22) + ')')  # 小計   合計
+        row = total_wip_start_row + wip_add_data_num  #完成PJ+仕掛PJサマリ 開始行
+        ws.cell(row, 4, '=SUM(D' + str(total_fg_start_row) + ':D' + str(total_fg_start_row + fg_add_data_num + wip_add_data_num - 1) + ')')  # 材料費 合計
+        ws.cell(row, 5, '=SUM(E' + str(total_fg_start_row) + ':E' + str(total_fg_start_row + fg_add_data_num + wip_add_data_num - 1) + ')')  # 労務費 合計
+        ws.cell(row, 6, '=SUM(F' + str(total_fg_start_row) + ':F' + str(total_fg_start_row + fg_add_data_num + wip_add_data_num - 1) + ')')  # 外注費 合計
+        ws.cell(row, 7, '=SUM(G' + str(total_fg_start_row) + ':G' + str(total_fg_start_row + fg_add_data_num + wip_add_data_num - 1) + ')')  # 経費   合計
+        ws.cell(row, 8, '=SUM(H' + str(total_fg_start_row) + ':H' + str(total_fg_start_row + fg_add_data_num + wip_add_data_num - 1) + ')')  # 小計   合計
 
         # 前月取得
         yyyymm = _getPrevMonth(yyyymm)
@@ -791,18 +821,14 @@ def _filedownload(yyyymm : str, version : str):
     # =====================
     ws = wb['完成PJ台帳']
 
-    # データの取得分行を追加する
     fg_data_num = len(result_fg) # 完成PJのデータ数
-    summary_base = ws[3]
-    ws.insert_rows(4, fg_data_num - 2)
-    for r in range(len(result_fg)-2):
-        i = 1
-        for cell in summary_base:
-            ws.cell(row = r + 4, column = i)._style = copy(cell._style)
-            i += 1
-
     row = 3 # 完成PJ 開始行
     fg_start_row = row
+
+    # データ件数に応じて行を追加
+    if fg_data_num > 2:
+      _insert_rows_with_style(ws, row, fg_data_num, False)
+
     for item in result_fg:
         ws.cell(row, 1, item['div_cd'])                         # 原価部門コード
         ws.cell(row, 2, item['div_nm'])                         # 原価部門名
@@ -829,22 +855,18 @@ def _filedownload(yyyymm : str, version : str):
     ws.cell(row, 13, '=IF(K' + str(fg_start_row + fg_data_num) + '=0, 0%,L' + str(fg_start_row + fg_data_num) + '/K' + str(fg_start_row + fg_data_num) + ')')  # 粗利率
 
     # =====================
-    # 仕掛J台帳シート
+    # 仕掛PJ台帳シート
     # =====================
     ws = wb['仕掛PJ台帳']
 
-    # データの取得分行を追加する
-    wip_data_num = len(result_wip) # 完成PJのデータ数
-    summary_base = ws[3]
-    ws.insert_rows(4, wip_data_num - 2)
-    for r in range(len(result_wip)-2):
-        i = 1
-        for cell in summary_base:
-            ws.cell(row = r + 4, column = i)._style = copy(cell._style)
-            i += 1
-
+    wip_data_num = len(result_wip) # 仕掛PJのデータ数
     row = 3 # 仕掛PJ 開始行
     wip_start_row = row
+
+    # データ件数に応じて行を追加
+    if wip_data_num > 2:
+      _insert_rows_with_style(ws, row, wip_data_num, False)
+
     for item in result_wip:
         ws.cell(row, 1, item['div_cd'])             # 原価部門コード
         ws.cell(row, 2, item['div_nm'])             # 原価部門名
@@ -1087,6 +1109,18 @@ def _get_last_year_november(yyyymm: str) -> str:
         # yyyyMM形式の文字列に変換
         prev_november = datetime.datetime(dt.year, 11, 1)
     return prev_november.strftime("%Y%m")
+
+# データ件数に応じて行を追加
+def _insert_rows_with_style(ws, base_row: int, data_count: int, isCopyValue: bool):
+    summary_base = ws[base_row]
+    ws.insert_rows(base_row + 1, data_count - 2)
+    for r in range(data_count - 2):
+      i = 1
+      for cell in summary_base:
+        ws.cell(row = r + base_row + 1, column = i)._style = copy(cell._style)  # セルのスタイルをコピー
+        if i == 2 and isCopyValue:
+          ws.cell(row = r + base_row + 1, column = i).value = cell.value  # セルの値をコピー
+        i += 1
 
 # デバッグ用サーバー起動
 if __name__ == "__main__":
