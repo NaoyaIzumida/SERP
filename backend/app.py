@@ -639,37 +639,40 @@ def _filedownload(yyyymm : str, version : str):
         prev_group_id = None # 前の行のグループID
         empty_row_count = 0 # 空行の数
         for item in result:
-          group_id = item['group_id']
+            group_id = item['group_id']
 
-          # グループIDが切り替わったら空行を追加
-          if prev_group_id is not None and group_id != prev_group_id:
-            _insert_rows_with_style(ws, row, 3, False)
+            # グループIDが切り替わったら空行を追加（関節プロジェクト除く）
+            if prev_group_id is not None and group_id != prev_group_id and item['order_detail'] != 'ZAB202400001':
+                _insert_rows_with_style(ws, row, 3, False)
+                ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')                                        # 小計
+                ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')')     # 振替額
+                ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')                           # 翌月繰越
+                row += 1
+                empty_row_count += 1
+
+            # 課題No3暫定対応
+            if item['order_detail'] == 'ZAB202400001':
+                indirect = copy(item)
+                noIndirect = 1;
+                continue
+            if item['product_div'] == '2':
+                ws.cell(row, 2, "○")                                                                                                        # 繰越(仕掛)
+            else:
+                ws.cell(row, 2, "")                                                                                                         # 繰越(完成)
+            ws.cell(row, 3, item['project_nm'])                                                                                             # 件名
+            ws.cell(row, 4, item['total_cost_wip'])                                                                                         # 前月繰越残
+            ws.cell(row, 5, item['sales'])                                                                                                  # 当月売上
+            ws.cell(row, 6, item['cost_labor'])                                                                                             # 労務費
+            ws.cell(row, 7, item['cost_subcontract'])                                                                                       # 外注費
+            ws.cell(row, 8, item['cost'])                                                                                                   # 旅費交通費
+            ws.cell(row, 9, item['cost_other'])                                                                                             # その他
+            ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')                                    # 小計
+            ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')') # 振替額
+            ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')                       # 翌月繰越
             row += 1
-            empty_row_count += 1
 
-          # 課題No3暫定対応
-          if item['order_detail'] == 'ZAB202400001':
-            indirect = copy(item)
-            noIndirect = 1;
-            continue
-          if item['product_div'] == '2':
-            ws.cell(row, 2, "○")                                                                                                        # 繰越(仕掛)
-          else:
-            ws.cell(row, 2, "")                                                                                                         # 繰越(完成)
-          ws.cell(row, 3, item['project_nm'])                                                                                             # 件名
-          ws.cell(row, 4, item['total_cost_wip'])                                                                                         # 前月繰越残
-          ws.cell(row, 5, item['sales'])                                                                                                  # 当月売上
-          ws.cell(row, 6, item['cost_labor'])                                                                                             # 労務費
-          ws.cell(row, 7, item['cost_subcontract'])                                                                                       # 外注費
-          ws.cell(row, 8, item['cost'])                                                                                                   # 旅費交通費
-          ws.cell(row, 9, item['cost_other'])                                                                                             # その他
-          ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')                                    # 小計
-          ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')') # 振替額
-          ws.cell(row, 12, '=IF(B' + str(row) + '="○",D' + str(row) + '+J' + str(row) + '-K' + str(row) + ',"--")')                       # 翌月繰越
-          row += 1
-
-          # 次のループの比較用
-          prev_group_id = group_id
+            # 次のループの比較用
+            prev_group_id = group_id
 
         ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')                                        # 小計
         ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')')     # 振替額
@@ -703,8 +706,8 @@ def _filedownload(yyyymm : str, version : str):
 
         # 行幅の設定
         for r in range(len(result) + empty_row_count + 3):
-          ws.row_dimensions[r + 4].height = copy(ws.row_dimensions[3].height)
-        
+            ws.row_dimensions[r + 4].height = copy(ws.row_dimensions[3].height)
+
         # セルの結合
         ws.merge_cells('H' + str(len(result) + empty_row_count + 6) + ':I' + str(len(result) + empty_row_count + 6))
 
@@ -739,7 +742,7 @@ def _filedownload(yyyymm : str, version : str):
 
         # データ件数に応じて行を追加
         if wip_data_num > 2:
-          _insert_rows_with_style(ws, row, wip_data_num, False)
+            _insert_rows_with_style(ws, row, wip_data_num, False)
 
         wip_start_row = row
         for item in result_wip:
@@ -760,9 +763,9 @@ def _filedownload(yyyymm : str, version : str):
 
         # データ件数に応じて行を追加
         if prev_wip_data_num > 2:
-          _insert_rows_with_style(ws, row, prev_wip_data_num, False)
+            _insert_rows_with_style(ws, row, prev_wip_data_num, False)
         else:
-          row += 2 # 空行分
+            row += 2 # 空行分
 
         wip_start_row = row
         for item in result_prev_wip:
@@ -777,7 +780,7 @@ def _filedownload(yyyymm : str, version : str):
 
         row = wip_start_row + prev_wip_data_num  #前月仕掛サマリ 開始行
         if prev_wip_data_num > 0:
-          ws.cell(row, 8, '=SUM(H' + str(wip_start_row) + ':H' + str(wip_start_row + prev_wip_data_num - 1) + ')')  # 計 合計
+            ws.cell(row, 8, '=SUM(H' + str(wip_start_row) + ':H' + str(wip_start_row + prev_wip_data_num - 1) + ')')  # 計 合計
 
         row += 4  #完成PJ+仕掛PJ 開始行
 
@@ -786,7 +789,7 @@ def _filedownload(yyyymm : str, version : str):
 
         # データ件数に応じて行を追加
         if fg_add_data_num > 2:
-          _insert_rows_with_style(ws, row, fg_add_data_num, True)
+            _insert_rows_with_style(ws, row, fg_add_data_num, True)
 
         total_fg_start_row = row
         for item in result:
@@ -803,7 +806,7 @@ def _filedownload(yyyymm : str, version : str):
 
         # データ件数に応じて行を追加
         if wip_add_data_num > 2:
-          _insert_rows_with_style(ws, row, wip_add_data_num, True)
+            _insert_rows_with_style(ws, row, wip_add_data_num, True)
 
         total_wip_start_row = row
         for item in result:
@@ -845,7 +848,7 @@ def _filedownload(yyyymm : str, version : str):
 
     # データ件数に応じて行を追加
     if fg_data_num > 2:
-      _insert_rows_with_style(ws, row, fg_data_num, False)
+        _insert_rows_with_style(ws, row, fg_data_num, False)
 
     for item in result_fg:
         ws.cell(row, 1, item['div_cd'])                         # 原価部門コード
@@ -883,7 +886,7 @@ def _filedownload(yyyymm : str, version : str):
 
     # データ件数に応じて行を追加
     if wip_data_num > 2:
-      _insert_rows_with_style(ws, row, wip_data_num, False)
+        _insert_rows_with_style(ws, row, wip_data_num, False)
 
     for item in result_wip:
         ws.cell(row, 1, item['div_cd'])             # 原価部門コード
