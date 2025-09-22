@@ -164,7 +164,7 @@ const TopicInfoMstPage: React.FC = () => {
 				topics: selectedData.map(item => ({
 					order_detail: item.order_detail,
 					order_rowno: item.order_rowno,
-					group_id: item.group_id,
+					group_id: item.group_id === '' ? null : item.group_id,
 					disp_seq: item.disp_seq === '' ? null : item.disp_seq,
 				})
 				)
