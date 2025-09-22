@@ -28,6 +28,7 @@ create table m_topic_info (
   , project_nm character varying(50)
   , group_id character varying(2)
   , disp_seq integer
+  , del_flg character varying(1)
   , modified_date timestamp with time zone
   , constraint m_topic_info_pk primary key (order_detail, order_rowno)
 ) ;
@@ -38,6 +39,7 @@ comment on column m_topic_info.order_rowno is '受注行番号';
 comment on column m_topic_info.project_nm is '契約工事略名';
 comment on column m_topic_info.group_id is 'グループID';
 comment on column m_topic_info.disp_seq is '表示順';
+comment on column m_topic_info.del_flg is '削除フラグ';
 comment on column m_topic_info.modified_date is '更新日時';
 
 -- ファイル情報マスタ
