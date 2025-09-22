@@ -140,6 +140,9 @@ def filemerge():
                     return jsonify({"status": -1, "result": "指定された管理IDは勘定年月が混在しています"})
                 file_div_result.append(_getfilediv(conn, manage_id))
 
+        # 過去月の案件情報マスタを削除フラグ=1に更新
+        _updateTopicInfo(fiscal_date)
+
         # マージ処理
         _filemerge(manage_ids, fiscal_date)
 
@@ -382,8 +385,8 @@ def _insertTopicInfo(conn : any, order_detail : str, order_rowno : str, project_
         # INSERT
         cur.execute("""
             insert into m_topic_info
-                (order_detail, order_rowno, project_nm, customer, group_id, disp_seq, modified_date)
-            values (%s, %s, %s, %s, %s, %s, current_timestamp)
+                (order_detail, order_rowno, project_nm, customer, group_id, disp_seq, del_flg, modified_date)
+            values (%s, %s, %s, %s, %s, %s, '0', current_timestamp)
         """, (order_detail, order_rowno, project_nm, customer, group_id, disp_seq))
 
 # 完成PJ台帳登録
@@ -492,6 +495,30 @@ def _filemergedetail(yyyymm: str, version: str):
             cur.execute(
                 sql, (yyyymm, version))
             return convertCursorToDict(cur)
+
+# 案件情報マスタ登録
+def _updateTopicInfo(fiscal_date:str):
+    sql = ""\
+    "update m_topic_info "\
+    "set del_flg = '1' "\
+    "    , modified_date = current_timestamp "\
+    "where "\
+    "    del_flg = '0' "\
+    "    and (order_detail, order_rowno) in (select "\
+    "                                            t_fg_project_info.order_detail "\
+    "                                            , t_fg_project_info.order_rowno "\
+    "                                        from "\
+    "                                            t_merge_target "\
+    "                                        inner join t_fg_project_info "\
+    "                                            on t_fg_project_info.manage_id = t_merge_target.fg_id "\
+    "                                        where "\
+    "                                            t_merge_target.fiscal_date < %s "\
+    "                                            and t_fg_project_info.order_detail <> 'ZAB202400001') "\
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                sql, (fiscal_date, ))
 
 # マージ要求
 def _filemerge(manage_ids:str, fiscal_date:str):
