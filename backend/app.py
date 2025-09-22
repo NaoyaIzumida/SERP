@@ -1083,6 +1083,7 @@ def _topicdetail(group_id_flg: bool, del_disp_flg: bool):
         "    , project_nm "\
         "    , group_id "\
         "    , disp_seq "\
+        "    , del_flg "\
         "from "\
         "    m_topic_info "\
         "where "\
