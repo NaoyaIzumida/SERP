@@ -19,15 +19,15 @@ const TopicInfoMstDataGrid: React.FC<TopicInfoMstDataGridProps> = ({
 
 	const columnsWithAutoWidth: GridColDef[] = columns.map((col) => {
 		const hasFixedWidth = col.width != null;
-	
+
 		return {
 			...col,
 			flex: hasFixedWidth ? undefined : 1,
 			align: typeof rows[0]?.[col.field] === 'number' ? 'right' : 'left',       // 数値列の場合は右詰め
-    	valueFormatter: (params: any) => {
-      	const value = params.value;
-      	return value;
-    	},
+			valueFormatter: (params: any) => {
+				const value = params.value;
+				return value;
+			},
 		};
 	});
 
@@ -52,6 +52,26 @@ const TopicInfoMstDataGrid: React.FC<TopicInfoMstDataGridProps> = ({
 				}}
 				autoHeight={false}
 				getRowId={(row) => row.id}
+				getRowClassName={(params) =>
+					params.row.del_flg === '1' ? 'deleted-row' : ''
+				}
+				sx={{
+					'& .MuiDataGrid-columnHeaders': {
+						backgroundColor: '#e0ffff',	// ヘッダー背景色
+						// color: '#fff',	// ヘッダー文字色
+						fontWeight: 'bold', // ヘッダー太字
+					},
+					'& .MuiDataGrid-cell': {
+						borderRight: '1px solid #ccc',	// セルの罫線
+					},
+					'& .MuiDataGrid-row': {
+						borderBottom: '1px solid #eee',	// 行の罫線
+					},
+					'& .deleted-row': {
+						backgroundColor: '#C0C0C0',	// 削除行の背景色
+						color: '#ff0000',	// 削除行の文字色
+					},
+				}}
 			/>
 		</div>
 	);
