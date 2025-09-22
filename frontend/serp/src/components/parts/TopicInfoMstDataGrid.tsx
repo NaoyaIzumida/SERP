@@ -65,15 +65,12 @@ const TopicInfoMstDataGrid: React.FC<TopicInfoMstDataGridProps> = ({
 				}
 				sx={{
 					'& .MuiDataGrid-columnHeaders': {
-						backgroundColor: '#8AC0EF',	// ヘッダー背景色
-						color: '#fff',	// ヘッダー文字色
+						// backgroundColor: '#8AC0EF',	// ヘッダー背景色
+						// color: '#fff',	// ヘッダー文字色
 						fontWeight: 'bold', // ヘッダー太字
 					},
 					'& .MuiDataGrid-cell': {
-						borderRight: '1px solid #ccc',	// セルの罫線
-					},
-					'& .MuiDataGrid-row': {
-						borderBottom: '1px solid #eee',	// 行の罫線
+						// borderRight: '1px solid #ccc',	// セルの罫線
 					},
 					'& .deleted-row': {
 						backgroundColor: '#C0C0C0',	// 削除行の背景色
