@@ -1,5 +1,5 @@
 import React from 'react';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridPaginationModel } from '@mui/x-data-grid';
 
 interface TopicInfoMstDataGridProps {
 	rows: any[];
@@ -36,8 +36,13 @@ const TopicInfoMstDataGrid: React.FC<TopicInfoMstDataGridProps> = ({
 		...row,
 	}));
 
+	const [paginationModel, setPaginationModel] = React.useState<GridPaginationModel>({
+		pageSize: 100,
+		page: 0,
+	});
+
 	return (
-		<div style={{ height: 700, width: '100%' }}>
+		<div style={{ height: 670, width: '100%' }}>
 			<DataGrid
 				rows={rowsWithUniqueId}
 				columns={columnsWithAutoWidth}
@@ -46,19 +51,22 @@ const TopicInfoMstDataGrid: React.FC<TopicInfoMstDataGridProps> = ({
 				disableRowSelectionOnClick
 				rowSelectionModel={selectedRowIds}
 				onRowSelectionModelChange={(ids) => onSelectionModelChange(ids)}
+				paginationModel={paginationModel}
+				onPaginationModelChange={setPaginationModel}
+				pageSizeOptions={[50, 100]}  // ここで任意の単位を指定
 				pagination
-				initialState={{
-					pagination: { paginationModel: { pageSize: 30 } },
-				}}
 				autoHeight={false}
 				getRowId={(row) => row.id}
+				localeText={{
+					noRowsLabel: 'データがありません',
+				}}
 				getRowClassName={(params) =>
 					params.row.del_flg === '1' ? 'deleted-row' : ''
 				}
 				sx={{
 					'& .MuiDataGrid-columnHeaders': {
-						backgroundColor: '#e0ffff',	// ヘッダー背景色
-						// color: '#fff',	// ヘッダー文字色
+						backgroundColor: '#8AC0EF',	// ヘッダー背景色
+						color: '#fff',	// ヘッダー文字色
 						fontWeight: 'bold', // ヘッダー太字
 					},
 					'& .MuiDataGrid-cell': {

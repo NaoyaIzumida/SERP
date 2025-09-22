@@ -111,7 +111,12 @@ const TopicInfoMstPage: React.FC = () => {
 			if (response.data.status == 1) {
 				showSnackbar('案件情報がありません。', SnackbarSeverity.WARNING);
 				setDataItem([]);
-			} else {
+			}
+			else if (response.data.result.length == 0) {
+				showSnackbar('条件に該当する案件情報はありません。', SnackbarSeverity.WARNING);
+				setDataItem([]);
+			}
+			else {
 				showSnackbar('データを取得しました。', SnackbarSeverity.SUCCESS);
 
 				setDataItem(response.data.result);
@@ -190,7 +195,7 @@ const TopicInfoMstPage: React.FC = () => {
 	}, []);
 
 	return (
-		<Box sx={{ height: 800, width: '100%' }}>
+		<Box sx={{ height: 700, width: '100%' }}>
 
 			{/* 検索条件 */}
 			<FormControlLabel control={<Checkbox defaultChecked />} label="グループID未設定のみ表示" onChange={handleGroupIdCheckBoxChange} />
@@ -226,15 +231,13 @@ const TopicInfoMstPage: React.FC = () => {
 
 			{/* TopicInfoMstDataGridに取得したデータを渡して表示 */}
 			<Box sx={{ height: '100%', width: '100%' }}>
-				{dataItem.length > 0 && (
-					<TopicInfoMstDataGrid
-						rows={dataItem}
-						columns={columns}
-						processRowUpdate={handleRowEdit}
-						selectedRowIds={selectedRowIds}
-						onSelectionModelChange={setSelectedRowIds}
-					/>
-				)}
+				<TopicInfoMstDataGrid
+					rows={dataItem}
+					columns={columns}
+					processRowUpdate={handleRowEdit}
+					selectedRowIds={selectedRowIds}
+					onSelectionModelChange={setSelectedRowIds}
+				/>
 			</Box>
 			{/* CopyrightArea */}
 			<Grid item lg={12} >
