@@ -149,7 +149,7 @@ def filemerge():
 
 # API No.9 ファイルダウンロード
 @app.route("/serp/api/filedownload/<yyyymm>,<version>", methods=["GET"])
-def filedownload(yyyymm: str, version: str):    
+def filedownload(yyyymm: str, version: str):
     filepath = "./" + _filedownload(yyyymm, version)
     filename = os.path.basename(filepath)
     return send_file(filepath, as_attachment=True,
@@ -158,10 +158,10 @@ def filedownload(yyyymm: str, version: str):
     return jsonify({"status": 0})
 
 # API No.10 案件情報マスタデータ取得
-@app.route("/serp/api/topicinfolist/<group_id_flg>", methods=["GET"])
-def topicdetail(group_id_flg: bool):
+@app.route("/serp/api/topicinfolist/<group_id_flg>,<del_disp_flg>", methods=["GET"])
+def topicdetail(group_id_flg: bool, del_disp_flg: bool):
     try:
-        return jsonify({"status": 0, "result": _topicdetail(group_id_flg)})
+        return jsonify({"status": 0, "result": _topicdetail(group_id_flg, del_disp_flg)})
     except:
         return jsonify({"status": -1})
 
@@ -1075,8 +1075,8 @@ def _loatmerge_perv_wip(yyyymm:str):
                 sql, (_getPrevMonth(yyyymm), ))
             return convertCursorToDict(cur)
 
-# 案件情報マスタからgroup_idの有無を指定して取得
-def _topicdetail(group_id_flg: bool):
+# 案件情報マスタからgroup_idの有無、削除フラグの状態を指定して取得
+def _topicdetail(group_id_flg: bool, del_disp_flg: bool):
     sql = "select "\
         "      order_detail "\
         "    , order_rowno "\
@@ -1087,12 +1087,13 @@ def _topicdetail(group_id_flg: bool):
         "    m_topic_info "\
         "where "\
         "    (%s = FALSE OR group_id IS NULL) "\
+        "and (%s = TRUE OR del_flg = '0') "\
         "order by "\
         "    group_id, disp_seq "
 
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute(sql, (group_id_flg,))
+            cur.execute(sql, (group_id_flg, del_disp_flg, ))
             return convertCursorToDict(cur)
 
 # 勘定年月取得
@@ -1136,12 +1137,12 @@ def _insert_rows_with_style(ws, base_row: int, data_count: int, isCopyValue: boo
     summary_base = ws[base_row]
     ws.insert_rows(base_row + 1, data_count - 2)
     for r in range(data_count - 2):
-      i = 1
-      for cell in summary_base:
-        ws.cell(row = r + base_row + 1, column = i)._style = copy(cell._style)  # セルのスタイルをコピー
-        if i == 2 and isCopyValue:
-          ws.cell(row = r + base_row + 1, column = i).value = cell.value  # セルの値をコピー
-        i += 1
+        i = 1
+        for cell in summary_base:
+            ws.cell(row = r + base_row + 1, column = i)._style = copy(cell._style)  # セルのスタイルをコピー
+            if i == 2 and isCopyValue:
+                ws.cell(row = r + base_row + 1, column = i).value = cell.value  # セルの値をコピー
+            i += 1
 
 # デバッグ用サーバー起動
 if __name__ == "__main__":

@@ -201,11 +201,17 @@ paths:
                 type: string
                 format: binary
 
-  /serp/api/topicinfolist/{group_id_flg}:
+  /serp/api/topicinfolist/{group_id_flg},{del_disp_flg}:
     get:
       summary: 案件情報マスタデータ取得
       parameters:
         - name: group_id_flg
+          in: path
+          required: true
+          schema:
+            type: boolean
+            example: false
+        - name: del_disp_flg
           in: path
           required: true
           schema:

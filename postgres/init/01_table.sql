@@ -10,7 +10,7 @@ drop table if exists m_div cascade;
 create table m_div (
   div_cd character varying(8)
   , div_nm character varying(3)
-  , modified_date timestamp with time zone 
+  , modified_date timestamp with time zone
   , constraint m_div_pk primary key (div_cd)
 ) ;
 
