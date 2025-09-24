@@ -10,7 +10,6 @@ import { GridRenderEditCellParams } from '@mui/x-data-grid';
 import FullWidthInputDisabledCell from "../parts/FullWidthInputDisabledCell";
 import MaxNumberEditCell from "../parts/MaxNumberEditCell";
 import { useSnackbar, SnackbarSeverity } from '../parts/SnackbarProvider';
-import { Sort } from "@mui/icons-material";
 
 // 案件情報マスタデータ
 interface TopicInfoMstList {
