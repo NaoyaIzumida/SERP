@@ -38,7 +38,7 @@ export const MyAppBar = () => {
               component="div"
               sx={{ display: "block" }}
             >
-              月次締め確認処理 （v 1.1.0）
+              月次締め確認処理 （v 1.1.1）
             </Typography>
           </Toolbar>
         </AppBar>
