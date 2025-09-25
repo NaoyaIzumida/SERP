@@ -66,7 +66,7 @@ const TopicInfoMstPage: React.FC = () => {
 			editable: true,
 			width: 150,
 			sortable: false,
-			renderEditCell: (params: GridRenderEditCellParams) => <FullWidthInputDisabledCell {...params} maxLength={2} />,
+			renderEditCell: (params: GridRenderEditCellParams) => <FullWidthInputDisabledCell {...params} maxLength={5} />,
 		},
 		{
 			field: 'disp_seq',

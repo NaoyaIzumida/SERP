@@ -9,7 +9,7 @@ interface CustomEditCellProps extends GridRenderEditCellParams {
 const FullWidthInputDisabledCell = (params: CustomEditCellProps) => {
   const apiRef = useGridApiContext();
   const [value, setValue] = useState(params.value ?? '');
-  const maxLength = params.maxLength ?? 2; // デフォルトを2にするなど
+  const maxLength = params.maxLength ?? 5; // デフォルト値
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const input = event.target.value;
