@@ -10,6 +10,7 @@ servers:
   - url: http://localhost:5000
     description: ローカル開発サーバー
 
+
 paths:
   /serp/api/fileupload:
     post:
@@ -247,7 +248,69 @@ paths:
                   - $ref: '#/components/schemas/TopicUpdateSuccess'
                   - $ref: '#/components/schemas/ErrorResponse'
 
+  /auth/callback:
+    post:
+      summary: Azure AD の IDトークンを受け取って検証する
+      description: >
+        React (MSAL.js) でログインして得た ID Token を受け取り、
+        Azure AD の公開鍵で署名検証を行い、ユーザー情報を返す。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id_token:
+                  type: string
+                  description: Azure AD から受け取った ID Token (JWT)
+              required:
+                - id_token
+      responses:
+        '200':
+          description: 認証成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  azure_ad_id:
+                    type: string
+                    description: Azure AD 内でのユーザー一意ID (oid)
+                  email:
+                    type: string
+                    description: ユーザーのメールアドレス
+                  name:
+                    type: string
+                    description: 表示名
+        '401':
+          description: 認証失敗
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid token"
+
 components:
+  securitySchemes:
+    azureOAuth:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://login.microsoftonline.com/7e80b39f-2bf1-4395-a356-64b74b4015bb/oauth2/v2.0/authorize
+          tokenUrl: https://login.microsoftonline.com/7e80b39f-2bf1-4395-a356-64b74b4015bb/oauth2/v2.0/token
+          scopes:
+            api://2796dabc-8d3f-4dbe-970c-3a01037879cd/.default: Access API
+            # openid: Access user identity
+            # profile: Access user profile
+            # email: Access user email
+
   schemas:
     BaseResponse:
       type: object

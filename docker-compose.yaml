@@ -47,6 +47,7 @@ services:
       SWAGGER_JSON: /spec/openapi.yaml
     volumes:
       - ./openapi.yaml:/spec/openapi.yaml:ro
+      - ./swagger-config.yaml:/usr/share/nginx/html/swagger-config.yaml
     networks:
       - production_nw
 

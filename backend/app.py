@@ -11,9 +11,17 @@ from pykakasi import kakasi
 import re
 import unicodedata
 import traceback
+import jwt
+from jwt import PyJWKClient
 
 app = Flask(__name__)
 app.json.sort_keys = False
+
+TENANT_ID = "7e80b39f-2bf1-4395-a356-64b74b4015bb"
+CLIENT_ID = "2796dabc-8d3f-4dbe-970c-3a01037879cd"
+
+JWKS_URL = f"https://login.microsoftonline.com/{TENANT_ID}/discovery/v2.0/keys"
+jwks_client = PyJWKClient(JWKS_URL)
 
 #CORS
 @app.after_request
@@ -208,6 +216,37 @@ def topicinfoupdate():
         return jsonify({"status": 0, "result": updated})
     except:
         return jsonify({"status": -1})
+
+# API No.11 Azure認証
+@app.route("/auth/callback", methods=["POST"])
+def auth_callback():
+    data = request.get_json()
+    id_token = data.get("id_token")
+
+    try:
+        # トークンの署名検証
+        signing_key = jwks_client.get_signing_key_from_jwt(id_token)
+        decoded = jwt.decode(
+            id_token,
+            signing_key.key,
+            algorithms=["RS256"],
+            audience=CLIENT_ID
+        )
+
+        oid = decoded.get("oid")
+        email = decoded.get("preferred_username")
+        name = decoded.get("name")
+
+        # DB保存用のレスポンス (実際はINSERT/UPDATEする)
+        return jsonify({
+            "status": "ok",
+            "azure_ad_id": oid,
+            "email": email,
+            "name": name
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 401
 
 # ファイルアップロード
 def _fileupload(file : any):

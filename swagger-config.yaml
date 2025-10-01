@@ -1,0 +1,6 @@
+oauth2RedirectUrl: http://localhost:8080/oauth2-redirect.html
+initOAuth:
+  clientId: 2796dabc-8d3f-4dbe-970c-3a01037879cd        # ここに Azure AD の client_id
+  usePkceWithAuthorizationCodeGrant: true
+  scopes:
+    - api://2796dabc-8d3f-4dbe-970c-3a01037879cd/.default

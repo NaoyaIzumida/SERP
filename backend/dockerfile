@@ -20,6 +20,7 @@ RUN pip install --upgrade openpyxl
 RUN pip install --upgrade python-dateutil
 RUN pip install --upgrade pandas
 RUN pip install --upgrade pykakasi
+RUN pip install --upgrade PyJWT[crypto]
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=development
 
