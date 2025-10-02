@@ -12,35 +12,52 @@ import { MyDrawer } from "./components/MyDrawer";
 import "./App.css";
 import { Main } from "./components/Main";
 import { SnackbarProvider } from "./components/parts/SnackbarProvider";
+import SignInPage from "./components/pages/SignInPage";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { MsalProvider } from "@azure/msal-react";
+import { msalInstance } from "./msalInstance";
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const { isAuthenticated } = useAuth();
   const [isOpened, setIsOpened] = React.useState(false);
 
   return (
-    <BrowserRouter>
-      <SnackbarProvider>
-        <menuContext.Provider value={{ isOpened, setOpened: setIsOpened }}>
-          <Box sx={{ display: "flex" }}>
-            <CssBaseline />
-            {/* AppBar */}
-            <MyAppBar />
-            {/* Drawer */}
-            <MyDrawer open={isOpened} />
-            {/* Main */}
-            <Main open={isOpened}>
-              <Toolbar />
-            </Main>
-          </Box>
-        </menuContext.Provider>
-        <Routes>
-          <Route path="/" element={<UploadPage />} />
-          <Route path="TopicInfoMstPage" element={<TopicInfoMstPage />} />
-          <Route path="UploadPage" element={<UploadPage />} />
-          <Route path="MergePage" element={<MergePage />} />
-        </Routes>
-      </SnackbarProvider>
-    </BrowserRouter>
+    <>
+      <menuContext.Provider value={{ isOpened, setOpened: setIsOpened }}>
+        <Box sx={{ display: "flex" }}>
+          <CssBaseline />
+          <MyAppBar isAuthenticated={isAuthenticated} />
+          {isAuthenticated && <MyDrawer open={isOpened} />}
+          <Main open={isAuthenticated && isOpened}>
+            <Toolbar />
+          </Main>
+        </Box>
+      </menuContext.Provider>
+
+      <Routes>
+        <Route path="/" element={<SignInPage />} />
+        <Route path="/SignIn" element={<SignInPage />} />
+        <Route path="/TopicInfoMstPage" element={<ProtectedRoute><TopicInfoMstPage /></ProtectedRoute>} />
+        <Route path="/UploadPage" element={<ProtectedRoute><UploadPage /></ProtectedRoute>} />
+        <Route path="/MergePage" element={<ProtectedRoute><MergePage /></ProtectedRoute>} />
+      </Routes>
+    </>
   );
-}
+};
+
+const App: React.FC = () => {
+  return (
+    <MsalProvider instance={msalInstance}>
+      <BrowserRouter>
+        <AuthProvider>
+          <SnackbarProvider>
+            <AppContent />
+          </SnackbarProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </MsalProvider>
+  );
+};
 
 export default App;
