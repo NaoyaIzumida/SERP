@@ -307,9 +307,6 @@ components:
           tokenUrl: https://login.microsoftonline.com/7e80b39f-2bf1-4395-a356-64b74b4015bb/oauth2/v2.0/token
           scopes:
             api://2796dabc-8d3f-4dbe-970c-3a01037879cd/.default: Access API
-            # openid: Access user identity
-            # profile: Access user profile
-            # email: Access user email
 
   schemas:
     BaseResponse:

@@ -18,7 +18,7 @@ app = Flask(__name__)
 app.json.sort_keys = False
 
 TENANT_ID = "7e80b39f-2bf1-4395-a356-64b74b4015bb"
-CLIENT_ID = "2796dabc-8d3f-4dbe-970c-3a01037879cd"
+CLIENT_ID = "b96bf6d0-b9b0-4888-a294-83018fd7786d"
 
 JWKS_URL = f"https://login.microsoftonline.com/{TENANT_ID}/discovery/v2.0/keys"
 jwks_client = PyJWKClient(JWKS_URL)
