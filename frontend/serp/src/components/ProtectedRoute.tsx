@@ -1,16 +1,14 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import CircularProgress from '@mui/material/CircularProgress';
-import Box from '@mui/material/Box';
+import { Box, CircularProgress } from "@mui/material";
 
 interface Props {
   children: JSX.Element;
 }
 
 const ProtectedRoute = ({ children }: Props) => {
-  const { user, isLoading } = useAuth();
+  const { isLoading , isAuthenticated} = useAuth();
 
-  // localStorageからの復元が終わっていない場合
   if (isLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
@@ -19,9 +17,8 @@ const ProtectedRoute = ({ children }: Props) => {
     );
   }
 
-  // ユーザ情報がない場合
-  if (!user) {
-    return <Navigate to="/SignIn" replace />;
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
   }
 
   return children;

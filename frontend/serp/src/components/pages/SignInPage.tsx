@@ -3,12 +3,29 @@ import { Box, Button, CircularProgress } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { useSnackbar, SnackbarSeverity } from '../parts/SnackbarProvider';
+import { msalInstance } from '../../msalInstance';
 
 const signInPage = () => {
-  const { signIn, signOut, isLoading } = useAuth();
+  const { signIn, setIsAuthenticated, setUser} = useAuth();
   const navigate = useNavigate();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { showSnackbar } = useSnackbar();
+
+  useEffect(() => {
+    // 手動でログインページに来た場合にセッション破棄
+    const logoutIfLoggedIn = async () => {
+      // アカウント情報を取得し、アカウントが存在する場合は破棄する
+      await msalInstance.initialize();
+      const accounts = msalInstance.getAllAccounts();
+      if (accounts.length > 0) {
+        await msalInstance.logoutPopup();
+        setIsAuthenticated(false);
+        setUser(null);
+      }
+    };
+
+    logoutIfLoggedIn();
+  }, []);
 
   const handlesignIn = async () => {
     setIsLoggingIn(true);
@@ -22,11 +39,6 @@ const signInPage = () => {
     }
   };
 
-  // URL直接遷移などに対応：ログアウトしてクリーンな状態に
-  useEffect(() => {
-    signOut();
-  }, [signOut]);
-
   return (
     <Box
       sx={{
@@ -36,7 +48,7 @@ const signInPage = () => {
         alignItems: 'center',
       }}
     >
-      {isLoading || isLoggingIn ? (
+      {isLoggingIn ? (
         <CircularProgress />
       ) : (
         <Button

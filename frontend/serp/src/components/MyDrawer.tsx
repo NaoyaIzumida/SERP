@@ -100,11 +100,11 @@ export const MyDrawer = (props: Props) => {
         <Box>
           <List>
             <ListItemButton
-              component={NavLink}
-              to={"/SignIn"}
-              sx={{ '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
-              onClick={() => { setOpened(!isOpened); authContext.signOut(); }}
-              end
+              component={"li" as any}
+              onClick={async () => {
+                setOpened(!isOpened);
+                await authContext.signOut();
+              }}
             >
               <ListItemIcon>
                 <LogoutIcon />
