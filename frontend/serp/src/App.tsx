@@ -6,7 +6,6 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { menuContext } from "./contexts/AppState";
 import { MyAppBar } from "./components/MyAppBar";
 import { MyDrawer } from "./components/MyDrawer";
-import "./App.css";
 import { Main } from "./components/Main";
 import { AppProviders } from "./contexts/AppUIContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -19,6 +18,8 @@ import UploadPage from "./components/pages/UploadPage";
 import MergePage from "./components/pages/MergePage";
 import TopicInfoMstPage from "./components/pages/TopicInfoMstPage";
 import SystemMenu from "./components/pages/SystemMenu";
+import Footer from "./components/parts/Footer";
+import "./App.css";
 
 const AppContent: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -55,6 +56,7 @@ const App: React.FC = () => {
         <AuthProvider>
           <AppProviders>
             <AppContent />
+            <Footer />
           </AppProviders>
         </AuthProvider>
       </BrowserRouter>

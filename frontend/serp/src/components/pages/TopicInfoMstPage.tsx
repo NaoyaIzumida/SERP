@@ -1,6 +1,6 @@
 import React, { SyntheticEvent, useState, useEffect } from "react";
 import apiClient from '../../api/api'; // API関数をインポート
-import { Box, Button, Checkbox, FormControlLabel, Grid, Link, Typography } from "@mui/material";
+import { Box, Button, Checkbox, FormControlLabel, Grid } from "@mui/material";
 import SearchIcon from '@mui/icons-material/Search';
 import UpdateRoundedIcon from '@mui/icons-material/UpdateRounded';
 
@@ -120,8 +120,6 @@ const TopicInfoMstPage: React.FC = () => {
 				setDataItem([]);
 			}
 			else {
-				showSnackbar('データを取得しました。', SnackbarSeverity.SUCCESS);
-
 				setDataItem(response.data.result);
 			}
 		} catch (error) {
@@ -243,18 +241,6 @@ const TopicInfoMstPage: React.FC = () => {
 					onSelectionModelChange={setSelectedRowIds}
 				/>
 			</Box>
-			{/* CopyrightArea */}
-			<Grid item lg={12} >
-				<Typography variant="body2" color="text.secondary" align="center">
-					{'Copyright © '}
-					<Link color="inherit" href="http://www.sci-it.co.jp/">
-						SCI
-					</Link>
-					{' '}
-					{new Date().getFullYear()}
-					{'.'}
-				</Typography>
-			</Grid>
 		</Box >
 	);
 };
