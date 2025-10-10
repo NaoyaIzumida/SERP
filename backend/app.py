@@ -13,13 +13,13 @@ import unicodedata
 import traceback
 import jwt
 from jwt import PyJWKClient
+from datetime import datetime
 
 app = Flask(__name__)
 app.json.sort_keys = False
 
 TENANT_ID = "7e80b39f-2bf1-4395-a356-64b74b4015bb"
 CLIENT_ID = "b96bf6d0-b9b0-4888-a294-83018fd7786d"
-
 JWKS_URL = f"https://login.microsoftonline.com/{TENANT_ID}/discovery/v2.0/keys"
 jwks_client = PyJWKClient(JWKS_URL)
 
@@ -233,20 +233,56 @@ def auth_callback():
             audience=CLIENT_ID
         )
 
-        oid = decoded.get("oid")
+        azure_ad_id = decoded.get("oid")
         email = decoded.get("preferred_username")
-        name = decoded.get("name")
+        displayName = decoded.get("name")
+
+        now = datetime.now()
+
+        # DB接続＆登録／更新処理 ---
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                # 存在チェック
+                cur.execute("SELECT id FROM m_users WHERE azure_ad_id = %s", (azure_ad_id,))
+                user = cur.fetchone()
+
+                if user:
+                    # 既存ユーザ → 更新
+                    cur.execute("""
+                        UPDATE m_users
+                        SET email = %s,
+                            display_name = %s,
+                            last_login_at = %s,
+                            updated_at = %s
+                        WHERE azure_ad_id = %s
+                    """, (email, displayName, now, now, azure_ad_id))
+                    message = "User updated"
+                else:
+                    # 新規ユーザ → 登録
+                    cur.execute("""
+                        INSERT INTO m_users (
+                            azure_ad_id, email, display_name, role_id,
+                            last_login_at, created_at, updated_at
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    """, (azure_ad_id, email, displayName, 2, now, now, now))
+                    message = "User inserted"
+            conn.commit()
 
         # DB保存用のレスポンス (実際はINSERT/UPDATEする)
         return jsonify({
             "status": "ok",
-            "azure_ad_id": oid,
+            "message": message,
+            "azure_ad_id": azure_ad_id,
             "email": email,
-            "name": name
+            "display_name": displayName
         })
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 401
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 401
 
 # ファイルアップロード
 def _fileupload(file : any):
