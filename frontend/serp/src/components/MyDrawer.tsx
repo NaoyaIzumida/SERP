@@ -13,8 +13,10 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { NavLink } from "react-router-dom";
 import { lightBlue } from "@mui/material/colors";
 import { useContext } from "react";
-import { menuContext } from "../contexts/AppState.ts";
-import { useAuth } from "../contexts/AuthContext.tsx";
+import { menuContext } from "../contexts/AppState";
+import { useAuth } from "../contexts/AuthContext";
+import { eSystemType, useSystem } from "../contexts/AppUIContext";
+import SystemMenuIcon from '@mui/icons-material/Dashboard';
 
 type Props = {
   open: boolean;
@@ -23,6 +25,8 @@ type Props = {
 export const MyDrawer = (props: Props) => {
   const context = useContext(menuContext);
   const authContext = useAuth();
+  const systemContext = useSystem();
+
   if (!context) {
     throw new Error("MenuComponent must be used within a MenuProvider");
   }
@@ -56,45 +60,65 @@ export const MyDrawer = (props: Props) => {
             Select Menu
           </ListSubheader>
 
+          {/* ダッシュボードは常に表示 */}
           <ListItemButton
             component={NavLink}
-            to={"/TopicInfoMstPage"}
+            to={"/SystemMenu"}
             sx={{ '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
             onClick={() => setOpened(!isOpened)}
             end
           >
             <ListItemIcon>
-              <TopicInfoIcon />
+              <SystemMenuIcon />
             </ListItemIcon>
-            <ListItemText primary="TopicInfoMst" />
+            <ListItemText primary="SystemMenu" />
           </ListItemButton>
 
-          <ListItemButton
-            component={NavLink}
-            to={"/UploadPage"}
-            sx={{ '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
-            onClick={() => setOpened(!isOpened)}
-            end
-          >
-            <ListItemIcon>
-              <FileUploadOutlinedIcon />
-            </ListItemIcon>
-            <ListItemText primary="Upload" />
-          </ListItemButton>
+          {/* 月次締めシステムへ遷移した場合のみ表示 */}
+          {systemContext.system === eSystemType.GETSUJI && (
+            <>
+              <ListItemButton
+                component={NavLink}
+                to={"/TopicInfoMstPage"}
+                sx={{ '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
+                onClick={() => setOpened(!isOpened)}
+                end
+              >
+                <ListItemIcon>
+                  <TopicInfoIcon />
+                </ListItemIcon>
+                <ListItemText primary="TopicInfoMst" />
+              </ListItemButton>
 
-          <ListItemButton
-            component={NavLink}
-            to={"/MergePage"}
-            sx={{ '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
-            onClick={() => setOpened(!isOpened)}
-            end
-          >
-            <ListItemIcon>
-              <MergeOutlinedIcon />
-            </ListItemIcon>
-            <ListItemText primary="Merge" />
-          </ListItemButton>
+              <ListItemButton
+                component={NavLink}
+                to={"/UploadPage"}
+                sx={{ '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
+                onClick={() => setOpened(!isOpened)}
+                end
+              >
+                <ListItemIcon>
+                  <FileUploadOutlinedIcon />
+                </ListItemIcon>
+                <ListItemText primary="Upload" />
+              </ListItemButton>
+
+              <ListItemButton
+                component={NavLink}
+                to={"/MergePage"}
+                sx={{ '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
+                onClick={() => setOpened(!isOpened)}
+                end
+              >
+                <ListItemIcon>
+                  <MergeOutlinedIcon />
+                </ListItemIcon>
+                <ListItemText primary="Merge" />
+              </ListItemButton>
+            </>
+          )}
         </List>
+
 
         {/* ログアウト（下部固定） */}
         <Box>

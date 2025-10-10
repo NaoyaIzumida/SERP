@@ -26,9 +26,10 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import Link from '@mui/material/Link';
 import apiClient from '../../api/api'; // API関数をインポート
 
+
 // Parts(子Component)のImport
 import MergeDataGrid from '../parts/MergeDataGrid';
-import { SnackbarSeverity, useSnackbar } from '../parts/SnackbarProvider';
+import { SnackbarSeverity, useSnackbar, useSystem } from '../../contexts/AppUIContext';
 
 // APIから取得するjsonの型定義（Switch Offの場合）
 interface FileListItem {
@@ -73,6 +74,7 @@ const MergePage: React.FC = () => {
   const [gridData, setGridData] = useState<GridDataItem[]>([]);                       // GridDataItem に表示するデータ
   const [columns, setColumns] = useState<any[]>([]);                                  // DataGrid の列
   const { showSnackbar } = useSnackbar();
+  const { setTitle } = useSystem();
 
   // Switchの状態が変更されたときの処理
   const handleSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,23 +107,24 @@ const MergePage: React.FC = () => {
       }
 
       if (response.data.status == 1) {
-        showSnackbar('一致するファイル一覧がありません。',SnackbarSeverity.WARNING);
+        showSnackbar('一致するファイル一覧がありません。', SnackbarSeverity.WARNING);
         setDataItem([]);                // 削除成功後にデータグリッドをクリアする
         setGridData([]);                // DataGrid を初期化
         setColumns([]);
       } else {
-        showSnackbar('データを取得しました。',SnackbarSeverity.SUCCESS);
+        showSnackbar('データを取得しました。', SnackbarSeverity.SUCCESS);
         setDataItem(response.data.result);
       }
 
     } catch (error) {
-      showSnackbar('データの取得に失敗しました。',SnackbarSeverity.ERROR);
+      showSnackbar('データの取得に失敗しました。', SnackbarSeverity.ERROR);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    setTitle("マージ");
     // 初回ロード時にデータを取得
     fetchData();
   }, [isSwitchOn]); // Switchが変更されたときにデータを再取得
@@ -147,10 +150,10 @@ const MergePage: React.FC = () => {
       const fileName = `${fiscalDate}_${version}.xlsx`; // ダウンロードファイル名
       saveAs(response.data, fileName); // ファイルを保存
 
-      showSnackbar('ファイルをダウンロードしました。',SnackbarSeverity.SUCCESS);
+      showSnackbar('ファイルをダウンロードしました。', SnackbarSeverity.SUCCESS);
     } catch (error) {
       console.log('error:', error);
-      showSnackbar('ダウンロードに失敗しました。',SnackbarSeverity.ERROR);
+      showSnackbar('ダウンロードに失敗しました。', SnackbarSeverity.ERROR);
     }
   };
 
@@ -196,9 +199,9 @@ const MergePage: React.FC = () => {
         setColumns(generatedColumns);   // 列定義を更新
         setGridData(gridData);          // DataGridに表示するためのデータを更新
       }
-      showSnackbar('データを取得しました。',SnackbarSeverity.SUCCESS);
+      showSnackbar('データを取得しました。', SnackbarSeverity.SUCCESS);
     } catch (error) {
-      showSnackbar('データの取得に失敗しました。',SnackbarSeverity.ERROR);
+      showSnackbar('データの取得に失敗しました。', SnackbarSeverity.ERROR);
     }
   };
 
@@ -210,13 +213,13 @@ const MergePage: React.FC = () => {
       });
       console.log('response.data.status:', response.data.status);
       if (response.data.status == 0) {
-        showSnackbar('マージ処理を実行しました。',SnackbarSeverity.SUCCESS);
+        showSnackbar('マージ処理を実行しました。', SnackbarSeverity.SUCCESS);
         fetchData();
       } else {
-        showSnackbar('マージ処理に失敗しました。',SnackbarSeverity.ERROR);
+        showSnackbar('マージ処理に失敗しました。', SnackbarSeverity.ERROR);
       }
     } catch (error) {
-      showSnackbar('マージ処理に失敗しました。',SnackbarSeverity.ERROR);
+      showSnackbar('マージ処理に失敗しました。', SnackbarSeverity.ERROR);
     }
   };
 

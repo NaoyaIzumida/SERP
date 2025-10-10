@@ -9,7 +9,7 @@ import TopicInfoMstDataGrid from '../parts/TopicInfoMstDataGrid';
 import { GridRenderEditCellParams } from '@mui/x-data-grid';
 import FullWidthInputDisabledCell from "../parts/FullWidthInputDisabledCell";
 import MaxNumberEditCell from "../parts/MaxNumberEditCell";
-import { useSnackbar, SnackbarSeverity } from '../parts/SnackbarProvider';
+import { useSnackbar, SnackbarSeverity, useSystem } from '../../contexts/AppUIContext';
 
 // 案件情報マスタデータ
 interface TopicInfoMstList {
@@ -35,6 +35,7 @@ const TopicInfoMstPage: React.FC = () => {
 	const { showSnackbar } = useSnackbar();
 	const [dataItem, setDataItem] = useState<TopicInfoMstList[]>([]); ``
 	const [selectedRowIds, setSelectedRowIds] = useState<(number | string)[]>([]);
+	const { setTitle } = useSystem();
 
 	// カラム設定
 	const columns = [
@@ -193,6 +194,7 @@ const TopicInfoMstPage: React.FC = () => {
 
 	// Initialize
 	useEffect(() => {
+		setTitle("案件情報マスタメンテナンス");
 		fetchData();
 	}, []);
 

@@ -5,6 +5,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { menuContext } from "../contexts/AppState";
 import logo from "../images/logo.png";
 import { useAuth } from "../contexts/AuthContext";
+import { eSystemType, useSystem } from "../contexts/AppUIContext";
 
 interface Props {
   isAuthenticated?: boolean;
@@ -13,6 +14,8 @@ interface Props {
 export const MyAppBar = ({ isAuthenticated = false }: Props) => {
   const context = useContext(menuContext);
   const authContext = useAuth();
+  const systemContext = useSystem();
+
   if (!context) {
     throw new Error("MenuComponent must be used within a MenuProvider");
   }
@@ -45,15 +48,17 @@ export const MyAppBar = ({ isAuthenticated = false }: Props) => {
               component="div"
               sx={{ display: "block" }}
             >
-              月次締め確認処理 （v 1.1.1）
-            </Typography>)}
-            {isAuthenticated && authContext.user?.name && (
+              {systemContext.system === eSystemType.GETSUJI
+                ? "月次処理システム："
+                  : ""}
+              {systemContext.title} （v {import.meta.env.VITE_APP_VERSION}）</Typography>)}
+            {isAuthenticated && authContext.user?.display_name && (
               <Typography
                 variant="subtitle1"
                 component="div"
                 sx={{ marginLeft: 'auto' }}
               >
-                {authContext.user.name}
+                {authContext.user.display_name}
               </Typography>
             )}
           </Toolbar>

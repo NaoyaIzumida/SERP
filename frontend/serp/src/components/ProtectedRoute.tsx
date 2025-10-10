@@ -6,8 +6,8 @@ interface Props {
   children: JSX.Element;
 }
 
-const ProtectedRoute = ({ children }: Props) => {
-  const { isLoading , isAuthenticated} = useAuth();
+const ProtectedRoute = ({ children, /*allowedSystem*/ }: Props) => {
+  const { isLoading, isAuthenticated } = useAuth();
 
   if (isLoading) {
     return (

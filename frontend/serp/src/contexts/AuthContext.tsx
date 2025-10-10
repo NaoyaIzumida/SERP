@@ -12,7 +12,7 @@ import { msalInstance } from "../msalInstance";
 import { signInRequest } from "../components/config/MsalConfig";
 import { useNavigate } from "react-router-dom";
 
-type User = { azure_ad_id: string; email: string; name: string } | null;
+type User = { message: string, azure_ad_id: string; email: string; display_name: string } | null;
 
 type AuthContextType = {
   user: User;
@@ -31,6 +31,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
+
+  const disposeAuth = () => {
+    setUser(null);
+    setIsAuthenticated(false)
+    navigate('/');
+  }
 
   useEffect(() => {
     const initializeUser = async () => {
@@ -64,18 +70,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (backendResponse.ok && data.status === "ok") {
               // 検証OKの場合、ユーザー情報と認証情報をセット
               setUser({
+                message: data.message,
                 azure_ad_id: data.azure_ad_id,
                 email: data.email,
-                name: data.name,
+                display_name: data.display_name,
               });
               setIsAuthenticated(true);
             } else {
+              // 検証NGの場合、ユーザ情報と認証状態を破棄してサインインページへリダイレクト
               console.error("Backend auth failed", data.error || data);
-              setUser(null);
+              disposeAuth();
             }
           } catch (error) {
             console.error("Token acquisition or backend call failed", error);
-            setUser(null);
+            // トークン期限切れなど例外発生時はユーザ情報と認証状態を破棄してサインインページへリダイレクト
+            disposeAuth();
           }
         }
       } catch (e) {
@@ -110,9 +119,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (response.ok && data.status === "ok") {
           // 検証結果がOKの場合、ユーザー情報と認証状態をセット
           setUser({
+            message: data.message,
             azure_ad_id: data.azure_ad_id,
             email: data.email,
-            name: data.name,
+            display_name: data.display_name,
           });
           setIsAuthenticated(true);
         } else {
@@ -136,9 +146,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // サインアウト後ユーザー情報、認証状態を破棄
       await msalInstance.logoutPopup();
-      setIsAuthenticated(false);
-      setUser(null);
-      navigate('/');
+      disposeAuth();
     } catch (err) {
       console.error('[AuthContext] Sign out failed:', err);
     }

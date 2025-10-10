@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Box, Button, CircularProgress } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useEffect, useState } from 'react';
-import { useSnackbar, SnackbarSeverity } from '../parts/SnackbarProvider';
+import { useSnackbar, SnackbarSeverity } from '../../contexts/AppUIContext';
 import { msalInstance } from '../../msalInstance';
 
 const signInPage = () => {
@@ -31,7 +31,7 @@ const signInPage = () => {
     setIsLoggingIn(true);
     try {
       await signIn();
-      navigate('/UploadPage');
+      navigate('/SystemMenu');
     } catch (err) {
       showSnackbar('サインインに失敗しました。', SnackbarSeverity.ERROR);
     } finally {

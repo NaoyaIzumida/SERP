@@ -25,7 +25,7 @@ import apiClient from '../../api/api'; // API関数をインポート
 
 // Parts(子Component)のImport
 import UploadDataGrid from '../parts/UploadDataGrid';
-import { SnackbarSeverity, useSnackbar } from '../parts/SnackbarProvider';
+import { SnackbarSeverity, useSnackbar, useSystem } from '../../contexts/AppUIContext';
 
 // (ファイル情報)APIから取得するデータの型
 interface FileListItem {
@@ -54,6 +54,7 @@ const UploadPage: React.FC = () => {
   const [gridData, setGridData] = useState<GridDataItem[]>([]);               // GridDataItem に表示するデータ
   const [columns, setColumns] = useState<any[]>([]);                          // DataGrid の列
   const { showSnackbar } = useSnackbar();
+  const { setTitle } = useSystem();
 
   // 検索ボタン押下時に呼び出す処理
   const handleSearchClick = () => {
@@ -72,16 +73,16 @@ const UploadPage: React.FC = () => {
     try {
       const response = await apiClient.get<ApiResponse>(`/filelist/${formattedDate}`);
       if (response.data.status == 1) {
-        showSnackbar('一致するデータがありません。',SnackbarSeverity.WARNING);
+        showSnackbar('一致するデータがありません。', SnackbarSeverity.WARNING);
         setDataItem([]);                // 削除成功後にデータグリッドをクリアする
         setGridData([]);                // DataGrid を初期化
         setColumns([]);
       } else {
-        showSnackbar('データを取得しました。',SnackbarSeverity.SUCCESS);
+        showSnackbar('データを取得しました。', SnackbarSeverity.SUCCESS);
         setDataItem(response.data.result);
       }
     } catch (error) {
-      showSnackbar('データの取得に失敗しました。',SnackbarSeverity.ERROR);
+      showSnackbar('データの取得に失敗しました。', SnackbarSeverity.ERROR);
     } finally {
       setLoading(false);
     }
@@ -89,6 +90,7 @@ const UploadPage: React.FC = () => {
 
   // 初回ロード時にデータを取得
   useEffect(() => {
+    setTitle("アップロード");
     fetchData();
   }, []);
 
@@ -117,9 +119,9 @@ const UploadPage: React.FC = () => {
         setColumns(generatedColumns);   // 列定義を更新
         setGridData(gridData);          // DataGridに表示するためのデータを更新
       }
-      showSnackbar('データを取得しました。',SnackbarSeverity.SUCCESS);
+      showSnackbar('データを取得しました。', SnackbarSeverity.SUCCESS);
     } catch (error) {
-      showSnackbar('データの取得に失敗しました。',SnackbarSeverity.ERROR);
+      showSnackbar('データの取得に失敗しました。', SnackbarSeverity.ERROR);
     }
   };
 
@@ -129,9 +131,9 @@ const UploadPage: React.FC = () => {
     try {
       const response = await apiClient.delete<ApiResponse>(`/filedelete/${manage_id}`);
       if (response.data.status == 1) {
-        showSnackbar('データの削除に失敗しました。',SnackbarSeverity.WARNING);
+        showSnackbar('データの削除に失敗しました。', SnackbarSeverity.WARNING);
       } else {
-        showSnackbar('データを削除しました。',SnackbarSeverity.SUCCESS);
+        showSnackbar('データを削除しました。', SnackbarSeverity.SUCCESS);
         setDataItem([]);                // 削除成功後にデータグリッドをクリアする
         setGridData([]);                // DataGrid を初期化
         setColumns([]);
@@ -139,71 +141,71 @@ const UploadPage: React.FC = () => {
       }
 
     } catch (error) {
-      showSnackbar('データの削除に失敗しました。',SnackbarSeverity.ERROR);
+      showSnackbar('データの削除に失敗しました。', SnackbarSeverity.ERROR);
     } finally {
       setLoading(false);
     }
   };
 
-// API呼び出し関数（ファイルアップロード）
-const uploadFile = async (file: File, fiscalDate: string, fileNm: string, fileDiv: string) => {
-  const formData = new FormData();
-  formData.append('uploadFile', file);
-  formData.append('fiscal_date', fiscalDate);
-  formData.append('file_nm', fileNm);
-  formData.append('file_div', fileDiv);
+  // API呼び出し関数（ファイルアップロード）
+  const uploadFile = async (file: File, fiscalDate: string, fileNm: string, fileDiv: string) => {
+    const formData = new FormData();
+    formData.append('uploadFile', file);
+    formData.append('fiscal_date', fiscalDate);
+    formData.append('file_nm', fileNm);
+    formData.append('file_div', fileDiv);
 
-  try {
-    const response = await apiClient.post('/fileupload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    try {
+      const response = await apiClient.post('/fileupload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
-    // レスポンスをチェックして必要に応じてエラーメッセージや成功メッセージを表示
-    if (response.data.status === 0) {
-      showSnackbar('アップロードに成功しました。',SnackbarSeverity.SUCCESS);
-      fetchData();
+      // レスポンスをチェックして必要に応じてエラーメッセージや成功メッセージを表示
+      if (response.data.status === 0) {
+        showSnackbar('アップロードに成功しました。', SnackbarSeverity.SUCCESS);
+        fetchData();
+      } else {
+        showSnackbar('アップロードに失敗しました。', SnackbarSeverity.WARNING);
+      }
+    } catch (error) {
+      showSnackbar('アップロードError', SnackbarSeverity.ERROR);
+    }
+  };
+
+  // ファイルから勘定年月・ファイル名・ファイル区分を決定
+  const parseFileName = (fileName: string) => {
+    // fiscalDateを抽出 (YYYYMMフォーマット) - 和暦対応
+    let fiscalDate = '';
+
+    // 西暦が含まれている場合
+    const dateMatch = fileName.match(/\d{4}(年)(\d{1,2})月/);
+    if (dateMatch) {
+      const year = dateMatch[0].substring(0, 4);    // 2024年の場合、2024を取得
+      const month = dateMatch[2].padStart(2, '0');  // 9月 -> 09 に変換
+      fiscalDate = `${year}${month}`;
     } else {
-      showSnackbar('アップロードに失敗しました。',SnackbarSeverity.WARNING);
+      // 他の形式で6桁の年月がある場合に対応
+      const defaultMatch = fileName.match(/\d{6}/);
+      if (defaultMatch) {
+        fiscalDate = defaultMatch[0]; // 202409など
+      }
     }
-  } catch (error) {
-    showSnackbar('アップロードError',SnackbarSeverity.ERROR);
-  }
-};
 
-// ファイルから勘定年月・ファイル名・ファイル区分を決定
-const parseFileName = (fileName: string) => {
-  // fiscalDateを抽出 (YYYYMMフォーマット) - 和暦対応
-  let fiscalDate = '';
-  
-  // 西暦が含まれている場合
-  const dateMatch = fileName.match(/\d{4}(年)(\d{1,2})月/);
-  if (dateMatch) {
-    const year = dateMatch[0].substring(0, 4);    // 2024年の場合、2024を取得
-    const month = dateMatch[2].padStart(2, '0');  // 9月 -> 09 に変換
-    fiscalDate = `${year}${month}`;
-  } else {
-    // 他の形式で6桁の年月がある場合に対応
-    const defaultMatch = fileName.match(/\d{6}/);
-    if (defaultMatch) {
-      fiscalDate = defaultMatch[0]; // 202409など
+    // fileNmは拡張子を除いた部分を使用
+    const fileNm = fileName.replace(/\.[^/.]+$/, ''); // 拡張子を削除
+
+    // fileDivの判定
+    let fileDiv = '';
+    if (fileNm.includes('仕掛PJ台帳')) {
+      fileDiv = 'W';
+    } else if (fileNm.includes('完成PJ台帳')) {
+      fileDiv = 'F';
     }
-  }
 
-  // fileNmは拡張子を除いた部分を使用
-  const fileNm = fileName.replace(/\.[^/.]+$/, ''); // 拡張子を削除
-
-  // fileDivの判定
-  let fileDiv = '';
-  if (fileNm.includes('仕掛PJ台帳')) {
-    fileDiv = 'W';
-  } else if (fileNm.includes('完成PJ台帳')) {
-    fileDiv = 'F';
-  }
-
-  return { fiscalDate, fileNm, fileDiv };
-};
+    return { fiscalDate, fileNm, fileDiv };
+  };
 
   // Dropzoneのコールバック
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
@@ -212,7 +214,7 @@ const parseFileName = (fileName: string) => {
       await uploadFile(file, fiscalDate, fileNm, fileDiv);
     }
   }, []);
-    
+
   // Dropzoneの設定
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -324,12 +326,12 @@ const parseFileName = (fileName: string) => {
                               (item as FileListItem).file_nm
                             }
                           />
-                            <IconButton
-                              edge="end"
-                              onClick={() => handleDelete((item as FileListItem).manage_id)}
-                            >
-                              <DeleteIcon />
-                            </IconButton>
+                          <IconButton
+                            edge="end"
+                            onClick={() => handleDelete((item as FileListItem).manage_id)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
                         </ListItemButton>
                       </ListItem>
                     ))
