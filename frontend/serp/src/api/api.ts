@@ -1,15 +1,44 @@
 import axios from 'axios';
+import { msalInstance } from '../msalInstance';
 
-// ベースURLを環境変数から取得
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// axiosインスタンスを作成
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 5000,          // タイムアウトを設定（オプション）
+  timeout: 5000,
+});
+
+// リクエストインターセプターを設定
+apiClient.interceptors.request.use(async (config) => {
+  try {
+    await msalInstance.initialize();
+
+    // サイレントでトークン取得
+    const account = msalInstance.getActiveAccount();
+    if (!account) throw new Error('No active account!');
+
+    const tokenRequest = {
+              scopes: ["api://b96bf6d0-b9b0-4888-a294-83018fd7786d/access_as_user"],
+              account,
+            };
+
+    const response = await msalInstance.acquireTokenSilent({
+      ...tokenRequest,
+      account,
+    });
+
+    // トークンをAuthorizationヘッダーにセット
+    config.headers['Authorization'] = `Bearer ${response.accessToken}`;
+  } catch (error) {
+    console.error('Failed to acquire token silently:', error);
+    // 必要に応じてリダイレクトや再ログインの処理もここで行う
+  }
+  return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
 export default apiClient;

@@ -6,7 +6,7 @@ import {
   ReactNode,
 } from "react";
 import {
-  AuthenticationResult,
+  AuthenticationResult
 } from "@azure/msal-browser";
 import { msalInstance } from "../msalInstance";
 import { signInRequest } from "../components/config/MsalConfig";
@@ -41,34 +41,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const initializeUser = async () => {
       try {
-        // msalインスタンス準備
         await msalInstance.initialize();
 
-        // アカウント情報がある場合はアクティブユーザーにセット
         const accounts = msalInstance.getAllAccounts();
         if (accounts.length > 0) {
           const account = accounts[0];
           msalInstance.setActiveAccount(account);
 
-          // アカウントの再検証
           try {
-            const response: AuthenticationResult = await msalInstance.acquireTokenSilent({
-              ...signInRequest,
+            // APIスコープのアクセストークン取得を試みる
+            const tokenRequest = {
+              scopes: ["api://b96bf6d0-b9b0-4888-a294-83018fd7786d/access_as_user"],
               account,
-            });
+            };
 
-            const idToken = response.idToken;
+            let response;
+            try {
+              response = await msalInstance.acquireTokenSilent(tokenRequest);
+            } catch {
+              // silent取得できなければpopupで取得
+              response = await msalInstance.acquireTokenPopup(tokenRequest);
+            }
+
+            const accessToken = response.accessToken;
+
+            // バックエンドにaccess_token送信して検証
             const backendResponse = await fetch("http://localhost:5000/auth/callback", {
               method: "POST",
               headers: {
-                "Content-Type": "application/json",
+                "Authorization": `Bearer ${accessToken}`,
+                "Content-Type": "application/json"
               },
-              body: JSON.stringify({ id_token: idToken }),
             });
 
             const data = await backendResponse.json();
             if (backendResponse.ok && data.status === "ok") {
-              // 検証OKの場合、ユーザー情報と認証情報をセット
               setUser({
                 message: data.message,
                 azure_ad_id: data.azure_ad_id,
@@ -77,18 +84,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               });
               setIsAuthenticated(true);
             } else {
-              // 検証NGの場合、ユーザ情報と認証状態を破棄してサインインページへリダイレクト
               console.error("Backend auth failed", data.error || data);
               disposeAuth();
             }
           } catch (error) {
             console.error("Token acquisition or backend call failed", error);
-            // トークン期限切れなど例外発生時はユーザ情報と認証状態を破棄してサインインページへリダイレクト
             disposeAuth();
           }
         }
       } catch (e) {
         console.error("MSAL initialization failed", e);
+        disposeAuth();
       } finally {
         setIsLoading(false);
       }
@@ -97,44 +103,61 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     initializeUser();
   }, []);
 
+
   const signIn = async () => {
+    setIsLoading(true);
+
     try {
-      // msalインスタンス準備
+      // msal インスタンス初期化
       await msalInstance.initialize();
 
-      // 認証ページをポップアップ
+      // 認証ページをポップアップで表示
       const result: AuthenticationResult = await msalInstance.loginPopup(signInRequest);
 
-      // id_tokenが取得できた場合、バックエンドでtokenの検証を行う
-      if (result.idToken) {
-        const response = await fetch("http://localhost:5000/auth/callback", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ id_token: result.idToken }),
-        });
+      console.log("ログイン成功:", result.account);
 
-        const data = await response.json();
-        if (response.ok && data.status === "ok") {
-          // 検証結果がOKの場合、ユーザー情報と認証状態をセット
-          setUser({
-            message: data.message,
-            azure_ad_id: data.azure_ad_id,
-            email: data.email,
-            display_name: data.display_name,
-          });
-          setIsAuthenticated(true);
-        } else {
-          console.error("Backend auth failed", data.error || data);
-          setUser(null);
-        }
+      // APIトークンのスコープを設定
+      const apiTokenRequest = {
+        scopes: ["api://b96bf6d0-b9b0-4888-a294-83018fd7786d/access_as_user"],
+        account: result.account
+      };
+
+      // api_token取得
+      const apiTokenResult = await msalInstance.acquireTokenSilent(apiTokenRequest).catch(async () => {
+        // silent失敗時はpopupで取得
+        return await msalInstance.acquireTokenPopup(apiTokenRequest);
+      });
+
+      // console.log("Access Token:", tokenResult.accessToken);
+
+      // バックエンドにアクセストークンを送信して検証
+      const response = await fetch("http://localhost:5000/auth/callback", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiTokenResult.accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json();
+      if (response.ok && data.status === "ok") {
+        // 認証成功
+        setUser({
+          message: data.message,
+          azure_ad_id: data.azure_ad_id,
+          email: data.email,
+          display_name: data.display_name,
+        });
+        setIsAuthenticated(true);
+      } else {
+        console.error("Backend auth failed", data.error || data);
+        setUser(null);
       }
+
     } catch (error) {
       console.error("signIn failed", error);
       setUser(null);
-    }
-    finally {
+    } finally {
       setIsLoading(false);
     }
   };

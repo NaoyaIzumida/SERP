@@ -2,7 +2,7 @@ const redirectUri = import.meta.env.VITE_REDIRECT_URI;
 
 export const msalConfig = {
   auth: {
-    clientId: "b96bf6d0-b9b0-4888-a294-83018fd7786d",
+    clientId: "2796dabc-8d3f-4dbe-970c-3a01037879cd",
     authority: "https://login.microsoftonline.com/7e80b39f-2bf1-4395-a356-64b74b4015bb",
     redirectUri: redirectUri,
   },
