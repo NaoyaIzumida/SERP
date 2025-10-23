@@ -28,6 +28,7 @@ import apiClient from '../../api/api'; // API関数をインポート
 // Parts(子Component)のImport
 import MergeDataGrid from '../parts/MergeDataGrid';
 import { SnackbarSeverity, useSnackbar, useSystem } from '../../contexts/AppUIContext';
+import { useAuth } from "../../contexts/AuthContext";
 
 // APIから取得するjsonの型定義（Switch Offの場合）
 interface FileListItem {
@@ -73,6 +74,7 @@ const MergePage: React.FC = () => {
   const [columns, setColumns] = useState<any[]>([]);                                  // DataGrid の列
   const { showSnackbar } = useSnackbar();
   const { setTitle } = useSystem();
+  const { user } = useAuth();
 
   // Switchの状態が変更されたときの処理
   const handleSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -208,6 +210,7 @@ const MergePage: React.FC = () => {
     try {
       const response = await apiClient.put('/filemerge', {
         manage_ids: favorites, // 選択された manage_id を送信
+        modified_user: user?.azure_ad_id
       });
       console.log('response.data.status:', response.data.status);
       if (response.data.status == 0) {

@@ -10,6 +10,7 @@ import { GridRenderEditCellParams } from '@mui/x-data-grid';
 import FullWidthInputDisabledCell from "../parts/FullWidthInputDisabledCell";
 import MaxNumberEditCell from "../parts/MaxNumberEditCell";
 import { useSnackbar, SnackbarSeverity, useSystem } from '../../contexts/AppUIContext';
+import { useAuth } from "../../contexts/AuthContext";
 
 // 案件情報マスタデータ
 interface TopicInfoMstList {
@@ -36,6 +37,7 @@ const TopicInfoMstPage: React.FC = () => {
 	const [dataItem, setDataItem] = useState<TopicInfoMstList[]>([]); ``
 	const [selectedRowIds, setSelectedRowIds] = useState<(number | string)[]>([]);
 	const { setTitle } = useSystem();
+	const { user } = useAuth();
 
 	// カラム設定
 	const columns = [
@@ -173,7 +175,8 @@ const TopicInfoMstPage: React.FC = () => {
 					group_id: item.group_id === '' ? null : item.group_id,
 					disp_seq: item.disp_seq === '' ? null : item.disp_seq,
 				})
-				)
+				),
+				modified_user: user?.azure_ad_id
 			});
 			console.log('response.data.status:', response.data.status);
 			if (response.data.status == 0) {

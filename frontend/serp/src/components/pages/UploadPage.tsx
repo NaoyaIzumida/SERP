@@ -25,6 +25,7 @@ import apiClient from '../../api/api'; // API関数をインポート
 // Parts(子Component)のImport
 import UploadDataGrid from '../parts/UploadDataGrid';
 import { SnackbarSeverity, useSnackbar, useSystem } from '../../contexts/AppUIContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 // (ファイル情報)APIから取得するデータの型
 interface FileListItem {
@@ -54,6 +55,7 @@ const UploadPage: React.FC = () => {
   const [columns, setColumns] = useState<any[]>([]);                          // DataGrid の列
   const { showSnackbar } = useSnackbar();
   const { setTitle } = useSystem();
+  const { user } = useAuth();
 
   // 検索ボタン押下時に呼び出す処理
   const handleSearchClick = () => {
@@ -153,6 +155,7 @@ const UploadPage: React.FC = () => {
     formData.append('fiscal_date', fiscalDate);
     formData.append('file_nm', fileNm);
     formData.append('file_div', fileDiv);
+    formData.append('modified_user', user!.azure_ad_id);
 
     try {
       const response = await apiClient.post('/fileupload', formData, {
