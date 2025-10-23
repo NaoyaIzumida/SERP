@@ -248,7 +248,7 @@ paths:
                   - $ref: '#/components/schemas/TopicUpdateSuccess'
                   - $ref: '#/components/schemas/ErrorResponse'
 
-  /auth/callback:
+    /serp/api/auth/callback:
     post:
       summary: Azure AD の IDトークンを受け取って検証する
       description: >

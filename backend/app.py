@@ -218,7 +218,7 @@ def topicinfoupdate():
         return jsonify({"status": -1})
 
 # API No.11 Azure認証
-@app.route("/auth/callback", methods=["POST"])
+@app.route("/serp/api/auth/callback", methods=["POST"])
 def auth_callback():
     auth_header = request.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "):
