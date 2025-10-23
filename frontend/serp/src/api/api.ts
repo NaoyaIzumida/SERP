@@ -21,9 +21,9 @@ apiClient.interceptors.request.use(async (config) => {
     if (!account) throw new Error('No active account!');
 
     const tokenRequest = {
-              scopes: ["api://b96bf6d0-b9b0-4888-a294-83018fd7786d/access_as_user"],
-              account,
-            };
+      scopes: [`api://${import.meta.env.VITE_API_SCOPE_ID}/${import.meta.env.VITE_API_SCOPE_NAME}`],
+      account,
+    };
 
     const response = await msalInstance.acquireTokenSilent({
       ...tokenRequest,

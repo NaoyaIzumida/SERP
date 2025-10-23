@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           try {
             // APIスコープのアクセストークン取得を試みる
             const tokenRequest = {
-              scopes: ["api://b96bf6d0-b9b0-4888-a294-83018fd7786d/access_as_user"],
+              scopes: [`api://${import.meta.env.VITE_API_SCOPE_ID}/${import.meta.env.VITE_API_SCOPE_NAME}`],
               account,
             };
 
@@ -66,7 +66,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const accessToken = response.accessToken;
 
             // バックエンドにaccess_token送信して検証
-            const backendResponse = await fetch("http://localhost:5000/auth/callback", {
+            const backendResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}auth/callback`, {
               method: "POST",
               headers: {
                 "Authorization": `Bearer ${accessToken}`,
@@ -118,7 +118,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // APIトークンのスコープを設定
       const apiTokenRequest = {
-        scopes: ["api://b96bf6d0-b9b0-4888-a294-83018fd7786d/access_as_user"],
+        scopes: [`api://${import.meta.env.VITE_API_SCOPE_ID}/${import.meta.env.VITE_API_SCOPE_NAME}`],
         account: result.account
       };
 
@@ -131,7 +131,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // console.log("Access Token:", tokenResult.accessToken);
 
       // バックエンドにアクセストークンを送信して検証
-      const response = await fetch("http://localhost:5000/auth/callback", {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}auth/callback`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${apiTokenResult.accessToken}`,
