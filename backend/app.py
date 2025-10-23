@@ -220,21 +220,25 @@ def topicinfoupdate():
 # API No.11 Azure認証
 @app.route("/auth/callback", methods=["POST"])
 def auth_callback():
-    data = request.get_json()
-    id_token = data.get("id_token")
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return {"error": "Missing or invalid token"}, 401
+
+    # アクセストークン取得
+    access_token = auth_header.split(" ")[1]
 
     try:
         # トークンの署名検証
-        signing_key = jwks_client.get_signing_key_from_jwt(id_token)
+        signing_key = jwks_client.get_signing_key_from_jwt(access_token)
         decoded = jwt.decode(
-            id_token,
+            access_token,
             signing_key.key,
             algorithms=["RS256"],
-            audience=CLIENT_ID
+            audience=f"api://{CLIENT_ID}"
         )
 
         azure_ad_id = decoded.get("oid")
-        email = decoded.get("preferred_username")
+        email = decoded.get("upn")
         displayName = decoded.get("name")
 
         now = datetime.now()

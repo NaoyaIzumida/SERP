@@ -18,4 +18,4 @@ ENV POSTGRES_USER serp
 ENV POSTGRES_PASSWORD serp
 
 # 初回起動時に照合順序バージョンを更新するSQLを実行
-COPY init.sql /docker-entrypoint-initdb.d/
+COPY init/init.sql /docker-entrypoint-initdb.d/
