@@ -57,6 +57,7 @@ interface FileMergeListItem {
 interface ApiResponse {
   status: number;
   result: FileListItem[] | FileMergeListItem[];
+  error: string;
 }
 
 // 各データのフィールドが異なるため、動的な型にする
@@ -105,18 +106,23 @@ const MergePage: React.FC = () => {
         // SwitchがOffのとき
         response = await apiClient.get<ApiResponse>(`/filelist/${formattedDate}`);
       }
-
+      if (response.data.status == 0){
+        showSnackbar('データを取得しました。', SnackbarSeverity.SUCCESS);
+        setDataItem(response.data.result);
+      }
       if (response.data.status == 1) {
         showSnackbar('一致するファイル一覧がありません。', SnackbarSeverity.WARNING);
         setDataItem([]);                // 削除成功後にデータグリッドをクリアする
         setGridData([]);                // DataGrid を初期化
         setColumns([]);
-      } else {
-        showSnackbar('データを取得しました。', SnackbarSeverity.SUCCESS);
-        setDataItem(response.data.result);
+      } else if (response.data.status == -1){
+        console.error("データ取得失敗：",response.data.error);
       }
-
+      else{
+        // NOP
+      }
     } catch (error) {
+      console.error("例外発生：",error);
       showSnackbar('データの取得に失敗しました。', SnackbarSeverity.ERROR);
     } finally {
       setLoading(false);
@@ -186,21 +192,34 @@ const MergePage: React.FC = () => {
       } else {
         response = await apiClient.get(`/filedetail/${displayString}`);      // データ取得
       }
-      const gridData = response.data.result;  // 取得したデータを保存
-      if (gridData.length > 0) {
-        // 取得したデータのキーに応じて列を動的に生成
-        const firstItem = gridData[0];
-        const generatedColumns = Object.keys(firstItem).map((key) => ({
-          field: key,
-          headerName: key.replace(/_/g, ' ').toUpperCase(),  // カラム名を加工
-          width: 180,
-        }));
+      if (response.data.status == 0) {
+        const gridData = response.data.result;  // 取得したデータを保存
+        if (gridData.length > 0) {
+          // 取得したデータのキーに応じて列を動的に生成
+          const firstItem = gridData[0];
+          const generatedColumns = Object.keys(firstItem).map((key) => ({
+            field: key,
+            headerName: key.replace(/_/g, ' ').toUpperCase(),  // カラム名を加工
+            width: 180,
+          }));
 
-        setColumns(generatedColumns);   // 列定義を更新
-        setGridData(gridData);          // DataGridに表示するためのデータを更新
+          setColumns(generatedColumns);   // 列定義を更新
+          setGridData(gridData);          // DataGridに表示するためのデータを更新
+        }
+        showSnackbar('データを取得しました。', SnackbarSeverity.SUCCESS);
       }
-      showSnackbar('データを取得しました。', SnackbarSeverity.SUCCESS);
+      else if (response.data.status == 1) {
+        showSnackbar('データがありません。', SnackbarSeverity.WARNING);
+      }
+      else if (response.data.status == -1){
+        console.error("データ取得失敗：", response.data.error);
+        showSnackbar('データの取得に失敗しました。', SnackbarSeverity.ERROR);
+      }
+      else{
+        // NOP
+      }
     } catch (error) {
+      console.error('例外発生:', error);
       showSnackbar('データの取得に失敗しました。', SnackbarSeverity.ERROR);
     }
   };
@@ -216,10 +235,17 @@ const MergePage: React.FC = () => {
       if (response.data.status == 0) {
         showSnackbar('マージ処理を実行しました。', SnackbarSeverity.SUCCESS);
         fetchData();
-      } else {
+      } else if (response.data.status == 1) {
+      // NOP
+      }else if (response.data.status == -1){
+        console.error('マージ処理失敗：', response.data.error);
         showSnackbar('マージ処理に失敗しました。', SnackbarSeverity.ERROR);
       }
+      else{
+        // NOP
+      }
     } catch (error) {
+      console.error('例外発生：', error);
       showSnackbar('マージ処理に失敗しました。', SnackbarSeverity.ERROR);
     }
   };

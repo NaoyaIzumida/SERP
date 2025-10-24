@@ -27,6 +27,7 @@ interface TopicInfoMstList {
 interface ApiResponse {
 	status: number;
 	result: TopicInfoMstList[];
+	error: string;
 }
 
 const TopicInfoMstPage: React.FC = () => {
@@ -113,18 +114,27 @@ const TopicInfoMstPage: React.FC = () => {
 			// 案件情報マスタ取得
 			let response = await apiClient.get<ApiResponse>(`/topicinfolist/${isGroupIdFlg},${isDeleteFlg}`);
 
-			if (response.data.status == 1) {
+			if (response.data.status == 0) {
+				if (response.data.result.length == 0) {
+					showSnackbar('条件に該当する案件情報はありません。', SnackbarSeverity.WARNING);
+					setDataItem([]);
+				} else {
+					setDataItem(response.data.result);
+				}
+			}
+			else if (response.data.status == 1) {
 				showSnackbar('案件情報がありません。', SnackbarSeverity.WARNING);
 				setDataItem([]);
 			}
-			else if (response.data.result.length == 0) {
-				showSnackbar('条件に該当する案件情報はありません。', SnackbarSeverity.WARNING);
-				setDataItem([]);
+			else if (response.status == -1) {
+				console.error('案件情報の取得失敗：', response.data.error);
+				showSnackbar('案件情報の取得に失敗しました。', SnackbarSeverity.ERROR);
 			}
 			else {
-				setDataItem(response.data.result);
+				// NOP
 			}
 		} catch (error) {
+			console.error('例外発生：', error);
 			setDataItem([]);
 			showSnackbar('案件情報の取得に失敗しました。', SnackbarSeverity.ERROR);
 		} finally {
@@ -178,14 +188,19 @@ const TopicInfoMstPage: React.FC = () => {
 				),
 				modified_user: user?.azure_ad_id
 			});
-			console.log('response.data.status:', response.data.status);
+
 			if (response.data.status == 0) {
 				showSnackbar('更新処理を実行しました。', SnackbarSeverity.SUCCESS);
 				fetchData();
-			} else {
+			} else if (response.data.status == 1) {
+				// NOP
+			}
+			else if (response.data.status == -1) {
+				console.error('更新処理に失敗：', response.data.error);
 				showSnackbar('更新処理に失敗しました。', SnackbarSeverity.ERROR);
 			}
 		} catch (error) {
+			console.error('例外発生', error);
 			showSnackbar('更新処理に失敗しました。', SnackbarSeverity.ERROR);
 		}
 		finally {
