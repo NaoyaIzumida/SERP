@@ -72,8 +72,12 @@ def fileupload():
             return jsonify({"status": -1, "result": "User not found for azure_ad_id."})
 
         return jsonify({"status":_fileupload(file, modified_user_id)})
-    except:
-        return jsonify({"status":-1})
+    except Exception as e:
+        traceback.print_exc()
+        response = {"status": -1, "error": str(e)}
+        if os.environ.get("FLASK_ENV") == "development":
+            response["trace"] = traceback.format_exc()
+        return jsonify(response)
     finally:
         conn.close()
 
@@ -86,8 +90,12 @@ def filelist(yyyymm : str) :
             return jsonify({"status":1, "result":result})
         else:
             return jsonify({"status":0, "result":result})
-    except:
-        return jsonify({"status":-1})
+    except Exception as e:
+        traceback.print_exc()
+        response = {"status": -1, "error": str(e)}
+        if os.environ.get("FLASK_ENV") == "development":
+            response["trace"] = traceback.format_exc()
+        return jsonify(response)
 
 # API No.3 マージ結果のファイル一覧
 @app.route("/serp/api/filemergelist/<yyyymm>", methods=["GET"])
@@ -98,32 +106,48 @@ def filemergelist(yyyymm: str):
             return jsonify({"status":1, "result":result})
         else:
             return jsonify({"status":0, "result":result})
-    except:
-        return jsonify({"status":-1})
+    except Exception as e:
+        traceback.print_exc()
+        response = {"status": -1, "error": str(e)}
+        if os.environ.get("FLASK_ENV") == "development":
+            response["trace"] = traceback.format_exc()
+        return jsonify(response)
 
 # API No.4 データ取得
 @app.route("/serp/api/filedetail/<manage_id>", methods=["GET"])
 def filedetail(manage_id: str):
     try:
         return jsonify({"status": 0, "result": _filedetail(manage_id)})
-    except:
-        return jsonify({"status": -1})
+    except Exception as e:
+        traceback.print_exc()
+        response = {"status": -1, "error": str(e)}
+        if os.environ.get("FLASK_ENV") == "development":
+            response["trace"] = traceback.format_exc()
+        return jsonify(response)
 
 # API No.5 マージ結果のデータ取得
 @app.route("/serp/api/filemergedetail/<yyyymm>,<version>", methods=["GET"])
 def filemergedetail(yyyymm: str, version: str):
     try:
         return jsonify({"status": 0, "result": _filemergedetail(yyyymm, version)})
-    except:
-        return jsonify({"status": -1})
+    except Exception as e:
+        traceback.print_exc()
+        response = {"status": -1, "error": str(e)}
+        if os.environ.get("FLASK_ENV") == "development":
+            response["trace"] = traceback.format_exc()
+        return jsonify(response)
 
 # API No.6 ファイル削除
 @app.route("/serp/api/filedelete/<manage_id>", methods=["DELETE"])
 def filedelete(manage_id: str):
     try:
         return jsonify({"status": 0, "result": _filedelete(manage_id)})
-    except:
-        return jsonify({"status": -1})
+    except Exception as e:
+        traceback.print_exc()
+        response = {"status": -1, "error": str(e)}
+        if os.environ.get("FLASK_ENV") == "development":
+            response["trace"] = traceback.format_exc()
+        return jsonify(response)
 
 # API No.8 マージ要求
 @app.route("/serp/api/filemerge", methods=["PUT"])
@@ -176,8 +200,12 @@ def filemerge():
         _filemerge(manage_ids, fiscal_date, modified_user_id)
 
         return jsonify({"status": 0, "result":fiscal_date})
-    except:
-        return jsonify({"status": -1})
+    except Exception as e:
+        traceback.print_exc()
+        response = {"status": -1, "error": str(e)}
+        if os.environ.get("FLASK_ENV") == "development":
+            response["trace"] = traceback.format_exc()
+        return jsonify(response)
 
 # API No.9 ファイルダウンロード
 @app.route("/serp/api/filedownload/<yyyymm>,<version>", methods=["GET"])
@@ -193,8 +221,12 @@ def filedownload(yyyymm: str, version: str):
 def topicdetail(group_id_flg: bool, del_disp_flg: bool):
     try:
         return jsonify({"status": 0, "result": _topicdetail(group_id_flg, del_disp_flg)})
-    except:
-        return jsonify({"status": -1})
+    except Exception as e:
+        traceback.print_exc()
+        response = {"status": -1, "error": str(e)}
+        if os.environ.get("FLASK_ENV") == "development":
+            response["trace"] = traceback.format_exc()
+        return jsonify(response)
 
 # API No.11 案件情報マスタデータ更新
 @app.route("/serp/api/topicinfoupdate", methods=["PUT"])
@@ -244,8 +276,12 @@ def topicinfoupdate():
             conn.commit()
 
         return jsonify({"status": 0, "result": updated})
-    except:
-        return jsonify({"status": -1})
+    except Exception as e:
+        traceback.print_exc()
+        response = {"status": -1, "error": str(e)}
+        if os.environ.get("FLASK_ENV") == "development":
+            response["trace"] = traceback.format_exc()
+        return jsonify(response)
 
 # API No.12 Azure認証
 @app.route("/serp/api/auth/callback", methods=["POST"])

@@ -13,6 +13,8 @@ services:
 
   backend:
     build: ./backend
+    environment:
+      - FLASK_ENV=development
     container_name: flask
     hostname: flask
     tty: true
