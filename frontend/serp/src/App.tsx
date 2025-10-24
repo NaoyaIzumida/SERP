@@ -1,5 +1,5 @@
 import React from "react";
-import CssBaseline from '@mui/material/CssBaseline';
+import { ThemeProvider, CssBaseline } from "@mui/material";
 import Box from '@mui/material/Box';
 import Toolbar from '@mui/material/Toolbar';
 import { BrowserRouter, Route, Routes } from "react-router-dom";
@@ -20,6 +20,7 @@ import TopicInfoMstPage from "./components/pages/TopicInfoMstPage";
 import SystemMenu from "./components/pages/SystemMenu";
 import Footer from "./components/parts/Footer";
 import "./App.css";
+import { theme } from "./theme/theme";
 
 const AppContent: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -55,8 +56,11 @@ const App: React.FC = () => {
       <BrowserRouter>
         <AuthProvider>
           <AppProviders>
-            <AppContent />
-            <Footer />
+            <ThemeProvider theme={theme}>
+              <CssBaseline />
+                <AppContent />
+                <Footer />
+            </ThemeProvider>
           </AppProviders>
         </AuthProvider>
       </BrowserRouter>
