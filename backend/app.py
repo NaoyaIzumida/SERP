@@ -1294,19 +1294,18 @@ def _getFiscalDateByManageID(conn : any, manage_id : str):
 def _getPrevMonth(yyyymm : str):
     return (datetime.strptime(yyyymm, '%Y%m') + relativedelta(months=-1)).strftime("%Y%m")
 
-# 期首月取得
+# 期首月前月取得
 def _get_last_year_november(yyyymm: str) -> str:
     # 入力（例: "202408"）を datetime に変換
     dt = datetime.strptime(yyyymm, "%Y%m")
 
-    # 10月以下の場合、前年の11月を生成
+    # 10月以下の場合、前年の10月を生成
     if dt.month <= 10:
-        prev_november = datetime(dt.year - 1, 11, 1)
+        prev_october = datetime(dt.year - 1, 10, 1)
     else:
-        # 11月、12月の場合、今年の11月を生成
-        # yyyyMM形式の文字列に変換
-        prev_november = datetime(dt.year, 11, 1)
-    return prev_november.strftime("%Y%m")
+        # 11月、12月の場合、今年の10月を生成
+        prev_october = datetime(dt.year, 10, 1)
+    return prev_october.strftime("%Y%m")
 
 # データ件数に応じて行を追加
 def _insert_rows_with_style(ws, base_row: int, data_count: int, isCopyValue: bool):
