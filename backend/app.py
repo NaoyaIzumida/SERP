@@ -59,10 +59,23 @@ def fileupload():
     if fileName == '' :
         return jsonify({"status":-1, 'result':'filename must not empty.'})
 
+    # modified_user（Azure AD ID）を取得
+    modified_user_azure_id = request.form.get("modified_user")
+    if not modified_user_azure_id:
+        return jsonify({"status": -1, "result": "modified_user is required."})
+
+    conn = get_connection()
     try:
-        return jsonify({"status":_fileupload(file)})
+        # 共通関数で user_id を取得
+        modified_user_id = get_user_id(conn, modified_user_azure_id)
+        if not modified_user_id:
+            return jsonify({"status": -1, "result": "User not found for azure_ad_id."})
+
+        return jsonify({"status":_fileupload(file, modified_user_id)})
     except:
         return jsonify({"status":-1})
+    finally:
+        conn.close()
 
 # API No.2 ファイル一覧
 @app.route("/serp/api/filelist/<yyyymm>", methods=["GET"])
@@ -121,6 +134,11 @@ def filemerge():
         # リクエストからJSON形式でデータを取得
         # 書式エラー時は例外が発生する
 
+        # modified_user（Azure AD ID）を取得
+        modified_user_azure_id = request.json['modified_user']
+        if not modified_user_azure_id:
+            return jsonify({"status": -1, "result": "modified_user is required."})
+
         # パラメータチェック(管理ID)
         manage_ids = request.json['manage_ids']
         if not isinstance(manage_ids, list):
@@ -135,6 +153,9 @@ def filemerge():
         fiscal_date = ''
         file_div_result = []
         with get_connection() as conn:
+            # modified_user_id を共通関数で取得
+            modified_user_id = get_user_id(conn, modified_user_azure_id)
+            # 管理IDの取得
             manage_ids = [str(manage_id) for manage_id in manage_ids]
             for manage_id in manage_ids:
                 work_date = _getFiscalDateByManageID(conn, manage_id)
@@ -149,10 +170,10 @@ def filemerge():
                 file_div_result.append(_getfilediv(conn, manage_id))
 
         # 過去月の案件情報マスタを削除フラグ=1に更新
-        _updateTopicInfo(fiscal_date)
+        _updateTopicInfo(fiscal_date, modified_user_id)
 
         # マージ処理
-        _filemerge(manage_ids, fiscal_date)
+        _filemerge(manage_ids, fiscal_date, modified_user_id)
 
         return jsonify({"status": 0, "result":fiscal_date})
     except:
@@ -166,7 +187,6 @@ def filedownload(yyyymm: str, version: str):
     return send_file(filepath, as_attachment=True,
                         download_name=filename,
                         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    return jsonify({"status": 0})
 
 # API No.10 案件情報マスタデータ取得
 @app.route("/serp/api/topicinfolist/<group_id_flg>,<del_disp_flg>", methods=["GET"])
@@ -176,7 +196,7 @@ def topicdetail(group_id_flg: bool, del_disp_flg: bool):
     except:
         return jsonify({"status": -1})
 
-# API No.10 案件情報マスタデータ更新
+# API No.11 案件情報マスタデータ更新
 @app.route("/serp/api/topicinfoupdate", methods=["PUT"])
 def topicinfoupdate():
     try:
@@ -189,8 +209,17 @@ def topicinfoupdate():
         if not topics:
             return jsonify({"status": -1, "result": "更新対象がありません"})
 
+        # modified_user（Azure AD ID）を取得
+        modified_user_azure_id = request.json['modified_user']
+        if not modified_user_azure_id:
+            return jsonify({"status": -1, "result": "modified_user is required."})
+
         updated = 0
         with get_connection() as conn:
+
+            # modified_user_id を共通関数で取得
+            modified_user_id = get_user_id(conn, modified_user_azure_id)
+
             with conn.cursor() as cur:
                 for t in topics:
                     order_detail = t.get("order_detail")
@@ -204,11 +233,12 @@ def topicinfoupdate():
                     sql = "update public.m_topic_info "\
                         "   set group_id = %s "\
                         "     , disp_seq = %s "\
+                        "     , modified_user = %s "\
                         "     , modified_date = current_timestamp "\
                         " where order_detail = %s "\
                         "   and order_rowno  = %s "\
 
-                    cur.execute(sql, (group_id, disp_seq, order_detail, order_rowno))
+                    cur.execute(sql, (group_id, disp_seq, modified_user_id, order_detail, order_rowno))
                     updated += cur.rowcount
 
             conn.commit()
@@ -217,7 +247,7 @@ def topicinfoupdate():
     except:
         return jsonify({"status": -1})
 
-# API No.11 Azure認証
+# API No.12 Azure認証
 @app.route("/serp/api/auth/callback", methods=["POST"])
 def auth_callback():
     auth_header = request.headers.get("Authorization")
@@ -289,7 +319,7 @@ def auth_callback():
         }), 401
 
 # ファイルアップロード
-def _fileupload(file : any):
+def _fileupload(file : any, modified_user_id : str):
     # リクエストパラメータの受取
     fiscal_date = request.form["fiscal_date"]
     file_nm = request.form["file_nm"]
@@ -298,7 +328,7 @@ def _fileupload(file : any):
     # ファイル読込
     with get_connection() as conn:
         # ファイル情報マスタ 登録
-        manege_id = _insertFileInfo(conn, fiscal_date, file_div, file_nm)
+        manege_id = _insertFileInfo(conn, fiscal_date, file_div, file_nm, modified_user_id)
 
         # ファイル区分別登録処理
         match file_div:
@@ -322,9 +352,9 @@ def _fileupload(file : any):
                     sales = data[10]                    #売上高
 
                     # 完成PJ台帳 登録
-                    _insertFgFileInfo(conn, manege_id, index, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost, sales)
+                    _insertFgFileInfo(conn, manege_id, index, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost, sales, modified_user_id)
                     # 案件情報マスタ 登録
-                    _insertTopicInfo(conn, order_detail, order_rowno, project_nm, customer)
+                    _insertTopicInfo(conn, order_detail, order_rowno, project_nm, customer, modified_user_id)
 
             case "W":   # 仕掛プロジェクト
 
@@ -345,9 +375,9 @@ def _fileupload(file : any):
                     cost = data[8]                      #経費
 
                     # 仕掛PJ台帳 登録
-                    _insertWipFileInfo(conn, manege_id, index, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost)
+                    _insertWipFileInfo(conn, manege_id, index, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost, modified_user_id)
                     # 案件情報マスタ 登録
-                    _insertTopicInfo(conn, order_detail, order_rowno, project_nm, customer)
+                    _insertTopicInfo(conn, order_detail, order_rowno, project_nm, customer, modified_user_id)
 
     return 0
 
@@ -372,12 +402,12 @@ def _getNextVersion(conn : any, fiscal_date : str, file_div : str):
         return res[0]
 
 # ファイル情報マスタ登録
-def _insertFileInfo(conn : any, fiscal_date : str, file_div : str, file_name : str):
+def _insertFileInfo(conn : any, fiscal_date : str, file_div : str, file_name : str, modified_user_id : str):
     manage_id = _getNextManageID(conn)
     version = _getNextVersion(conn, fiscal_date, file_div)
 
     with conn.cursor() as cur:
-        cur.execute("insert into m_file_info (manage_id, fiscal_date, version, file_div, file_nm, modified_date) values (%s, %s, %s, %s, %s, current_timestamp)", (manage_id, fiscal_date, version, file_div, file_name))
+        cur.execute("insert into m_file_info (manage_id, fiscal_date, version, file_div, file_nm, modified_user, modified_date) values (%s, %s, %s, %s, %s, %s, current_timestamp)", (manage_id, fiscal_date, version, file_div, file_name, modified_user_id))
 
     return manage_id
 
@@ -428,7 +458,7 @@ def _generate_group_id_from_customer(customer: str) -> str:
     return base + "000"
 
 # 案件情報マスタ登録
-def _insertTopicInfo(conn : any, order_detail : str, order_rowno : str, project_nm : str, customer : str):
+def _insertTopicInfo(conn : any, order_detail : str, order_rowno : str, project_nm : str, customer : str, modified_user_id : str):
     with conn.cursor() as cur:
         # 受注明細・受注行番号による存在チェック
         cur.execute("""
@@ -464,19 +494,19 @@ def _insertTopicInfo(conn : any, order_detail : str, order_rowno : str, project_
         # INSERT
         cur.execute("""
             insert into m_topic_info
-                (order_detail, order_rowno, project_nm, customer, group_id, disp_seq, del_flg, modified_date)
-            values (%s, %s, %s, %s, %s, %s, '0', current_timestamp)
-        """, (order_detail, order_rowno, project_nm, customer, group_id, disp_seq))
+                (order_detail, order_rowno, project_nm, customer, group_id, disp_seq, del_flg, modified_user, modified_date)
+            values (%s, %s, %s, %s, %s, %s, '0', %s, current_timestamp)
+        """, (order_detail, order_rowno, project_nm, customer, group_id, disp_seq, modified_user_id))
 
 # 完成PJ台帳登録
-def _insertFgFileInfo(conn : any, manage_id : str, row_no : str, div_cd : str, order_detail : str, order_rowno : str, project_nm : str, customer : str, cost_material : str, cost_labor : str, cost_subcontract : str, cost : str, sales : str):
+def _insertFgFileInfo(conn : any, manage_id : str, row_no : str, div_cd : str, order_detail : str, order_rowno : str, project_nm : str, customer : str, cost_material : str, cost_labor : str, cost_subcontract : str, cost : str, sales : str, modified_user_id : str):
     with conn.cursor() as cur:
-        cur.execute("insert into t_fg_project_info (manage_id, row_no, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost, sales, modified_date) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, current_timestamp)", (manage_id, row_no, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost, sales))
+        cur.execute("insert into t_fg_project_info (manage_id, row_no, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost, sales, modified_user, modified_date) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, current_timestamp)", (manage_id, row_no, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost, sales, modified_user_id))
 
 # 仕掛PJ台帳登録
-def _insertWipFileInfo(conn : any, manage_id : str, row_no : str, div_cd : str, order_detail : str, order_rowno : str, project_nm : str,customer : str, cost_material : str, cost_labor : str, cost_subcontract : str, cost : str):
+def _insertWipFileInfo(conn : any, manage_id : str, row_no : str, div_cd : str, order_detail : str, order_rowno : str, project_nm : str,customer : str, cost_material : str, cost_labor : str, cost_subcontract : str, cost : str, modified_user_id : str):
     with conn.cursor() as cur:
-        cur.execute("insert into t_wip_project_info (manage_id, row_no, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost, modified_date) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, current_timestamp)", (manage_id, row_no, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost))
+        cur.execute("insert into t_wip_project_info (manage_id, row_no, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost, modified_user, modified_date) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, current_timestamp)", (manage_id, row_no, div_cd, order_detail, order_rowno, project_nm, customer, cost_material, cost_labor, cost_subcontract, cost, modified_user_id))
 
 # ファイル情報マスタから勘定年月を指定して取得
 def _filelist(yyyymm: str):
@@ -576,10 +606,11 @@ def _filemergedetail(yyyymm: str, version: str):
             return convertCursorToDict(cur)
 
 # 案件情報マスタ登録
-def _updateTopicInfo(fiscal_date:str):
+def _updateTopicInfo(fiscal_date : str, modified_user_id : str):
     sql = ""\
     "update m_topic_info "\
     "set del_flg = '1' "\
+    "    , modified_user = %s "\
     "    , modified_date = current_timestamp "\
     "where "\
     "    del_flg = '0' "\
@@ -597,13 +628,13 @@ def _updateTopicInfo(fiscal_date:str):
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
-                sql, (fiscal_date, ))
+                sql, (modified_user_id, fiscal_date))
 
 # マージ要求
-def _filemerge(manage_ids:str, fiscal_date:str):
+def _filemerge(manage_ids : str, fiscal_date : str, modified_user_id : str):
     try:
         select_version_sql = "select version from t_merge_target where fiscal_date = %s order by version desc"
-        insert_target_sql = 'insert into t_merge_target (fiscal_date, version, fg_id, wip_id, modified_date) values (%s, %s, %s, %s, current_timestamp)'
+        insert_target_sql = 'insert into t_merge_target (fiscal_date, version, fg_id, wip_id, modified_user, modified_date) values (%s, %s, %s, %s, %s, current_timestamp)'
 
         merge_sql = \
         "insert into t_merge_result "\
@@ -636,6 +667,7 @@ def _filemerge(manage_ids:str, fiscal_date:str):
         "    , cost_material - coalesce(cost_other_wip, 0) as cost_other "\
         "    , null as change_value "\
         "    , '1' as product_div "\
+        "    , %s as modified_user "\
         "    , current_timestamp as modified_date "\
         "from "\
         "    t_fg_project_info "\
@@ -660,6 +692,7 @@ def _filemerge(manage_ids:str, fiscal_date:str):
         "    , cost_material - coalesce(cost_other_wip, 0) as cost_other "\
         "    , cost_labor + cost_subcontract + cost + cost_material as change_value "\
         "    , '2' as product_div "\
+        "    , %s as modified_user "\
         "    , current_timestamp as modified_date "\
         "from "\
         "    t_wip_project_info "\
@@ -684,7 +717,7 @@ def _filemerge(manage_ids:str, fiscal_date:str):
 
             # マージ処理
             with conn.cursor() as cur:
-                cur.execute(merge_sql, (_getPrevMonth(fiscal_date), version, tuple(manage_ids), version, tuple(manage_ids),))
+                cur.execute(merge_sql, (_getPrevMonth(fiscal_date), version, modified_user_id, tuple(manage_ids), version, modified_user_id, tuple(manage_ids),))
 
                 # 管理ID初期化
                 fg = '';
@@ -700,8 +733,8 @@ def _filemerge(manage_ids:str, fiscal_date:str):
                             wip = manage_id
                             # 勘定年月分の仕掛情報テーブルを洗替え
                             cur.execute("delete from t_wip_info where fiscal_date = %s", (fiscal_date,))
-                            cur.execute("insert into t_wip_info (fiscal_date, order_detail, order_rowno, cost_labor, cost_subcontract, cost, cost_other, modified_date) select %s as fiscal_date, order_detail, order_rowno, cost_labor, cost_subcontract, cost, cost_material, current_timestamp from t_wip_project_info where manage_id = %s", (fiscal_date, manage_id,))
-                cur.execute(insert_target_sql, (fiscal_date, version, fg, wip,))
+                            cur.execute("insert into t_wip_info (fiscal_date, order_detail, order_rowno, cost_labor, cost_subcontract, cost, cost_other, modified_user, modified_date) select %s as fiscal_date, order_detail, order_rowno, cost_labor, cost_subcontract, cost, cost_material, %s as modified_user, current_timestamp from t_wip_project_info where manage_id = %s", (fiscal_date, modified_user_id, manage_id,))
+                cur.execute(insert_target_sql, (fiscal_date, version, fg, wip, modified_user_id,))
     except Exception as e:
         print("=== ERROR OCCURRED ===")
         print("エラー内容:", e)
@@ -1206,8 +1239,8 @@ def _topicdetail(group_id_flg: bool, del_disp_flg: bool):
 # 勘定年月取得
 def _getFiscalDate():
     # 前月末日を取得しその年月を文字列として返す
-    today = datetime.datetime.today()
-    thismonth = datetime.datetime(today.year, today.month, 1)
+    today = datetime.today()
+    thismonth = datetime(today.year, today.month, 1)
     lastmonth = thismonth + datetime.timedelta(days=-1)
     return lastmonth.strftime("%Y%m")
 
@@ -1223,20 +1256,20 @@ def _getFiscalDateByManageID(conn : any, manage_id : str):
 
 # 前月取得
 def _getPrevMonth(yyyymm : str):
-    return (datetime.datetime.strptime(yyyymm, '%Y%m') + relativedelta(months=-1)).strftime("%Y%m")
+    return (datetime.strptime(yyyymm, '%Y%m') + relativedelta(months=-1)).strftime("%Y%m")
 
 # 期首月取得
 def _get_last_year_november(yyyymm: str) -> str:
     # 入力（例: "202408"）を datetime に変換
-    dt = datetime.datetime.strptime(yyyymm, "%Y%m")
+    dt = datetime.strptime(yyyymm, "%Y%m")
 
     # 10月以下の場合、前年の11月を生成
     if dt.month <= 10:
-        prev_november = datetime.datetime(dt.year - 1, 11, 1)
+        prev_november = datetime(dt.year - 1, 11, 1)
     else:
         # 11月、12月の場合、今年の11月を生成
         # yyyyMM形式の文字列に変換
-        prev_november = datetime.datetime(dt.year, 11, 1)
+        prev_november = datetime(dt.year, 11, 1)
     return prev_november.strftime("%Y%m")
 
 # データ件数に応じて行を追加
@@ -1250,6 +1283,14 @@ def _insert_rows_with_style(ws, base_row: int, data_count: int, isCopyValue: boo
             if i == 2 and isCopyValue:
                 ws.cell(row = r + base_row + 1, column = i).value = cell.value  # セルの値をコピー
             i += 1
+
+# AzureIDに紐付くIDを取得
+def get_user_id(conn, azure_ad_id: str):
+    # 対応するユーザーID。存在しない場合は None。
+    with conn.cursor() as cur:
+        cur.execute("select id from m_users where azure_ad_id = %s", (azure_ad_id,))
+        row = cur.fetchone()
+        return row[0] if row else None
 
 # デバッグ用サーバー起動
 if __name__ == "__main__":
