@@ -131,7 +131,7 @@ const TopicInfoMstPage: React.FC = () => {
 				showSnackbar('案件情報の取得に失敗しました。', SnackbarSeverity.ERROR);
 			}
 			else {
-				throw new Error(`不正なステータス [status_code=${response.data.status}]`);
+				throw new Error(`不正なステータス [status=${response.data.status}]`);
 			}
 		} catch (error) {
 			console.error('例外発生：', error);
@@ -193,7 +193,7 @@ const TopicInfoMstPage: React.FC = () => {
 				showSnackbar('更新処理を実行しました。', SnackbarSeverity.SUCCESS);
 				fetchData();
 			} else if (response.data.status == 1) {
-				throw new Error(`不正なステータス [status_code=${response.data.status}]`);
+				throw new Error(`不正なステータス [status=${response.data.status}]`);
 			}
 			else if (response.data.status == -1) {
 				console.error('更新処理に失敗：', response.data.error);

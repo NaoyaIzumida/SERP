@@ -89,7 +89,7 @@ const UploadPage: React.FC = () => {
         showSnackbar('データの取得に失敗しました。', SnackbarSeverity.ERROR);
       }
       else {
-        throw new Error(`不正なステータス [status_code=${response.data.status}]`);
+        throw new Error(`不正なステータス [status=${response.data.status}]`);
       }
     } catch (error) {
       console.error('例外発生：', error);
@@ -161,13 +161,13 @@ const UploadPage: React.FC = () => {
         fetchData();                    // ここでデータを再取得してリフレッシュ
       }
       else if (response.data.status == 1) {
-        throw new Error(`不正なステータス [status_code=${response.data.status}]`);
+        throw new Error(`不正なステータス [status=${response.data.status}]`);
       }
       else if (response.data.status == -1) {
         console.error('データ取得失敗：', response.data.error);
         showSnackbar('データの削除に失敗しました。', SnackbarSeverity.WARNING);
       } else {
-        throw new Error(`不正なステータス [status_code=${response.data.status}]`);
+        throw new Error(`不正なステータス [status=${response.data.status}]`);
       }
     } catch (error) {
       console.error('例外発生：', error);
@@ -199,14 +199,14 @@ const UploadPage: React.FC = () => {
         fetchData();
       }
       else if (response.data.status == 1) {
-        throw new Error(`不正なステータス [status_code=${response.data.status}]`);
+        throw new Error(`不正なステータス [status=${response.data.status}]`);
       }
       else if (response.data.status == -1) {
         console.log('アップロード失敗：', response.data.error);
         showSnackbar('アップロードに失敗しました。', SnackbarSeverity.WARNING);
       }
       else {
-        throw new Error(`不正なステータス [status_code=${response.data.status}]`);
+        throw new Error(`不正なステータス [status=${response.data.status}]`);
       }
     } catch (error) {
       console.log('例外発生：', error);

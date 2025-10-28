@@ -119,7 +119,7 @@ const MergePage: React.FC = () => {
         console.error("データ取得失敗：", response.data.error);
       }
       else {
-        throw new Error(`不正なステータス [status_code=${response.data.status}]`);
+        throw new Error(`不正なステータス [status=${response.data.status}]`);
       }
     } catch (error) {
       console.error("例外発生：", error);
@@ -216,7 +216,7 @@ const MergePage: React.FC = () => {
         showSnackbar('データの取得に失敗しました。', SnackbarSeverity.ERROR);
       }
       else {
-        throw new Error(`不正なステータス [status_code=${response.data.status}]`);
+        throw new Error(`不正なステータス [status=${response.data.status}]`);
       }
     } catch (error) {
       console.error('例外発生:', error);
@@ -231,18 +231,17 @@ const MergePage: React.FC = () => {
         manage_ids: favorites, // 選択された manage_id を送信
         modified_user: user?.azure_ad_id
       });
-      console.log('response.data.status:', response.data.status);
       if (response.data.status == 0) {
         showSnackbar('マージ処理を実行しました。', SnackbarSeverity.SUCCESS);
         fetchData();
       } else if (response.data.status == 1) {
-        throw new Error(`不正なステータス [status_code=${response.data.status}]`);
+        throw new Error(`不正なステータス [status=${response.data.status}]`);
       } else if (response.data.status == -1) {
         console.error('マージ処理失敗：', response.data.error);
         showSnackbar('マージ処理に失敗しました。', SnackbarSeverity.ERROR);
       }
       else {
-        throw new Error(`不正なステータス [status_code=${response.data.status}]`);
+        throw new Error(`不正なステータス [status=${response.data.status}]`);
       }
     } catch (error) {
       console.error('例外発生：', error);
