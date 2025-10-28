@@ -106,7 +106,7 @@ const MergePage: React.FC = () => {
         // SwitchがOffのとき
         response = await apiClient.get<ApiResponse>(`/filelist/${formattedDate}`);
       }
-      if (response.data.status == 0){
+      if (response.data.status == 0) {
         showSnackbar('データを取得しました。', SnackbarSeverity.SUCCESS);
         setDataItem(response.data.result);
       }
@@ -115,14 +115,14 @@ const MergePage: React.FC = () => {
         setDataItem([]);                // 削除成功後にデータグリッドをクリアする
         setGridData([]);                // DataGrid を初期化
         setColumns([]);
-      } else if (response.data.status == -1){
-        console.error("データ取得失敗：",response.data.error);
+      } else if (response.data.status == -1) {
+        console.error("データ取得失敗：", response.data.error);
       }
-      else{
-        // NOP
+      else {
+        throw new Error(`不正なステータス [status_code=${response.data.status}]`);
       }
     } catch (error) {
-      console.error("例外発生：",error);
+      console.error("例外発生：", error);
       showSnackbar('データの取得に失敗しました。', SnackbarSeverity.ERROR);
     } finally {
       setLoading(false);
@@ -211,12 +211,12 @@ const MergePage: React.FC = () => {
       else if (response.data.status == 1) {
         showSnackbar('データがありません。', SnackbarSeverity.WARNING);
       }
-      else if (response.data.status == -1){
+      else if (response.data.status == -1) {
         console.error("データ取得失敗：", response.data.error);
         showSnackbar('データの取得に失敗しました。', SnackbarSeverity.ERROR);
       }
-      else{
-        // NOP
+      else {
+        throw new Error(`不正なステータス [status_code=${response.data.status}]`);
       }
     } catch (error) {
       console.error('例外発生:', error);
@@ -236,13 +236,13 @@ const MergePage: React.FC = () => {
         showSnackbar('マージ処理を実行しました。', SnackbarSeverity.SUCCESS);
         fetchData();
       } else if (response.data.status == 1) {
-      // NOP
-      }else if (response.data.status == -1){
+        throw new Error(`不正なステータス [status_code=${response.data.status}]`);
+      } else if (response.data.status == -1) {
         console.error('マージ処理失敗：', response.data.error);
         showSnackbar('マージ処理に失敗しました。', SnackbarSeverity.ERROR);
       }
-      else{
-        // NOP
+      else {
+        throw new Error(`不正なステータス [status_code=${response.data.status}]`);
       }
     } catch (error) {
       console.error('例外発生：', error);
