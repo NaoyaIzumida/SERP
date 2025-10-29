@@ -8,6 +8,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { eSystemType, useSystem } from "../contexts/AppUIContext";
 import ReleaseNoteAlert from "./ReleaseNoteAlert";
 import { useLocation } from "react-router-dom";
+import LogoutIcon from '@mui/icons-material/Logout';
 
 interface Props {
   isAuthenticated?: boolean;
@@ -31,6 +32,12 @@ export const MyAppBar = ({ isAuthenticated = false }: Props) => {
     location.pathname.startsWith(path)
   );
 
+  // サイドメニューを表示しないページを設定
+  const hiddenSideMenuPagePaths = ["/SystemMenu"];
+  const isHiddenSideMenuPage = !hiddenSideMenuPagePaths.some(path =>
+    location.pathname.startsWith(path)
+  );
+
   return (
     <Box sx={{ display: "flex" }}>
       <AppBar
@@ -38,7 +45,8 @@ export const MyAppBar = ({ isAuthenticated = false }: Props) => {
         sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
       >
         <Toolbar>
-          {isAuthenticated && (
+          {/* サインイン済かつサイドメニュー非表示ページ以外 */}
+          {isAuthenticated && isHiddenSideMenuPage && (
             <IconButton
               color="inherit"
               aria-label="open drawer"
@@ -64,13 +72,20 @@ export const MyAppBar = ({ isAuthenticated = false }: Props) => {
             </Typography>
           )}
           {isAuthenticated && authContext.user?.display_name && (
-            <Typography
-              variant="subtitle1"
-              component="div"
-              sx={{ marginLeft: 'auto' }}
-            >
-              {authContext.user.display_name}
-            </Typography>
+            <Box sx={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography variant="subtitle1" component="div">
+                {authContext.user.display_name}
+              </Typography>
+              <IconButton
+                color="inherit"
+                size="small"
+                onClick={async () => {
+                  await authContext.signOut();
+                }}
+              >
+                <LogoutIcon />
+              </IconButton>
+            </Box>
           )}
         </Toolbar>
 

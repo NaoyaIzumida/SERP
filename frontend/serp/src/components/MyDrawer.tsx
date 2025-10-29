@@ -9,12 +9,10 @@ import Toolbar from '@mui/material/Toolbar';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import MergeOutlinedIcon from '@mui/icons-material/MergeOutlined';
 import TopicInfoIcon from '@mui/icons-material/Topic';
-import LogoutIcon from '@mui/icons-material/Logout';
 import { NavLink } from "react-router-dom";
 import { lightBlue } from "@mui/material/colors";
 import { useContext, useState } from "react";
 import { menuContext } from "../contexts/AppState";
-import { useAuth } from "../contexts/AuthContext";
 import { eSystemType, useSystem } from "../contexts/AppUIContext";
 import SystemMenuIcon from '@mui/icons-material/Dashboard';
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
@@ -31,7 +29,6 @@ export const MyDrawer = (props: Props) => {
     throw new Error("MenuComponent must be used within a MenuProvider");
   }
   const { isOpened, setOpened } = context;
-  const authContext = useAuth();
   const systemContext = useSystem();
   const [isMstToggled, setMstToggle] = useState(true);
   const [isMonthlyToggled, setMonthlyToggle] = useState(true);
@@ -157,24 +154,6 @@ export const MyDrawer = (props: Props) => {
             </>
           )}
         </List>
-
-        {/* ログアウト（下部固定） */}
-        <Box>
-          <List>
-            <ListItemButton
-              component={"li" as any}
-              onClick={async () => {
-                setOpened(!isOpened);
-                await authContext.signOut();
-              }}
-            >
-              <ListItemIcon>
-                <LogoutIcon />
-              </ListItemIcon>
-              <ListItemText primary="SignOut" />
-            </ListItemButton>
-          </List>
-        </Box>
       </Box>
     </Drawer>
   );
