@@ -32,9 +32,9 @@ export const MyAppBar = ({ isAuthenticated = false }: Props) => {
     location.pathname.startsWith(path)
   );
 
-  // サイドメニューを表示しないページを設定
+  // サイドメニューを表示するページの設定
   const hiddenSideMenuPagePaths = ["/SystemMenu"];
-  const isHiddenSideMenuPage = !hiddenSideMenuPagePaths.some(path =>
+  const isShowSideMenu = !hiddenSideMenuPagePaths.some(path =>
     location.pathname.startsWith(path)
   );
 
@@ -46,7 +46,7 @@ export const MyAppBar = ({ isAuthenticated = false }: Props) => {
       >
         <Toolbar>
           {/* サインイン済かつサイドメニュー非表示ページ以外 */}
-          {isAuthenticated && isHiddenSideMenuPage && (
+          {isAuthenticated && isShowSideMenu && (
             <IconButton
               color="inherit"
               aria-label="open drawer"
