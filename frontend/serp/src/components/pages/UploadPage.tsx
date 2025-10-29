@@ -271,7 +271,7 @@ const UploadPage: React.FC = () => {
             square
             {...getRootProps()}
             style={{
-              border: '2px dashed #0087F7',
+              border: '2px dashed #000',
               height: '100%',
               display: 'flex',
               alignItems: 'stretch',
