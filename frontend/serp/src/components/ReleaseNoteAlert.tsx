@@ -48,7 +48,9 @@ const ReleaseNoteAlert: React.FC = () => {
         if (sections.length > 0) {
           const latest = sections[sections.length - 1]; // 最新版
           setLatestNote(latest);
-          setAllNotes(sections);
+          // 最新含めて「直近6件（過去5件＋最新版）」だけ保持
+          const recentNotes = sections.slice(-6);
+          setAllNotes(recentNotes);
 
           const storageKey = `seenReleaseNoteVersion_${user.azure_ad_id}`;
           const seenVersion = localStorage.getItem(storageKey);
@@ -93,9 +95,12 @@ const ReleaseNoteAlert: React.FC = () => {
                 {showHistory ? "過去バージョンを閉じる" : "過去バージョンを表示"}
               </Button>
               <Collapse in={showHistory}>
-                {allNotes.slice(0, -1).reverse().map(note => (
+                {/* 最新を除く過去5件だけを表示 */}
+                {allNotes.slice(0, -1).slice(-5).reverse().map(note => (
                   <Box key={note.version} sx={{ mt: 1, borderTop: "1px solid #ccc", pt: 1 }}>
-                    <Typography variant="subtitle2">{note.version} ({note.date})</Typography>
+                    <Typography variant="subtitle2">
+                      {note.version} ({note.date})
+                    </Typography>
                     <ul style={{ margin: "2px 0 0 1.2em", paddingLeft: 16 }}>
                       {note.changes.map((c, i) => <li key={i}>{c}</li>)}
                     </ul>
