@@ -6,6 +6,7 @@ import { menuContext } from "../contexts/AppState";
 import logo from "../images/logo.png";
 import { useAuth } from "../contexts/AuthContext";
 import { eSystemType, useSystem } from "../contexts/AppUIContext";
+import ReleaseNoteAlert from "./ReleaseNoteAlert";
 
 interface Props {
   isAuthenticated?: boolean;
@@ -50,7 +51,7 @@ export const MyAppBar = ({ isAuthenticated = false }: Props) => {
             >
               {systemContext.system === eSystemType.GETSUJI
                 ? "月次処理システム："
-                  : ""}
+                : ""}
               {systemContext.title} （v {import.meta.env.VITE_APP_VERSION}）</Typography>)}
             {isAuthenticated && authContext.user?.display_name && (
               <Typography
@@ -62,6 +63,7 @@ export const MyAppBar = ({ isAuthenticated = false }: Props) => {
               </Typography>
             )}
           </Toolbar>
+          <ReleaseNoteAlert />
         </AppBar>
       </Box>
     </>
