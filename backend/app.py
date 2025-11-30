@@ -939,8 +939,6 @@ def _filedownload(yyyymm : str, version : str):
         # データ件数に応じて行を追加
         if prev_wip_data_num > 2:
             _insert_rows_with_style(ws, row, prev_wip_data_num, False)
-        else:
-            row += 2 # 空行分
 
         wip_start_row = row
         for item in result_prev_wip:
