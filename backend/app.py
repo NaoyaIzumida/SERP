@@ -906,7 +906,9 @@ def _filedownload(yyyymm : str, version : str):
             ws.cell(row, 8, item['total_cost'])         # 原価計
             ws.cell(row, 9, item['sales'])              # 売上高
             row += 1
-        row = fg_start_row + fg_data_num # 完成PJサマリ 開始行
+
+        # 完成PJサマリ 開始行
+        row = fg_start_row + fg_data_num + max(0, 2 - fg_data_num) # 固定行(2行)にデータが入らなかった場合に備えて、計算式を設定
         ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + fg_data_num - 1) + ')')  # 原価計 合計
         ws.cell(row, 9, '=SUM(I' + str(fg_start_row) + ':I' + str(fg_start_row + fg_data_num - 1) + ')')  # 売上高 合計
 
@@ -928,7 +930,9 @@ def _filedownload(yyyymm : str, version : str):
             ws.cell(row, 7, item['cost'])               # 経費
             ws.cell(row, 8, item['total_cost'])         # 原価計
             row += 1
-        row = wip_start_row + wip_data_num #仕掛PJサマリ 開始行
+
+        #仕掛PJサマリ 開始行
+        row = wip_start_row + wip_data_num + max(0, 2 - wip_data_num) #固定行(2行)にデータが入らなかった場合に備えて、計算式を設定
         ws.cell(row, 8, '=SUM(H' + str(wip_start_row) + ':H' + str(wip_start_row + wip_data_num - 1) + ')')  # 原価計 合計
 
         row += 4  # 前月仕掛 開始行
@@ -951,7 +955,8 @@ def _filedownload(yyyymm : str, version : str):
         for index in range(prev_wip_data_num):
             ws.cell(wip_start_row + index, 8, '=SUM(D' + str(wip_start_row + index) + ':G' + str(wip_start_row + index) + ')')   # 計
 
-        row = wip_start_row + prev_wip_data_num  #前月仕掛サマリ 開始行
+        #前月仕掛サマリ 開始行
+        row = wip_start_row + prev_wip_data_num + max(0, 2 - prev_wip_data_num)  # 固定行(2行)にデータが入らなかった場合に備えて、計算式を設定
         if prev_wip_data_num > 0:
             ws.cell(row, 8, '=SUM(H' + str(wip_start_row) + ':H' + str(wip_start_row + prev_wip_data_num - 1) + ')')  # 計 合計
 
@@ -993,7 +998,8 @@ def _filedownload(yyyymm : str, version : str):
         for index in range(fg_add_data_num + wip_add_data_num):
             ws.cell(total_fg_start_row + index, 8, '=SUM(D' + str(total_fg_start_row + index) + ':G' + str(total_fg_start_row + index) + ')')   # 小計
 
-        row = total_wip_start_row + wip_add_data_num  #完成PJ+仕掛PJサマリ 開始行
+        #完成PJ+仕掛PJサマリ 開始行
+        row = total_wip_start_row + wip_add_data_num + max (0, 2 - fg_add_data_num) + max(0, 2 - wip_add_data_num) #固定(完成2行、仕掛2行)にデータが入らなかった場合に備えて、計算式を設定
         ws.cell(row, 4, '=SUM(D' + str(total_fg_start_row) + ':D' + str(total_fg_start_row + fg_add_data_num + wip_add_data_num - 1) + ')')  # 材料費 合計
         ws.cell(row, 5, '=SUM(E' + str(total_fg_start_row) + ':E' + str(total_fg_start_row + fg_add_data_num + wip_add_data_num - 1) + ')')  # 労務費 合計
         ws.cell(row, 6, '=SUM(F' + str(total_fg_start_row) + ':F' + str(total_fg_start_row + fg_add_data_num + wip_add_data_num - 1) + ')')  # 外注費 合計
