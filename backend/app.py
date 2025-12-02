@@ -783,6 +783,8 @@ def _filedownload(yyyymm : str, version : str):
     shutil.copy('template.xlsx', target_file)
     wb = openpyxl.load_workbook(target_file)
 
+    template_sheet = wb['template']
+
     # =====================
     # サマリー・仕掛MM月シート
     # =====================
@@ -790,9 +792,7 @@ def _filedownload(yyyymm : str, version : str):
     currentyyyymm = yyyymm  # 当月
 
     while yyyymm >=  beginningOfYear:
-        ws = wb['template']
-        wsCopy = wb.copy_worksheet(ws)
-        ws = wsCopy
+        ws = wb.copy_worksheet(template_sheet)
         ws.title = "サマリー・仕掛り" + yyyymm[4:6] + "月"
 
         # ヘッダ行
@@ -892,9 +892,9 @@ def _filedownload(yyyymm : str, version : str):
 
         # ================================ 完成PJ ================================
         fg_data_num = len(result_fg) # 完成PJのデータ数
-
-        # データ件数に応じて行を追加
-        _insert_rows_with_style(ws, row, fg_data_num, False)
+        if fg_data_num > 2 :
+            # データ件数に応じて行を追加
+            _insert_rows_with_style(ws, row, fg_data_num, False)
 
         fg_start_row = row
         for item in result_fg:
@@ -909,8 +909,9 @@ def _filedownload(yyyymm : str, version : str):
 
         # 完成PJサマリ 開始行
         row = fg_start_row + fg_data_num + max(0, 2 - fg_data_num) # 固定行(2行)にデータが入らなかった場合に備えて、計算式を設定
-        ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + fg_data_num - 1) + ')')  # 原価計 合計
-        ws.cell(row, 9, '=SUM(I' + str(fg_start_row) + ':I' + str(fg_start_row + fg_data_num - 1) + ')')  # 売上高 合計
+        if fg_data_num > 0:
+            ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + fg_data_num - 1) + ')')  # 原価計 合計
+            ws.cell(row, 9, '=SUM(I' + str(fg_start_row) + ':I' + str(fg_start_row + fg_data_num - 1) + ')')  # 売上高 合計
 
         row += 4  # 仕掛PJ 開始行
 
@@ -933,7 +934,8 @@ def _filedownload(yyyymm : str, version : str):
 
         #仕掛PJサマリ 開始行
         row = wip_start_row + wip_data_num + max(0, 2 - wip_data_num) #固定行(2行)にデータが入らなかった場合に備えて、計算式を設定
-        ws.cell(row, 8, '=SUM(H' + str(wip_start_row) + ':H' + str(wip_start_row + wip_data_num - 1) + ')')  # 原価計 合計
+        if wip_data_num > 0:
+            ws.cell(row, 8, '=SUM(H' + str(wip_start_row) + ':H' + str(wip_start_row + wip_data_num - 1) + ')')  # 原価計 合計
 
         row += 4  # 前月仕掛 開始行
 
@@ -1000,11 +1002,12 @@ def _filedownload(yyyymm : str, version : str):
 
         #完成PJ+仕掛PJサマリ 開始行
         row = total_wip_start_row + wip_add_data_num + max (0, 2 - fg_add_data_num) + max(0, 2 - wip_add_data_num) #固定(完成2行、仕掛2行)にデータが入らなかった場合に備えて、計算式を設定
-        ws.cell(row, 4, '=SUM(D' + str(total_fg_start_row) + ':D' + str(total_fg_start_row + fg_add_data_num + wip_add_data_num - 1) + ')')  # 材料費 合計
-        ws.cell(row, 5, '=SUM(E' + str(total_fg_start_row) + ':E' + str(total_fg_start_row + fg_add_data_num + wip_add_data_num - 1) + ')')  # 労務費 合計
-        ws.cell(row, 6, '=SUM(F' + str(total_fg_start_row) + ':F' + str(total_fg_start_row + fg_add_data_num + wip_add_data_num - 1) + ')')  # 外注費 合計
-        ws.cell(row, 7, '=SUM(G' + str(total_fg_start_row) + ':G' + str(total_fg_start_row + fg_add_data_num + wip_add_data_num - 1) + ')')  # 経費   合計
-        ws.cell(row, 8, '=SUM(H' + str(total_fg_start_row) + ':H' + str(total_fg_start_row + fg_add_data_num + wip_add_data_num - 1) + ')')  # 小計   合計
+        if fg_add_data_num + wip_add_data_num > 0:
+            ws.cell(row, 4, '=SUM(D' + str(total_fg_start_row) + ':D' + str(total_fg_start_row + fg_add_data_num + wip_add_data_num - 1) + ')')  # 材料費 合計
+            ws.cell(row, 5, '=SUM(E' + str(total_fg_start_row) + ':E' + str(total_fg_start_row + fg_add_data_num + wip_add_data_num - 1) + ')')  # 労務費 合計
+            ws.cell(row, 6, '=SUM(F' + str(total_fg_start_row) + ':F' + str(total_fg_start_row + fg_add_data_num + wip_add_data_num - 1) + ')')  # 外注費 合計
+            ws.cell(row, 7, '=SUM(G' + str(total_fg_start_row) + ':G' + str(total_fg_start_row + fg_add_data_num + wip_add_data_num - 1) + ')')  # 経費   合計
+            ws.cell(row, 8, '=SUM(H' + str(total_fg_start_row) + ':H' + str(total_fg_start_row + fg_add_data_num + wip_add_data_num - 1) + ')')  # 小計   合計
 
         # 前月取得
         yyyymm = _getPrevMonth(yyyymm)
@@ -1044,15 +1047,16 @@ def _filedownload(yyyymm : str, version : str):
         ws.cell(row, 12, item['sales'] - item['total_cost'])    # 粗利
         ws.cell(row, 13, '=IF(K' + str(row) + '=0, 0%,L' + str(row) + '/K' + str(row) + ')')  # 粗利率
         row += 1
-    row = fg_start_row + fg_data_num  # 完成PJ総計 開始行
-    ws.cell(row, 6, '=SUM(F' + str(fg_start_row) + ':F' + str(fg_start_row + fg_data_num - 1) + ')')     # 材料費計
-    ws.cell(row, 7, '=SUM(G' + str(fg_start_row) + ':G' + str(fg_start_row + fg_data_num - 1) + ')')     # 労務費計
-    ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + fg_data_num - 1) + ')')     # 外注計
-    ws.cell(row, 9, '=SUM(I' + str(fg_start_row) + ':I' + str(fg_start_row + fg_data_num - 1) + ')')     # 経費計
-    ws.cell(row, 10, '=SUM(J' + str(fg_start_row) + ':J' + str(fg_start_row + fg_data_num - 1) + ')')    # 原価計
-    ws.cell(row, 11, '=SUM(K' + str(fg_start_row) + ':K' + str(fg_start_row + fg_data_num - 1) + ')')    # 売上高計
-    ws.cell(row, 12, '=+K' + str(fg_start_row + fg_data_num) + '-J' + str(fg_start_row + fg_data_num))        # 粗利計
-    ws.cell(row, 13, '=IF(K' + str(fg_start_row + fg_data_num) + '=0, 0%,L' + str(fg_start_row + fg_data_num) + '/K' + str(fg_start_row + fg_data_num) + ')')  # 粗利率
+    row = fg_start_row + fg_data_num + max(0, 2 - fg_data_num) # 完成PJ総計 開始行
+    if fg_data_num > 0:
+        ws.cell(row, 6, '=SUM(F' + str(fg_start_row) + ':F' + str(fg_start_row + fg_data_num - 1) + ')')     # 材料費計
+        ws.cell(row, 7, '=SUM(G' + str(fg_start_row) + ':G' + str(fg_start_row + fg_data_num - 1) + ')')     # 労務費計
+        ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + fg_data_num - 1) + ')')     # 外注計
+        ws.cell(row, 9, '=SUM(I' + str(fg_start_row) + ':I' + str(fg_start_row + fg_data_num - 1) + ')')     # 経費計
+        ws.cell(row, 10, '=SUM(J' + str(fg_start_row) + ':J' + str(fg_start_row + fg_data_num - 1) + ')')    # 原価計
+        ws.cell(row, 11, '=SUM(K' + str(fg_start_row) + ':K' + str(fg_start_row + fg_data_num - 1) + ')')    # 売上高計
+        ws.cell(row, 12, '=+K' + str(fg_start_row + fg_data_num) + '-J' + str(fg_start_row + fg_data_num))        # 粗利計
+        ws.cell(row, 13, '=IF(K' + str(fg_start_row + fg_data_num) + '=0, 0%,L' + str(fg_start_row + fg_data_num) + '/K' + str(fg_start_row + fg_data_num) + ')')  # 粗利率
 
     # =====================
     # 仕掛PJ台帳シート
@@ -1079,12 +1083,13 @@ def _filedownload(yyyymm : str, version : str):
         ws.cell(row, 9, item['cost'])               # 経費
         ws.cell(row, 10, item['total_cost'])        # 合計
         row += 1
-    row = wip_start_row + wip_data_num # 仕掛PJサマリ 開始行
-    ws.cell(row, 6, '=SUM(F' + str(fg_start_row) + ':F' + str(fg_start_row + wip_data_num - 1) + ')')      # 材料費計
-    ws.cell(row, 7, '=SUM(G' + str(fg_start_row) + ':G' + str(fg_start_row + wip_data_num - 1) + ')')      # 労務費計
-    ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + wip_data_num - 1) + ')')      # 外注計
-    ws.cell(row, 9, '=SUM(I' + str(fg_start_row) + ':I' + str(fg_start_row + wip_data_num - 1) + ')')      # 経費計
-    ws.cell(row, 10, '=SUM(J' + str(fg_start_row) + ':J' + str(fg_start_row + wip_data_num - 1) + ')')     # 原価計
+    row = wip_start_row + wip_data_num + max(0, 2 - wip_data_num) # 仕掛PJサマリ 開始行
+    if wip_data_num > 0:
+        ws.cell(row, 6, '=SUM(F' + str(fg_start_row) + ':F' + str(fg_start_row + wip_data_num - 1) + ')')      # 材料費計
+        ws.cell(row, 7, '=SUM(G' + str(fg_start_row) + ':G' + str(fg_start_row + wip_data_num - 1) + ')')      # 労務費計
+        ws.cell(row, 8, '=SUM(H' + str(fg_start_row) + ':H' + str(fg_start_row + wip_data_num - 1) + ')')      # 外注計
+        ws.cell(row, 9, '=SUM(I' + str(fg_start_row) + ':I' + str(fg_start_row + wip_data_num - 1) + ')')      # 経費計
+        ws.cell(row, 10, '=SUM(J' + str(fg_start_row) + ':J' + str(fg_start_row + wip_data_num - 1) + ')')     # 原価計
 
     wb.save(target_file)
 
