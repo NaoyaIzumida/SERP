@@ -74,23 +74,23 @@ export const MyDrawer = (props: Props) => {
             <ListItemText primary="SystemMenu" />
           </ListItemButton>
 
-          {/* 月次締めシステムへ遷移した場合のみ表示 */}
+          {/* 月締め処理システムへ遷移した場合のみ表示 */}
           {systemContext.system === eSystemType.GETSUJI && (
             <>
-              {/* 月次メニュー */}
+              {/* 月締めメニュー */}
               <ListItemButton onClick={() => setMonthlyToggle(!isMonthlyToggled)}>
                 <ListItemIcon>
                   <MenuIcon />
                 </ListItemIcon>
-                <ListItemText primary={"月次メニュー"} />
+                <ListItemText primary={"月締めメニュー"} />
                 {isMonthlyToggled ? <ExpandLess /> : <ExpandMore />}
               </ListItemButton>
 
-              {/* 月次メニュー - リスト */}
+              {/* 月締めメニュー - リスト */}
               <Collapse in={isMonthlyToggled} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
 
-                  {/* 月次メニュー > マスタ */}
+                  {/* 月締めメニュー > マスタ */}
                   <ListItemButton
                     onClick={() => setMstToggle(!isMstToggled)}
                     sx={{ pl: 3, '&[aria-current="page"]': { bgcolor: lightBlue["50"] } }}
@@ -102,11 +102,11 @@ export const MyDrawer = (props: Props) => {
                     {isMstToggled ? <ExpandLess /> : <ExpandMore />}
                   </ListItemButton>
 
-                  {/* 月次メニュー > マスタ - リスト */}
+                  {/* 月締めメニュー > マスタ - リスト */}
                   <Collapse in={isMstToggled} timeout="auto" unmountOnExit>
                     <List component="div" disablePadding>
 
-                      { /* 月次メニュー > マスタ > 案件情報 */}
+                      { /* 月締めメニュー > マスタ > 案件情報 */}
                       <ListItemButton
                         component={NavLink}
                         to={"/TopicInfoMstPage"}
@@ -122,7 +122,7 @@ export const MyDrawer = (props: Props) => {
                     </List>
                   </Collapse>
 
-                  { /* 月次メニュー > UPLOAD */}
+                  { /* 月締めメニュー > UPLOAD */}
                   <ListItemButton
                     component={NavLink}
                     to={"/UploadPage"}
@@ -136,7 +136,7 @@ export const MyDrawer = (props: Props) => {
                     <ListItemText primary={"UPLOAD"} />
                   </ListItemButton>
 
-                  { /* 月次メニュー > MERGE */}
+                  { /* 月締めメニュー > MERGE */}
                   <ListItemButton
                     component={NavLink}
                     to={"/MergePage"}

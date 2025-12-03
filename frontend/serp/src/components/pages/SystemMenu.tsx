@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const buttons = [
-  { label: "月次処理", system: eSystemType.GETSUJI },
+  { label: "月締め処理", system: eSystemType.GETSUJI },
 ];
 
 const DashbordPage = () => {
