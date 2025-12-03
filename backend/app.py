@@ -788,6 +788,7 @@ def _filedownload(yyyymm : str, version : str):
     # =====================
     beginningOfYear = _get_last_year_november(yyyymm)  # 前年11月（期首月）
     currentyyyymm = yyyymm  # 当月
+    loop_version = version # whileループ用バージョン
 
     while yyyymm >=  beginningOfYear:
         ws = wb['template']
@@ -799,9 +800,9 @@ def _filedownload(yyyymm : str, version : str):
         ws.cell(1, 2, yyyymm[0:4] + "年" + yyyymm[4:6] + "月　仕掛 原価一覧")
 
         # サマリー
-        result = _loadmerge(yyyymm, version)
-        result_fg = _loadmerge_fg(yyyymm, version)
-        result_wip = _loadmerge_wip(yyyymm, version)
+        result = _loadmerge(yyyymm, loop_version)
+        result_fg = _loadmerge_fg(yyyymm, loop_version)
+        result_wip = _loadmerge_wip(yyyymm, loop_version)
         result_prev_wip = _loatmerge_perv_wip(yyyymm)
 
         ws.unmerge_cells('H8:I8')
@@ -1004,6 +1005,8 @@ def _filedownload(yyyymm : str, version : str):
 
         # 前月取得
         yyyymm = _getPrevMonth(yyyymm)
+        # 前月最新バージョンを取得
+        loop_version = _get_latest_version(yyyymm)
 
     # templeteシートを削除
     del wb['template']
@@ -1293,6 +1296,20 @@ def _getFiscalDateByManageID(conn : any, manage_id : str):
 # 前月取得
 def _getPrevMonth(yyyymm : str):
     return (datetime.strptime(yyyymm, '%Y%m') + relativedelta(months=-1)).strftime("%Y%m")
+
+# 前月最新バージョン取得
+def _get_latest_version(yyyymm: str) -> str:
+    sql = "select "\
+        "    max(version) "\
+        "from "\
+        "    t_merge_target "\
+        "where "\
+        "    fiscal_date = %s "
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql, (yyyymm, ))
+            row = cur.fetchone()
+            return row[0] if row and row[0] is not None else '0'
 
 # 期首月前月取得
 def _get_last_year_november(yyyymm: str) -> str:
