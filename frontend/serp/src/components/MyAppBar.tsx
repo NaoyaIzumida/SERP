@@ -66,7 +66,7 @@ export const MyAppBar = ({ isAuthenticated = false }: Props) => {
               sx={{ display: "block" }}
             >
               {systemContext.system === eSystemType.GETSUJI
-                ? "月次処理システム："
+                ? "月極処理システム："
                 : ""}
               {systemContext.title} （v {import.meta.env.VITE_APP_VERSION}）
             </Typography>
