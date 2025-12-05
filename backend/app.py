@@ -14,6 +14,7 @@ import traceback
 import jwt
 from jwt import PyJWKClient
 from datetime import datetime
+from config import config
 
 app = Flask(__name__)
 app.json.sort_keys = False
@@ -33,7 +34,11 @@ def after_request(response):
 
 # SERP DB - PostgreSQL接続
 def get_connection():
-    return psycopg2.connect('postgresql://serp:serp@postgres:5432/serp')
+    conn = (
+        f"postgresql://{config['DB_USER']}:{config['DB_PASSWORD']}"
+        f"@{config['DB_HOST']}:{config['DB_PORT']}/{config['DB_NAME']}"
+    )
+    return psycopg2.connect(conn)
 
 # カーソルをカラム名付き辞書形式に変換する
 # カーソルはオープン状態で渡すこと
