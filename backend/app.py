@@ -23,6 +23,7 @@ TENANT_ID = "7e80b39f-2bf1-4395-a356-64b74b4015bb"
 CLIENT_ID = "b96bf6d0-b9b0-4888-a294-83018fd7786d"
 JWKS_URL = f"https://login.microsoftonline.com/{TENANT_ID}/discovery/v2.0/keys"
 jwks_client = PyJWKClient(JWKS_URL)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 #CORS
 @app.after_request
@@ -215,7 +216,7 @@ def filemerge():
 # API No.9 ファイルダウンロード
 @app.route("/serp/api/filedownload/<yyyymm>,<version>", methods=["GET"])
 def filedownload(yyyymm: str, version: str):
-    filepath = "./" + _filedownload(yyyymm, version)
+    filepath = _filedownload(yyyymm, version)
     filename = os.path.basename(filepath)
     return send_file(filepath, as_attachment=True,
                         download_name=filename,
@@ -785,7 +786,11 @@ def _filemerge(manage_ids : str, fiscal_date : str, modified_user_id : str):
 def _filedownload(yyyymm : str, version : str):
     target_file = yyyymm + '.xlsx'
 
-    shutil.copy('template.xlsx', target_file)
+    template_path = os.path.join(BASE_DIR, "template.xlsx")
+    print(template_path)
+    target_file = os.path.join(BASE_DIR, f"{yyyymm}.xlsx")
+
+    shutil.copy(template_path, target_file)
     wb = openpyxl.load_workbook(target_file)
 
     template_sheet = wb['template']
