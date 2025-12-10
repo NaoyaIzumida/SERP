@@ -1,0 +1,9 @@
+Flask
+flask_cors
+psycopg2-binary
+openpyxl
+python-dateutil
+pandas
+pykakasi
+PyJWT[crypto]
+waitress
