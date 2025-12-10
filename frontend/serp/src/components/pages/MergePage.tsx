@@ -110,7 +110,7 @@ const MergePage: React.FC = () => {
         showSnackbar('データを取得しました。', SnackbarSeverity.SUCCESS);
         setDataItem(response.data.result);
       }
-      if (response.data.status == 1) {
+      else if (response.data.status == 1) {
         showSnackbar('一致するファイル一覧がありません。', SnackbarSeverity.WARNING);
         setDataItem([]);                // 削除成功後にデータグリッドをクリアする
         setGridData([]);                // DataGrid を初期化
