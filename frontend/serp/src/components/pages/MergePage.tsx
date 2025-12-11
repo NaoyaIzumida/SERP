@@ -29,6 +29,7 @@ import apiClient from '../../api/api'; // API関数をインポート
 import MergeDataGrid from '../parts/MergeDataGrid';
 import { SnackbarSeverity, useSnackbar, useSystem } from '../../contexts/AppUIContext';
 import { useAuth } from "../../contexts/AuthContext";
+import CircularProgress from '@mui/material/CircularProgress';
 
 // APIから取得するjsonの型定義（Switch Offの場合）
 interface FileListItem {
@@ -73,6 +74,8 @@ const MergePage: React.FC = () => {
   const [favorites, setFavorites] = useState<string[]>([]);                           // お気に入りの manage_id を保持
   const [gridData, setGridData] = useState<GridDataItem[]>([]);                       // GridDataItem に表示するデータ
   const [columns, setColumns] = useState<any[]>([]);                                  // DataGrid の列
+  const [downloadLoading, setDownloadLoading] = useState(false);
+  const [downloadingVersion, setDownloadingVersion] = useState<string | null>(null);
   const { showSnackbar } = useSnackbar();
   const { setTitle } = useSystem();
   const { user } = useAuth();
@@ -148,6 +151,8 @@ const MergePage: React.FC = () => {
 
   // ダウンロードボタン押下時に呼び出す処理
   const handleFileDownload = async (fiscalDate: string, version: string) => {
+    setDownloadLoading(true);
+    setDownloadingVersion(version);
     try {
       const response = await apiClient.get(`/filedownload/${fiscalDate},${version}`, {
         responseType: 'blob', // バイナリデータを受け取るために blob 形式に設定
@@ -160,6 +165,9 @@ const MergePage: React.FC = () => {
     } catch (error) {
       console.log('error:', error);
       showSnackbar('ダウンロードに失敗しました。', SnackbarSeverity.ERROR);
+    } finally {
+      setDownloadLoading(false);
+      setDownloadingVersion(null);
     }
   };
 
@@ -364,8 +372,13 @@ const MergePage: React.FC = () => {
                             <IconButton
                               edge="end"
                               onClick={() => handleFileDownload(item.fiscal_date, item.version)}
+                              disabled={downloadLoading && downloadingVersion === item.version}
                             >
-                              <FileDownloadIcon />
+                              {downloadLoading && downloadingVersion === item.version ? (
+                                <CircularProgress size={24} />
+                              ) : (
+                                <FileDownloadIcon />
+                              )}
                             </IconButton>
                           )}
                           {!isSwitchOn && (

@@ -25,7 +25,7 @@ const MergeDataGrid: React.FC<MergeDataGridProps> = ({ gridData, columns }) => {
       return typeof value === 'number' ? formatNumberWithCommas(value) : value;   // 数値ならカンマ区切り
     },
   }));
-  
+
   // ユニークなIDを生成する場合、例えばデータに連番を付与する
   const rowsWithUniqueId = gridData.map((row, index) => ({
     id: index,  // データがユニークでない場合にインデックスを使ってユニークIDを生成
@@ -49,5 +49,5 @@ const MergeDataGrid: React.FC<MergeDataGridProps> = ({ gridData, columns }) => {
     </div>
   );
 };
-  
+
 export default MergeDataGrid;
