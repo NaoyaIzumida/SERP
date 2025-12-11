@@ -53,7 +53,7 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <MsalProvider instance={msalInstance}>
-      <BrowserRouter>
+      <BrowserRouter basename="/serp">
         <AuthProvider>
           <AppProviders>
             <ThemeProvider theme={theme}>
