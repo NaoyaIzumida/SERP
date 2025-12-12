@@ -828,7 +828,7 @@ def _filedownload(yyyymm : str, version : str):
             group_id = item['group_id']
 
             # グループIDが切り替わったら空行を追加（間接プロジェクト除く）
-            if prev_group_id is not None and group_id != prev_group_id and item['order_detail'] != 'ZAB202400001':
+            if prev_group_id is not None and group_id != prev_group_id and item['order_detail'] != 'ZAB202500001':
                 _insert_rows_with_style(ws, row, 3, False)
                 ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')                                        # 小計
                 ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')')     # 振替額
@@ -837,7 +837,7 @@ def _filedownload(yyyymm : str, version : str):
                 empty_row_count += 1
 
             # 課題No3暫定対応
-            if item['order_detail'] == 'ZAB202400001':
+            if item['order_detail'] == 'ZAB202500001':
                 indirect = copy(item)
                 noIndirect = 1;
                 continue
