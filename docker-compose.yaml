@@ -23,21 +23,6 @@ services:
       - 5000:5000
     volumes:
       - ./backend/:/app
-    depends_on:
-      - postgres
-    networks:
-      - production_nw
-
-  postgres:
-    build: ./postgres
-    container_name: postgres
-    hostname: postgres
-    tty: true
-    ports:
-      - 5433:5432
-    volumes:
-      - postgres-store:/var/lib/postgresql/data
-      - ./postgres/init:/docker-entrypoint-initdb.d
     networks:
       - production_nw
 
