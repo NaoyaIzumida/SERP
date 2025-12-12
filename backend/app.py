@@ -804,7 +804,7 @@ def _filedownload(yyyymm : str, version : str):
 
     while yyyymm >=  beginningOfYear:
         ws = wb.copy_worksheet(template_sheet)
-        ws.title = "サマリー・仕掛り" + yyyymm[4:6] + "月"
+        ws.title = f"サマリー・仕掛り{yyyymm[:4]}年{yyyymm[4:6]}月"
 
         # ヘッダ行
         ws.cell(1, 2, yyyymm[0:4] + "年" + yyyymm[4:6] + "月　仕掛 原価一覧")
