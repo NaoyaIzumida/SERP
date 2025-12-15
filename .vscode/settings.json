@@ -3,5 +3,10 @@
 	"editor.defaultFormatter": "esbenp.prettier-vscode",
 	"editor.detectIndentation": false,
 	"editor.tabSize": 4,
-	"editor.insertSpaces": false
+	"editor.insertSpaces": false,
+
+	"[python]": {
+		"editor.tabSize": 4,
+		"editor.insertSpaces": true
+	}
 }

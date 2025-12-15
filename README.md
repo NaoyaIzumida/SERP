@@ -30,3 +30,8 @@ git commit -m "chore: format files to tabs (tab width 4)"
 
 -   VS Code でプロジェクトのルールを確実に適用するには、`editor.detectIndentation` を `false` に設定してからファイルを保存（あるいは Format Document）してください。
 -   Prettier の CLI は `useTabs: true` を尊重してタブに変換します。大きな変更が心配であれば、先に `--check`（差分確認）を行ってください。
+
+-   Python の例外:
+
+    -   Python ファイルは `PEP8` に従い **スペース 4**（`indent_size = 4`）に統一しています。
+    -   これは `.editorconfig` の `[*.py]` セクションと、ワークスペースの `[python]` 設定（`editor.insertSpaces = true`, `editor.tabSize = 4`）で適用されます。
