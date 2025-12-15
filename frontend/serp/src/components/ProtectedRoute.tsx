@@ -1,27 +1,27 @@
-import { Navigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
-import { Box, CircularProgress } from "@mui/material";
+import { Navigate } from "react-router-dom"
+import { useAuth } from "../contexts/AuthContext"
+import { Box, CircularProgress } from "@mui/material"
 
 interface Props {
-  children: JSX.Element;
+	children: JSX.Element
 }
 
-const ProtectedRoute = ({ children, /*allowedSystem*/ }: Props) => {
-  const { isLoading, isAuthenticated } = useAuth();
+const ProtectedRoute = ({ children /*allowedSystem*/ }: Props) => {
+	const { isLoading, isAuthenticated } = useAuth()
 
-  if (isLoading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <CircularProgress />
-      </Box>
-    );
-  }
+	if (isLoading) {
+		return (
+			<Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+				<CircularProgress />
+			</Box>
+		)
+	}
 
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
+	if (!isAuthenticated) {
+		return <Navigate to="/" replace />
+	}
 
-  return children;
-};
+	return children
+}
 
-export default ProtectedRoute;
+export default ProtectedRoute

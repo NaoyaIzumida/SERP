@@ -1,6 +1,6 @@
 oauth2RedirectUrl: http://localhost:8080/oauth2-redirect.html
 initOAuth:
-  clientId: b96bf6d0-b9b0-4888-a294-83018fd7786d
-  usePkceWithAuthorizationCodeGrant: true
-  scopes:
-    - api://b96bf6d0-b9b0-4888-a294-83018fd7786d/.default
+    clientId: b96bf6d0-b9b0-4888-a294-83018fd7786d
+    usePkceWithAuthorizationCodeGrant: true
+    scopes:
+        - api://b96bf6d0-b9b0-4888-a294-83018fd7786d/.default

@@ -1,7 +1,7 @@
 {
-    "DB_HOST": "10.3.4.42",
-    "DB_PORT": 5432,
-    "DB_NAME": "serp",
-    "DB_USER": "serp",
-    "DB_PASSWORD": "serp"
+	"DB_HOST": "10.3.4.42",
+	"DB_PORT": 5432,
+	"DB_NAME": "serp",
+	"DB_USER": "serp",
+	"DB_PASSWORD": "serp"
 }

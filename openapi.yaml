@@ -1,500 +1,499 @@
 openapi: "3.0.0"
 info:
-  title: SERP File Management API
-  version: "1.0.0"
-  description: >
-    ファイルのアップロード、一覧取得、詳細取得、マージ、ダウンロード、
-    トピック情報取得などを行う SERP API です。
+    title: SERP File Management API
+    version: "1.0.0"
+    description: >
+        ファイルのアップロード、一覧取得、詳細取得、マージ、ダウンロード、
+        トピック情報取得などを行う SERP API です。
 
 servers:
-  - url: http://localhost:5000
-    description: ローカル開発サーバー
-
+    - url: http://localhost:5000
+      description: ローカル開発サーバー
 
 paths:
-  /serp/api/fileupload:
-    post:
-      summary: ファイルアップロード
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                uploadFile:
-                  type: string
-                  format: binary
-                  description: アップロードする Excel ファイル
-                fiscal_date:
-                  type: string
-                  description: 勘定年月 (YYYYMM)
-                file_nm:
-                  type: string
-                  description: オリジナルのファイル名
-                file_div:
-                  type: string
-                  enum: ["F", "W"]
-                  description: ファイル区分 ("F" 完成プロジェクト または "W" 仕掛プロジェクト)
-              required:
-                - uploadFile
-                - fiscal_date
-                - file_nm
-                - file_div
-      responses:
-        "200":
-          description: ステータス情報
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BaseResponse'
+    /serp/api/fileupload:
+        post:
+            summary: ファイルアップロード
+            requestBody:
+                required: true
+                content:
+                    multipart/form-data:
+                        schema:
+                            type: object
+                            properties:
+                                uploadFile:
+                                    type: string
+                                    format: binary
+                                    description: アップロードする Excel ファイル
+                                fiscal_date:
+                                    type: string
+                                    description: 勘定年月 (YYYYMM)
+                                file_nm:
+                                    type: string
+                                    description: オリジナルのファイル名
+                                file_div:
+                                    type: string
+                                    enum: ["F", "W"]
+                                    description: ファイル区分 ("F" 完成プロジェクト または "W" 仕掛プロジェクト)
+                            required:
+                                - uploadFile
+                                - fiscal_date
+                                - file_nm
+                                - file_div
+            responses:
+                "200":
+                    description: ステータス情報
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/BaseResponse"
 
-  /serp/api/filelist/{yyyymm}:
-    get:
-      summary: アップロード済みファイル一覧取得
-      parameters:
-        - name: yyyymm
-          in: path
-          required: true
-          schema:
-            type: string
-            example: "202508"
-      responses:
-        "200":
-          description: 指定年月のファイル一覧
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FileListResponse'
+    /serp/api/filelist/{yyyymm}:
+        get:
+            summary: アップロード済みファイル一覧取得
+            parameters:
+                - name: yyyymm
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                      example: "202508"
+            responses:
+                "200":
+                    description: 指定年月のファイル一覧
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/FileListResponse"
 
-  /serp/api/filemergelist/{yyyymm}:
-    get:
-      summary: マージ結果ファイル一覧取得
-      parameters:
-        - name: yyyymm
-          in: path
-          required: true
-          schema:
-            type: string
-            example: "202508"
-      responses:
-        "200":
-          description: 指定年月のマージ結果一覧
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MergeListResponse'
+    /serp/api/filemergelist/{yyyymm}:
+        get:
+            summary: マージ結果ファイル一覧取得
+            parameters:
+                - name: yyyymm
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                      example: "202508"
+            responses:
+                "200":
+                    description: 指定年月のマージ結果一覧
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/MergeListResponse"
 
-  /serp/api/filedetail/{manage_id}:
-    get:
-      summary: アップロードファイルの詳細データ取得
-      parameters:
-        - name: manage_id
-          in: path
-          required: true
-          schema:
-            type: string
-            example: "1"
-      responses:
-        "200":
-          description: プロジェクト別詳細情報
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FileDetailResponse'
+    /serp/api/filedetail/{manage_id}:
+        get:
+            summary: アップロードファイルの詳細データ取得
+            parameters:
+                - name: manage_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                      example: "1"
+            responses:
+                "200":
+                    description: プロジェクト別詳細情報
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/FileDetailResponse"
 
-  /serp/api/filemergedetail/{yyyymm},{version}:
-    get:
-      summary: マージ結果の詳細データ取得
-      parameters:
-        - name: yyyymm
-          in: path
-          required: true
-          schema:
-            type: string
-            example: "202508"
-        - name: version
-          in: path
-          required: true
-          schema:
-            type: string
-            example: "1"
-      responses:
-        "200":
-          description: マージ結果詳細
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MergeDetailResponse'
+    /serp/api/filemergedetail/{yyyymm},{version}:
+        get:
+            summary: マージ結果の詳細データ取得
+            parameters:
+                - name: yyyymm
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                      example: "202508"
+                - name: version
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                      example: "1"
+            responses:
+                "200":
+                    description: マージ結果詳細
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/MergeDetailResponse"
 
-  /serp/api/filedelete/{manage_id}:
-    delete:
-      summary: ファイルと関連データ削除
-      parameters:
-        - name: manage_id
-          in: path
-          required: true
-          schema:
-            type: string
-            example: "1"
-      responses:
-        "200":
-          description: 削除結果
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/BaseResponse'
+    /serp/api/filedelete/{manage_id}:
+        delete:
+            summary: ファイルと関連データ削除
+            parameters:
+                - name: manage_id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                      example: "1"
+            responses:
+                "200":
+                    description: 削除結果
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/BaseResponse"
 
-  /serp/api/filemerge:
-    put:
-      summary: 複数ファイルのマージ実行
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                manage_ids:
-                  type: array
-                  items:
-                    type: string
-                  description: マージ対象の管理ID配列
-              required:
-                - manage_ids
-      responses:
-        "200":
-          description: マージ完了（勘定年月を返却）
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: integer
-                    example: 0
-                  result:
-                    type: string
-                    example: "202508"
+    /serp/api/filemerge:
+        put:
+            summary: 複数ファイルのマージ実行
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                manage_ids:
+                                    type: array
+                                    items:
+                                        type: string
+                                    description: マージ対象の管理ID配列
+                            required:
+                                - manage_ids
+            responses:
+                "200":
+                    description: マージ完了（勘定年月を返却）
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    status:
+                                        type: integer
+                                        example: 0
+                                    result:
+                                        type: string
+                                        example: "202508"
 
-  /serp/api/filedownload/{yyyymm},{version}:
-    get:
-      summary: マージ結果ファイル（Excel）ダウンロード
-      parameters:
-        - name: yyyymm
-          in: path
-          required: true
-          schema:
-            type: string
-            example: "202508"
-        - name: version
-          in: path
-          required: true
-          schema:
-            type: string
-            example: "1"
-      responses:
-        "200":
-          description: Excel ファイルをバイナリで返却
-          content:
-            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
-              schema:
-                type: string
-                format: binary
+    /serp/api/filedownload/{yyyymm},{version}:
+        get:
+            summary: マージ結果ファイル（Excel）ダウンロード
+            parameters:
+                - name: yyyymm
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                      example: "202508"
+                - name: version
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+                      example: "1"
+            responses:
+                "200":
+                    description: Excel ファイルをバイナリで返却
+                    content:
+                        application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+                            schema:
+                                type: string
+                                format: binary
 
-  /serp/api/topicinfolist/{group_id_flg},{del_disp_flg}:
-    get:
-      summary: 案件情報マスタデータ取得
-      parameters:
-        - name: group_id_flg
-          in: path
-          required: true
-          schema:
-            type: boolean
-            example: false
-        - name: del_disp_flg
-          in: path
-          required: true
-          schema:
-            type: boolean
-            example: false
-      responses:
-        "200":
-          description: トピック情報リスト
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TopicInfoResponse'
+    /serp/api/topicinfolist/{group_id_flg},{del_disp_flg}:
+        get:
+            summary: 案件情報マスタデータ取得
+            parameters:
+                - name: group_id_flg
+                  in: path
+                  required: true
+                  schema:
+                      type: boolean
+                      example: false
+                - name: del_disp_flg
+                  in: path
+                  required: true
+                  schema:
+                      type: boolean
+                      example: false
+            responses:
+                "200":
+                    description: トピック情報リスト
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/TopicInfoResponse"
 
-  /serp/api/topicinfoupdate:
-    put:
-      summary: トピック情報を一括更新
-      description: |
-        複数の topic オブジェクトを受け取り、
-        m_topic_info テーブルを ORDER_DETAIL + ORDER_ROWNO で UPDATE します。
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TopicUpdateRequest'
-      responses:
-        "200":
-          description: 更新完了 or エラー情報
-          content:
-            application/json:
-              schema:
-                oneOf:
-                  - $ref: '#/components/schemas/TopicUpdateSuccess'
-                  - $ref: '#/components/schemas/ErrorResponse'
+    /serp/api/topicinfoupdate:
+        put:
+            summary: トピック情報を一括更新
+            description: |
+                複数の topic オブジェクトを受け取り、
+                m_topic_info テーブルを ORDER_DETAIL + ORDER_ROWNO で UPDATE します。
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/TopicUpdateRequest"
+            responses:
+                "200":
+                    description: 更新完了 or エラー情報
+                    content:
+                        application/json:
+                            schema:
+                                oneOf:
+                                    - $ref: "#/components/schemas/TopicUpdateSuccess"
+                                    - $ref: "#/components/schemas/ErrorResponse"
 
-    /serp/api/auth/callback:
-    post:
-      summary: Azure AD の IDトークンを受け取って検証する
-      description: >
-        React (MSAL.js) でログインして得た ID Token を受け取り、
-        Azure AD の公開鍵で署名検証を行い、ユーザー情報を返す。
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                id_token:
-                  type: string
-                  description: Azure AD から受け取った ID Token (JWT)
-              required:
-                - id_token
-      responses:
-        '200':
-          description: 認証成功
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: "ok"
-                  azure_ad_id:
-                    type: string
-                    description: Azure AD 内でのユーザー一意ID (oid)
-                  email:
-                    type: string
-                    description: ユーザーのメールアドレス
-                  name:
-                    type: string
-                    description: 表示名
-        '401':
-          description: 認証失敗
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "Invalid token"
+        /serp/api/auth/callback:
+        post:
+            summary: Azure AD の IDトークンを受け取って検証する
+            description: >
+                React (MSAL.js) でログインして得た ID Token を受け取り、
+                Azure AD の公開鍵で署名検証を行い、ユーザー情報を返す。
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                id_token:
+                                    type: string
+                                    description: Azure AD から受け取った ID Token (JWT)
+                            required:
+                                - id_token
+            responses:
+                "200":
+                    description: 認証成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    status:
+                                        type: string
+                                        example: "ok"
+                                    azure_ad_id:
+                                        type: string
+                                        description: Azure AD 内でのユーザー一意ID (oid)
+                                    email:
+                                        type: string
+                                        description: ユーザーのメールアドレス
+                                    name:
+                                        type: string
+                                        description: 表示名
+                "401":
+                    description: 認証失敗
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    error:
+                                        type: string
+                                        example: "Invalid token"
 
 components:
-  securitySchemes:
-    azureOAuth:
-      type: oauth2
-      flows:
-        authorizationCode:
-          authorizationUrl: https://login.microsoftonline.com/7e80b39f-2bf1-4395-a356-64b74b4015bb/oauth2/v2.0/authorize
-          tokenUrl: https://login.microsoftonline.com/7e80b39f-2bf1-4395-a356-64b74b4015bb/oauth2/v2.0/token
-          scopes:
-            api://2796dabc-8d3f-4dbe-970c-3a01037879cd/.default: Access API
+    securitySchemes:
+        azureOAuth:
+            type: oauth2
+            flows:
+                authorizationCode:
+                    authorizationUrl: https://login.microsoftonline.com/7e80b39f-2bf1-4395-a356-64b74b4015bb/oauth2/v2.0/authorize
+                    tokenUrl: https://login.microsoftonline.com/7e80b39f-2bf1-4395-a356-64b74b4015bb/oauth2/v2.0/token
+                    scopes:
+                        api://2796dabc-8d3f-4dbe-970c-3a01037879cd/.default: Access API
 
-  schemas:
-    BaseResponse:
-      type: object
-      properties:
-        status:
-          type: integer
-          description: 処理結果ステータス（0:成功, 1:警告, -1:エラー）
-        result:
-          nullable: true
-          description: 処理結果の内容（エラー時やダウンロード時は省略される場合あり）
+    schemas:
+        BaseResponse:
+            type: object
+            properties:
+                status:
+                    type: integer
+                    description: 処理結果ステータス（0:成功, 1:警告, -1:エラー）
+                result:
+                    nullable: true
+                    description: 処理結果の内容（エラー時やダウンロード時は省略される場合あり）
 
-    FileInfo:
-      type: object
-      properties:
-        manage_id:
-          type: string
-        fiscal_date:
-          type: string
-        version:
-          type: string
-        file_div:
-          type: string
-        file_nm:
-          type: string
-        modified_date:
-          type: string
-          format: date-time
+        FileInfo:
+            type: object
+            properties:
+                manage_id:
+                    type: string
+                fiscal_date:
+                    type: string
+                version:
+                    type: string
+                file_div:
+                    type: string
+                file_nm:
+                    type: string
+                modified_date:
+                    type: string
+                    format: date-time
 
-    FileListResponse:
-      type: object
-      allOf:
-        - $ref: '#/components/schemas/BaseResponse'
-      properties:
-        result:
-          type: array
-          items:
-            $ref: '#/components/schemas/FileInfo'
+        FileListResponse:
+            type: object
+            allOf:
+                - $ref: "#/components/schemas/BaseResponse"
+            properties:
+                result:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/FileInfo"
 
-    MergeTarget:
-      type: object
-      properties:
-        fiscal_date:
-          type: string
-        version:
-          type: string
-        fg_id:
-          type: string
-        fg_file_name:
-          type: string
-        wip_id:
-          type: string
-        wip_file_name:
-          type: string
-        hrmos_id:
-          type: string
-        hrmos_file_name:
-          type: string
+        MergeTarget:
+            type: object
+            properties:
+                fiscal_date:
+                    type: string
+                version:
+                    type: string
+                fg_id:
+                    type: string
+                fg_file_name:
+                    type: string
+                wip_id:
+                    type: string
+                wip_file_name:
+                    type: string
+                hrmos_id:
+                    type: string
+                hrmos_file_name:
+                    type: string
 
-    MergeListResponse:
-      type: object
-      allOf:
-        - $ref: '#/components/schemas/BaseResponse'
-      properties:
-        result:
-          type: array
-          items:
-            $ref: '#/components/schemas/MergeTarget'
+        MergeListResponse:
+            type: object
+            allOf:
+                - $ref: "#/components/schemas/BaseResponse"
+            properties:
+                result:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/MergeTarget"
 
-    FileDetailItem:
-      type: object
-      properties:
-        原価部門コード:
-          type: string
-        原価部門名:
-          type: string
-        受注明細:
-          type: string
-        受注行番号:
-          type: string
-        契約工事略名:
-          type: string
-        得意先名:
-          type: string
-        材料費:
-          type: number
-        労務費:
-          type: number
-        外注費:
-          type: number
-        経費:
-          type: number
-        売上高:
-          type: number
+        FileDetailItem:
+            type: object
+            properties:
+                原価部門コード:
+                    type: string
+                原価部門名:
+                    type: string
+                受注明細:
+                    type: string
+                受注行番号:
+                    type: string
+                契約工事略名:
+                    type: string
+                得意先名:
+                    type: string
+                材料費:
+                    type: number
+                労務費:
+                    type: number
+                外注費:
+                    type: number
+                経費:
+                    type: number
+                売上高:
+                    type: number
 
-    FileDetailResponse:
-      type: object
-      allOf:
-        - $ref: '#/components/schemas/BaseResponse'
-      properties:
-        result:
-          type: array
-          items:
-            $ref: '#/components/schemas/FileDetailItem'
+        FileDetailResponse:
+            type: object
+            allOf:
+                - $ref: "#/components/schemas/BaseResponse"
+            properties:
+                result:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/FileDetailItem"
 
-    MergeDetailItem:
-      type: object
-      properties:
-        繰越対象:
-          type: string
-        受注明細:
-          type: string
-        件名:
-          type: string
-        労務費:
-          type: number
-        外注費:
-          type: number
-        旅費交通費:
-          type: number
-        翌月繰越:
-          type: number
+        MergeDetailItem:
+            type: object
+            properties:
+                繰越対象:
+                    type: string
+                受注明細:
+                    type: string
+                件名:
+                    type: string
+                労務費:
+                    type: number
+                外注費:
+                    type: number
+                旅費交通費:
+                    type: number
+                翌月繰越:
+                    type: number
 
-    MergeDetailResponse:
-      type: object
-      allOf:
-        - $ref: '#/components/schemas/BaseResponse'
-      properties:
-        result:
-          type: array
-          items:
-            $ref: '#/components/schemas/MergeDetailItem'
+        MergeDetailResponse:
+            type: object
+            allOf:
+                - $ref: "#/components/schemas/BaseResponse"
+            properties:
+                result:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/MergeDetailItem"
 
-    TopicInfo:
-      type: object
-      properties:
-        order_detail:
-          type: string
-        order_rowno:
-          type: string
-        group_id:
-          nullable: true
-          type: string
-        disp_seq:
-          type: integer
+        TopicInfo:
+            type: object
+            properties:
+                order_detail:
+                    type: string
+                order_rowno:
+                    type: string
+                group_id:
+                    nullable: true
+                    type: string
+                disp_seq:
+                    type: integer
 
-    TopicInfoResponse:
-      type: object
-      allOf:
-        - $ref: '#/components/schemas/BaseResponse'
-      properties:
-        result:
-          type: array
-          items:
-            $ref: '#/components/schemas/TopicInfo'
+        TopicInfoResponse:
+            type: object
+            allOf:
+                - $ref: "#/components/schemas/BaseResponse"
+            properties:
+                result:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/TopicInfo"
 
-    TopicUpdateRequest:
-      type: object
-      properties:
-        topics:
-          type: array
-          items:
-            $ref: '#/components/schemas/TopicInfo'
-      required:
-        - topics
+        TopicUpdateRequest:
+            type: object
+            properties:
+                topics:
+                    type: array
+                    items:
+                        $ref: "#/components/schemas/TopicInfo"
+            required:
+                - topics
 
-    TopicUpdateSuccess:
-      type: object
-      properties:
-        status:
-          type: integer
-          example: 0
-        result:
-          type: integer
-          description: 更新件数
-      required:
-        - status
-        - result
+        TopicUpdateSuccess:
+            type: object
+            properties:
+                status:
+                    type: integer
+                    example: 0
+                result:
+                    type: integer
+                    description: 更新件数
+            required:
+                - status
+                - result
 
-    ErrorResponse:
-      type: object
-      properties:
-        status:
-          type: integer
-          example: -1
-        result:
-          type: string
-          description: エラーメッセージ
-      required:
-        - status
-        - result
+        ErrorResponse:
+            type: object
+            properties:
+                status:
+                    type: integer
+                    example: -1
+                result:
+                    type: string
+                    description: エラーメッセージ
+            required:
+                - status
+                - result

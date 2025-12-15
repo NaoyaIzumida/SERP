@@ -1,47 +1,47 @@
 services:
-  # frontend:
-  #   build: ./frontend/serp
-  #   container_name: react
-  #   hostname: react
-  #   tty: true
-  #   ports:
-  #     - 3000:80
-  #   depends_on:
-  #     - backend
-  #   networks:
-  #     - production_nw
+    # frontend:
+    #   build: ./frontend/serp
+    #   container_name: react
+    #   hostname: react
+    #   tty: true
+    #   ports:
+    #     - 3000:80
+    #   depends_on:
+    #     - backend
+    #   networks:
+    #     - production_nw
 
-  backend:
-    build: ./backend
-    environment:
-      - FLASK_ENV=development
-      - APP_ENV=development
-    container_name: flask
-    hostname: flask
-    tty: true
-    ports:
-      - 5000:5000
-    volumes:
-      - ./backend/:/app
-    networks:
-      - production_nw
+    backend:
+        build: ./backend
+        environment:
+            - FLASK_ENV=development
+            - APP_ENV=development
+        container_name: flask
+        hostname: flask
+        tty: true
+        ports:
+            - 5000:5000
+        volumes:
+            - ./backend/:/app
+        networks:
+            - production_nw
 
-  swagger-ui:
-    image: swaggerapi/swagger-ui:latest
-    container_name: serpent-swagger-ui
-    ports:
-      - "8080:8080"
-    environment:
-      SWAGGER_JSON: /spec/openapi.yaml
-    volumes:
-      - ./openapi.yaml:/spec/openapi.yaml:ro
-      - ./swagger-config.yaml:/usr/share/nginx/html/swagger-config.yaml:ro
-    networks:
-      - production_nw
+    swagger-ui:
+        image: swaggerapi/swagger-ui:latest
+        container_name: serpent-swagger-ui
+        ports:
+            - "8080:8080"
+        environment:
+            SWAGGER_JSON: /spec/openapi.yaml
+        volumes:
+            - ./openapi.yaml:/spec/openapi.yaml:ro
+            - ./swagger-config.yaml:/usr/share/nginx/html/swagger-config.yaml:ro
+        networks:
+            - production_nw
 
 volumes:
-  postgres-store:
+    postgres-store:
 
 networks:
-  production_nw:
-    driver: bridge
+    production_nw:
+        driver: bridge
