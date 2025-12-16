@@ -525,6 +525,12 @@ def _insertTopicInfo(conn : any, order_detail : str, order_rowno : str, project_
         else:
             group_id = _generate_group_id_from_customer(customer)
 
+        #indirect_flgの初期値設定
+        if customer == "【社内処理】株式会社ｴｽｼｰｱｲ":
+            indirect_flg = '1'  #間接プロジェクト
+        else:
+            indirect_flg = '0'  #通常プロジェクト
+
         # disp_seq を算出
         cur.execute("""
             select coalesce(max(disp_seq), 0) + 1
@@ -536,9 +542,9 @@ def _insertTopicInfo(conn : any, order_detail : str, order_rowno : str, project_
         # INSERT
         cur.execute("""
             insert into m_topic_info
-                (order_detail, order_rowno, project_nm, customer, group_id, disp_seq, del_flg, modified_user, modified_date)
-            values (%s, %s, %s, %s, %s, %s, '0', %s, current_timestamp)
-        """, (order_detail, order_rowno, project_nm, customer, group_id, disp_seq, modified_user_id))
+                (order_detail, order_rowno, project_nm, customer, group_id, indirect_flg, disp_seq, del_flg, modified_user, modified_date)
+            values (%s, %s, %s, %s, %s, %s, %s, '0', %s, current_timestamp)
+        """, (order_detail, order_rowno, project_nm, customer, group_id, indirect_flg, disp_seq, modified_user_id))
 
 # 完成PJ台帳登録
 def _insertFgFileInfo(conn : any, manage_id : str, row_no : str, div_cd : str, order_detail : str, order_rowno : str, project_nm : str, customer : str, cost_material : str, cost_labor : str, cost_subcontract : str, cost : str, sales : str, modified_user_id : str):
@@ -801,6 +807,7 @@ def _filedownload(yyyymm : str, version : str):
     beginningOfYear = _get_last_year_november(yyyymm)  # 前年11月（期首月）
     currentyyyymm = yyyymm  # 当月
     loop_version = version # whileループ用バージョン
+    INDIRECT_FLG = "1" # 間接プロジェクトフラグ
 
     while yyyymm >=  beginningOfYear:
         ws = wb.copy_worksheet(template_sheet)
@@ -828,7 +835,7 @@ def _filedownload(yyyymm : str, version : str):
             group_id = item['group_id']
 
             # グループIDが切り替わったら空行を追加（間接プロジェクト除く）
-            if prev_group_id is not None and group_id != prev_group_id and item['order_detail'] != 'ZAB202500001':
+            if prev_group_id is not None and group_id != prev_group_id and item['indirect_flg'] != INDIRECT_FLG:
                 _insert_rows_with_style(ws, row, 3, False)
                 ws.cell(row, 10, '=F' + str(row) + '+G' + str(row) + '+H' + str(row) + '+I' + str(row) + '')                                        # 小計
                 ws.cell(row, 11, '=IF(B' + str(row) + '="○",IF(E' + str(row) + '="",0,J' + str(row) + '),D' + str(row) + '+J' + str(row) + ')')     # 振替額
@@ -837,9 +844,9 @@ def _filedownload(yyyymm : str, version : str):
                 empty_row_count += 1
 
             # 課題No3暫定対応
-            if item['order_detail'] == 'ZAB202500001':
+            if item['indirect_flg'] == INDIRECT_FLG:
                 indirect = copy(item)
-                noIndirect = 1;
+                noIndirect = 1
                 continue
             if item['product_div'] == '2':
                 ws.cell(row, 2, "○")                                                                                                        # 繰越(仕掛)
@@ -1140,6 +1147,7 @@ def _loadmerge(yyyymm : str, version : str):
         "    , '1' as product_div "\
         "    , m_topic_info.group_id "\
         "    , m_topic_info.disp_seq "\
+        "    , m_topic_info.indirect_flg "\
         "from "\
         "    t_fg_project_info "\
         "    left join wip "\
@@ -1166,6 +1174,7 @@ def _loadmerge(yyyymm : str, version : str):
         "    , '2' as product_div "\
         "    , m_topic_info.group_id "\
         "    , m_topic_info.disp_seq "\
+        "    , m_topic_info.indirect_flg "\
         "from "\
         "    t_wip_project_info "\
         "    left join wip "\
