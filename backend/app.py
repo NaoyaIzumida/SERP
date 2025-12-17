@@ -1117,79 +1117,123 @@ def _filedownload(yyyymm : str, version : str):
 
 # マージ結果
 def _loadmerge(yyyymm : str, version : str):
-    sql = "with wip as ( "\
-        "    select "\
-        "          order_detail "\
-        "        , order_rowno "\
-        "        , sum(cost_labor) + sum(cost_subcontract) + sum(cost) + sum(cost_other) as total_cost_wip "\
-        "        , sum(cost_labor) as cost_labor_wip "\
-        "        , sum(cost_subcontract) as cost_subcontract_wip "\
-        "        , sum(cost) as cost_wip "\
-        "        , sum(cost_other) as cost_other_wip "\
-        "    from "\
-        "        t_wip_info "\
-        "    where "\
-        "         fiscal_date = %s"\
-        "    group by "\
-        "        order_detail"\
-        "        , order_rowno"\
-        ") "\
-        "select"\
-        "     t_fg_project_info.order_detail "\
-        "    , m_topic_info.project_nm "\
-        "    , wip.total_cost_wip "\
-        "    , t_fg_project_info.sales "\
-        "    , t_fg_project_info.cost_labor - coalesce(wip.cost_labor_wip, 0)   as cost_labor "\
-        "    , t_fg_project_info.cost_subcontract - coalesce(wip.cost_subcontract_wip, 0) as cost_subcontract "\
-        "    , t_fg_project_info.cost - coalesce(wip.cost_wip, 0) as cost "\
-        "    , t_fg_project_info.cost_material - coalesce(wip.cost_other_wip, 0) as cost_other "\
-        "    , null as change_value "\
-        "    , '1' as product_div "\
-        "    , m_topic_info.group_id "\
-        "    , m_topic_info.disp_seq "\
-        "    , m_topic_info.indirect_flg "\
-        "from "\
-        "    t_fg_project_info "\
-        "    left join wip "\
-        "        on t_fg_project_info.order_detail = wip.order_detail "\
-        "        and t_fg_project_info.order_rowno = wip.order_rowno "\
-        "    left join m_topic_info "\
-        "        on t_fg_project_info.order_detail = m_topic_info.order_detail "\
-        "        and t_fg_project_info.order_rowno = m_topic_info.order_rowno "\
-        "    inner join m_file_info "\
-        "        on t_fg_project_info.manage_id = m_file_info.manage_id "\
-        "where "\
-        "    t_fg_project_info.manage_id in (select fg_id from t_merge_target where fiscal_date = %s and version = %s) "\
-        "union all "\
-        "select "\
-        "     t_wip_project_info.order_detail "\
-        "    , m_topic_info.project_nm "\
-        "    , wip.total_cost_wip "\
-        "    , null as sales "\
-        "    , t_wip_project_info.cost_labor - coalesce(wip.cost_labor_wip, 0)   as cost_labor "\
-        "    , t_wip_project_info.cost_subcontract - coalesce(wip.cost_subcontract_wip, 0) as cost_subcontract "\
-        "    , t_wip_project_info.cost - coalesce(wip.cost_wip, 0) as cost "\
-        "    , t_wip_project_info.cost_material - coalesce(wip.cost_other_wip, 0) as cost_other "\
-        "    , t_wip_project_info.cost_labor + t_wip_project_info.cost_subcontract + t_wip_project_info.cost + t_wip_project_info.cost_material as change_value "\
-        "    , '2' as product_div "\
-        "    , m_topic_info.group_id "\
-        "    , m_topic_info.disp_seq "\
-        "    , m_topic_info.indirect_flg "\
-        "from "\
-        "    t_wip_project_info "\
-        "    left join wip "\
-        "        on t_wip_project_info.order_detail = wip.order_detail "\
-        "    left join m_topic_info "\
-        "        on t_wip_project_info.order_detail = m_topic_info.order_detail "\
-        "        and t_wip_project_info.order_rowno = m_topic_info.order_rowno "\
-        "    inner join m_file_info "\
-        "        on t_wip_project_info.manage_id = m_file_info.manage_id "\
-        "where "\
-        "    t_wip_project_info.manage_id in (select wip_id from t_merge_target where fiscal_date = %s and version = %s) "\
-        "order by "\
-        "    group_id "\
-        "    , disp_seq "\
-        "    , order_detail "
+    sql = "with wip as ( " \
+        "    select " \
+        "        order_detail, " \
+        "        order_rowno, " \
+        "        sum(cost_labor) + sum(cost_subcontract) + sum(cost) + sum(cost_other) as total_cost_wip, " \
+        "        sum(cost_labor) as cost_labor_wip, " \
+        "        sum(cost_subcontract) as cost_subcontract_wip, " \
+        "        sum(cost) as cost_wip, " \
+        "        sum(cost_other) as cost_other_wip " \
+        "    from " \
+        "        t_wip_info " \
+        "    where " \
+        "        fiscal_date = %s " \
+        "    group by " \
+        "        order_detail, " \
+        "        order_rowno " \
+        "), " \
+        "base as ( " \
+        "    select " \
+        "        t_fg_project_info.order_detail, " \
+        "        m_topic_info.project_nm, " \
+        "        wip.total_cost_wip, " \
+        "        t_fg_project_info.sales, " \
+        "        t_fg_project_info.cost_labor - coalesce(wip.cost_labor_wip, 0) as cost_labor, " \
+        "        t_fg_project_info.cost_subcontract - coalesce(wip.cost_subcontract_wip, 0) as cost_subcontract, " \
+        "        t_fg_project_info.cost - coalesce(wip.cost_wip, 0) as cost, " \
+        "        t_fg_project_info.cost_material - coalesce(wip.cost_other_wip, 0) as cost_other, " \
+        "        null as change_value, " \
+        "        '1' as product_div, " \
+        "        m_topic_info.group_id, " \
+        "        m_topic_info.disp_seq, " \
+        "        m_topic_info.indirect_flg " \
+        "    from " \
+        "        t_fg_project_info " \
+        "        left join wip " \
+        "            on t_fg_project_info.order_detail = wip.order_detail " \
+        "           and t_fg_project_info.order_rowno  = wip.order_rowno " \
+        "        left join m_topic_info " \
+        "            on t_fg_project_info.order_detail = m_topic_info.order_detail " \
+        "           and t_fg_project_info.order_rowno  = m_topic_info.order_rowno " \
+        "        inner join m_file_info " \
+        "            on t_fg_project_info.manage_id = m_file_info.manage_id " \
+        "    where " \
+        "        t_fg_project_info.manage_id in ( " \
+        "            select fg_id " \
+        "            from t_merge_target " \
+        "            where fiscal_date = %s " \
+        "              and version     = %s " \
+        "        ) " \
+        "    union all " \
+        "    select " \
+        "        t_wip_project_info.order_detail, " \
+        "        m_topic_info.project_nm, " \
+        "        wip.total_cost_wip, " \
+        "        null as sales, " \
+        "        t_wip_project_info.cost_labor - coalesce(wip.cost_labor_wip, 0) as cost_labor, " \
+        "        t_wip_project_info.cost_subcontract - coalesce(wip.cost_subcontract_wip, 0) as cost_subcontract, " \
+        "        t_wip_project_info.cost - coalesce(wip.cost_wip, 0) as cost, " \
+        "        t_wip_project_info.cost_material - coalesce(wip.cost_other_wip, 0) as cost_other, " \
+        "        t_wip_project_info.cost_labor " \
+        "        + t_wip_project_info.cost_subcontract " \
+        "        + t_wip_project_info.cost " \
+        "        + t_wip_project_info.cost_material as change_value, " \
+        "        '2' as product_div, " \
+        "        m_topic_info.group_id, " \
+        "        m_topic_info.disp_seq, " \
+        "        m_topic_info.indirect_flg " \
+        "    from " \
+        "        t_wip_project_info " \
+        "        left join wip " \
+        "            on t_wip_project_info.order_detail = wip.order_detail " \
+        "        left join m_topic_info " \
+        "            on t_wip_project_info.order_detail = m_topic_info.order_detail " \
+        "           and t_wip_project_info.order_rowno  = m_topic_info.order_rowno " \
+        "        inner join m_file_info " \
+        "            on t_wip_project_info.manage_id = m_file_info.manage_id " \
+        "    where " \
+        "        t_wip_project_info.manage_id in ( " \
+        "            select wip_id " \
+        "            from t_merge_target " \
+        "            where fiscal_date = %s " \
+        "              and version     = %s " \
+        "        ) " \
+        ") " \
+        "select " \
+        "    case " \
+        "        when indirect_flg = '1' then 'INDIRECT' " \
+        "        else order_detail " \
+        "    end as order_key, " \
+        "    case " \
+        "        when indirect_flg = '1' then '間接プロジェクト' " \
+        "        else max(project_nm) " \
+        "    end as project_nm, " \
+        "    sum(total_cost_wip) as total_cost_wip, " \
+        "    sum(sales) as sales, " \
+        "    sum(cost_labor) as cost_labor, " \
+        "    sum(cost_subcontract) as cost_subcontract, " \
+        "    sum(cost) as cost, " \
+        "    sum(cost_other) as cost_other, " \
+        "    sum(change_value) as change_value, " \
+        "    product_div, " \
+        "    max(group_id) as group_id, " \
+        "    min(disp_seq) as disp_seq, " \
+        "    indirect_flg " \
+        "from " \
+        "    base " \
+        "group by " \
+        "    case " \
+        "        when indirect_flg = '1' then 'INDIRECT' " \
+        "        else order_detail " \
+        "    end, " \
+        "    product_div, " \
+        "    indirect_flg " \
+        "order by " \
+        "    indirect_flg, " \
+        "    group_id, " \
+        "    disp_seq;"
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
