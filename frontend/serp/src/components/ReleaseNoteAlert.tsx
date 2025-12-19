@@ -26,7 +26,7 @@ const ReleaseNoteAlert: React.FC = () => {
 			return
 		}
 
-		fetch("/README.md")
+		fetch("/serp/README.md")
 			.then((res) => res.text())
 			.then((text) => {
 				const lines = text.split("\n").map((l) => l.trim())
